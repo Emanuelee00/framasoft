@@ -8,6 +8,8 @@ https://docs.djangoproject.com/en/5.1/topics/http/views/
 """
 
 import csv
+import itertools
+import logging
 from datetime import datetime, timedelta, date
 from django.utils import timezone
 import os
@@ -21,9 +23,9 @@ import base64
 from bs4 import BeautifulSoup
 
 from django.shortcuts import render, redirect
-from django.http import Http404, HttpResponse, HttpResponseForbidden, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponseForbidden, JsonResponse, StreamingHttpResponse
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, PermissionDenied
 from django.utils.translation import gettext as _
 from django.contrib import messages
 from django.contrib.messages import get_messages
@@ -39,6 +41,9 @@ from django.utils.timezone import now
 from django.core.files.storage import FileSystemStorage
 from django.core.paginator import Paginator
 from django.core.cache import cache
+from django.core import signing
+from django.utils.html import strip_tags
+from django.views.decorators.cache import never_cache
 from django.views.generic.edit import CreateView
 
 from formtools.wizard.views import SessionWizardView
@@ -47,9 +52,10 @@ from .models import Petition, Signature, Organization, PytitionUser, PetitionTem
 from .models import SlugModel, ModerationReason, Moderation, MonitoringReason, Monitoring
 from .forms import SignatureForm, ContentFormPetition, EmailForm, NewsletterForm, SocialNetworkForm, ContentFormTemplate
 from .forms import StyleForm, PetitionCreationStep1, PetitionCreationStep2, PetitionCreationStep3, UpdateInfoForm
-from .forms import DeleteAccountForm, OrgCreationForm
+from .forms import DeleteAccountForm, OrgCreationForm, SignatureLinkRequestForm
 from .helpers import get_client_ip, get_session_user, petition_from_id, signature_ip_hash
 from .helpers import check_petition_is_accessible
+from .helpers import send_already_signed_email, send_manage_link_email, MANAGE_SALT
 from .helpers import send_confirmation_email, subscribe_to_newsletter, send_welcome_mail, send_moderation_mail, send_mail_to_moderation, send_mail_to_moderation_monitor, send_monitoring_mail, send_mail_to_moderation_info
 from .helpers import get_update_form, petition_detail_meta
 from .helpers import sanitize_html
@@ -212,6 +218,8 @@ def detail(request, petition_id):
 def confirm(request, petition_id, confirmation_hash):
     petition = petition_from_id(petition_id)
     check_petition_is_accessible(request, petition)
+    signature = Signature.objects.filter(petition=petition, confirmation_hash=confirmation_hash).first()
+    was_confirmed = signature.confirmed if signature else True
     try:
         successmsg = petition.confirm_signature(confirmation_hash)
         if successmsg is None:
@@ -219,11 +227,32 @@ def confirm(request, petition_id, confirmation_hash):
         else:
             messages.success(request, successmsg)
             request.session['just_confirmed'] = True
+            # Newsletter subscription only once the signature is confirmed, and only once
+            if not was_confirmed and petition.has_newsletter and signature.subscribed_to_mailinglist:
+                subscribe_to_newsletter(petition, signature.email)
+                Signature.objects.filter(pk=signature.pk).update(newsletter_consent_at=timezone.now())
     except ValidationError as e:
         messages.error(request, _(e.message))
     except Signature.DoesNotExist:
         messages.error(request, _("Error: This confirmation code is invalid."))
     return redirect(petition.url)
+
+
+audit_logger = logging.getLogger("petition.audit")
+
+
+class _Echo:
+    # pseudo-buffer for csv.writer: returns the line instead of storing it
+    def write(self, value):
+        return value
+
+
+def _csv_cell(column, value):
+    text = "" if value is None else str(value)
+    # neutralize spreadsheet formulas (phone numbers in E.164 always start with "+")
+    if column != "phone" and text[:1] in ("=", "+", "-", "@", "\t", "\r"):
+        return "'" + text
+    return text
 
 
 # <int:petition_id>/get_csv_signature
@@ -243,19 +272,18 @@ def get_csv_signature(request, petition_id, only_confirmed):
             return JsonResponse({}, status=403)
 
     filename = '{}.csv'.format(petition)
-    signatures = Signature.objects.filter(petition = petition)
-    if only_confirmed:
-        signatures = signatures.filter(confirmed = True)
-    else:
-        signatures = signatures.all()
-    response = HttpResponse(content_type='text/csv')
+    # only confirmed signatures are exported, whatever the route (only_confirmed is kept for URL compatibility)
+    signatures = Signature.objects.filter(petition=petition, confirmed=True)
+    attrs = ['first_name', 'last_name', 'email', 'subscribed_to_mailinglist', 'confirmed']
+    if getattr(settings, 'SIGNATURE_COLLECT_PHONE', True):
+        attrs.insert(2, 'phone')
+    audit_logger.info("csv_export petition=%s user=%s count=%d", petition.pk, user.pk, signatures.count())
+    rows = signatures.order_by('pk').values_list(*attrs).iterator(chunk_size=2000)
+    writer = csv.writer(_Echo())
+    response = StreamingHttpResponse(
+        (writer.writerow([_csv_cell(c, v) for c, v in zip(attrs, row)]) for row in itertools.chain([attrs], rows)),
+        content_type='text/csv')
     response['Content-Disposition'] = 'attachment;filename={}'.format(filename).replace('\r\n', '').replace(' ', '%20')
-    writer = csv.writer(response)
-    attrs = ['first_name', 'last_name', 'phone', 'email', 'subscribed_to_mailinglist', 'confirmed']
-    writer.writerow(attrs)
-    for signature in signatures:
-        values = [getattr(signature, field) for field in attrs]
-        writer.writerow(values)
     return response
 
 
@@ -263,6 +291,8 @@ def get_csv_signature(request, petition_id, only_confirmed):
 # resend the signature confirmation email
 @login_required
 def go_send_confirmation_email(request, signature_id):
+    if not request.user.is_staff:  # only used from the Django admin
+        raise PermissionDenied
     app_label = Signature._meta.app_label
     signature = Signature.objects.filter(pk=signature_id).get()
     send_confirmation_email(request, signature)
@@ -285,8 +315,26 @@ def create_signature(request, petition_id):
         }
         if not form.is_valid():
             return render(request, 'petition/petition_detail.html', ctx)
+        # version of the privacy notice and consent text accepted with this signature
+        form.instance.notice_version = settings.PRIVACY_NOTICE_VERSION
 
         ipaddr = signature_ip_hash(petition, get_client_ip(request))
+
+        # Same response whether or not this address already signed
+        email = form.cleaned_data['email']
+        if petition.already_signed(email):
+            existing = petition.signature_set.filter(email=email, confirmed=True).first()
+            # at most one notification per signature and per throttle window
+            if cache.add("already-signed:{}".format(existing.pk), 1, settings.SIGNATURE_THROTTLE_TIMING):
+                send_already_signed_email(request, existing)
+            messages.success(request,
+                format_html(_("Thank you for signing this petition, an email has just been sent to you at your address \'{}\'" \
+                " in order to confirm your signature.<br>" \
+                "You will need to click on the confirmation link in the email.<br>" \
+                "If you cannot find the email in your Inbox, please have a look in your Spam box.")\
+                , email))
+            return redirect(petition.url)
+
         since = now() - timedelta(seconds=settings.SIGNATURE_THROTTLE_TIMING)
         signatures = Signature.objects.filter(
             petition=petition,
@@ -330,10 +378,86 @@ def create_signature(request, petition_id):
                 "If you cannot find the email in your Inbox, please have a look in your Spam box.")\
                 , signature.email))
 
-        if petition.has_newsletter and signature.subscribed_to_mailinglist:
-            subscribe_to_newsletter(petition, signature.email)
-
     return redirect(petition.url)
+
+
+def _signature_from_manage_token(token):
+    try:
+        data = signing.loads(token, salt=MANAGE_SALT)
+    except signing.BadSignature:
+        raise Http404(_("Signature not found"))
+    try:
+        return Signature.objects.get(pk=data["s"], petition_id=data["p"])
+    except Signature.DoesNotExist:
+        raise Http404(_("Signature not found"))
+
+
+def _private(response):
+    response["Referrer-Policy"] = "no-referrer"
+    response["X-Robots-Tag"] = "noindex"
+    return response
+
+
+# signature/manage/<str:token>
+# Let a signatory view, export or delete their own signature
+# (no accessibility check: these rights also apply to moderated or unpublished petitions)
+@never_cache
+def manage_signature(request, token):
+    signature = _signature_from_manage_token(token)
+    petition = signature.petition
+    if request.method == "POST" and request.POST.get("action") == "delete":
+        signature.delete()
+        return _private(render(request, "petition/signature_deleted.html", {"petition": petition}))
+    return _private(render(request, "petition/manage_signature.html",
+                           {"signature": signature, "petition": petition, "token": token,
+                            "creator_name": petition.owner_name}))
+
+
+# signature/manage/<str:token>/data.json
+# Export the signatory's own data
+@never_cache
+def manage_signature_export(request, token):
+    s = _signature_from_manage_token(token)
+
+    def iso(value):
+        return value.isoformat() if value else None
+
+    data = {"petition": {"title": strip_tags(s.petition.title),
+                         "url": request.build_absolute_uri(s.petition.url)},
+            "first_name": s.first_name, "last_name": s.last_name, "email": s.email,
+            "phone": str(s.phone) if s.phone else "", "date": iso(s.date),
+            "confirmed": s.confirmed, "confirmed_at": iso(s.confirmed_at),
+            "subscribed_to_mailinglist": s.subscribed_to_mailinglist,
+            "newsletter_consent_at": iso(s.newsletter_consent_at),
+            "notice_version": s.notice_version}
+    response = JsonResponse(data, json_dumps_params={"ensure_ascii": False, "indent": 2})
+    response["Content-Disposition"] = 'attachment; filename="signature.json"'
+    return _private(response)
+
+
+# <int:petition_id>/signature/forgot
+# Send a new "manage my signature" link; same answer whether or not the address signed
+def forgot_signature_link(request, petition_id):
+    petition = petition_from_id(petition_id)
+    form = SignatureLinkRequestForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        sig = petition.signature_set.filter(email=form.cleaned_data["email"]).order_by("-confirmed", "-date").first()
+        if sig and cache.add("manage-link:{}".format(sig.pk), 1, settings.SIGNATURE_THROTTLE_TIMING):
+            send_manage_link_email(request, sig)
+        messages.info(request, _("If a signature is associated with this address, an email has just been sent to you."))
+        return redirect("forgot_signature_link", petition.id)
+    return _private(render(request, "petition/forgot_signature_link.html", {"petition": petition, "form": form}))
+
+
+# privacy
+# Full privacy notice for signatories
+def privacy_notice(request):
+    return render(request, "petition/privacy_notice.html", {
+        'version': settings.PRIVACY_NOTICE_VERSION,
+        'unconfirmed_days': settings.UNCONFIRMED_SIGNATURE_RETENTION_DAYS,
+        'ip_days': settings.SIGNATURE_IP_HASH_RETENTION_DAYS,
+        'creator_ip_days': settings.CREATOR_IP_RETENTION_DAYS,
+    })
 
 
 # /org/<slug:orgslugname>/dashboard
@@ -1575,7 +1699,7 @@ def show_signatures(request, petition_id):
         selected_signature_ids = request.POST.getlist('signature_id', '')
         failed = False
         if selected_signature_ids and action:
-            selected_signatures = Signature.objects.filter(pk__in=selected_signature_ids)
+            selected_signatures = Signature.objects.filter(pk__in=selected_signature_ids, petition=petition)
             if action == "delete":
                 for s in selected_signatures:
                     pet = s.petition

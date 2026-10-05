@@ -32,6 +32,7 @@ from django.contrib import messages
 from tinymce.widgets import TinyMCE
 
 from akismet import Akismet
+from .spam_management.detectors.akismet_detector import akismet_kwargs
 from bs4 import BeautifulSoup
 
 from .models import Signature, Petition, Organization, PytitionUser, PetitionTemplate, Permission, SlugModel, ModeratedElement, ModerationReason, Moderation
@@ -54,12 +55,10 @@ def submit_ham(modeladmin, request, queryset):
                 text_msg = soup.get_text(separator = " ")
                 clean_text_msg = ' '.join(text_msg.split())
 
-                akismet.submit_ham(petition.ipaddr, petition.user_agent, 
-                                    comment_type = "blog-post",
-                                    comment_author = petition.user.username,
-                                    comment_author_email = petition.user.user.email,
-                                    comment_content = petition.title + " " + clean_text_msg,
-                                    is_test = 1) #is_test to change in production
+                email = petition.user.user.email if petition.user else None
+                akismet.submit_ham(petition.ipaddr, petition.user_agent,
+                                    **akismet_kwargs(petition.owner_username, email,
+                                                     petition.title + " " + clean_text_msg))
 
                 if petition.moderated:
                     petition.moderate(False)
@@ -83,12 +82,10 @@ def submit_spam(modeladmin, request, queryset):
                 text_msg = soup.get_text(separator = " ")
                 clean_text_msg = ' '.join(text_msg.split())
                 
-                akismet.submit_spam(petition.ipaddr, petition.user_agent, 
-                                    comment_type = "blog-post",
-                                    comment_author = petition.user.username,
-                                    comment_author_email = petition.user.user.email,
-                                    comment_content = petition.title + " " + clean_text_msg,
-                                    is_test = 1) #is_test to change in production
+                email = petition.user.user.email if petition.user else None
+                akismet.submit_spam(petition.ipaddr, petition.user_agent,
+                                    **akismet_kwargs(petition.owner_username, email,
+                                                     petition.title + " " + clean_text_msg))
 
                 petition.moderate(True)
                 moderation_reason = ModerationReason.objects.create(msg="This petition is inappropriate.", visible=True)
@@ -416,12 +413,12 @@ class OrganizationAdmin(admin.ModelAdmin):
 
 @admin.register(Signature)
 class SignatureAdmin(admin.ModelAdmin):
-    list_display = ('first_name', 'last_name', 'phone', 'email', 'confirmed', 'subscribed_to_mailinglist', 'petition', 'date')
+    list_display = ('first_name', 'last_name', 'email', 'confirmed', 'subscribed_to_mailinglist', 'petition', 'date')
     list_filter = ('petition', 'confirmed')
     actions = [confirm, resend_confirmation_mail]
 
     # fields to search threw when searching by keyword in admin panel
-    search_fields = ('first_name', 'last_name', 'phone', 'email')
+    search_fields = ('first_name', 'last_name', 'email')
     change_form_template = 'petition/signature_change_form.html'
 
 

@@ -16,6 +16,7 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.utils.crypto import salted_hmac
 from django.core.mail import get_connection, EmailMultiAlternatives, EmailMessage
+from django.core import signing
 from django.utils.translation import gettext as _
 from django.contrib.auth.models import User
 
@@ -133,11 +134,26 @@ def footer_content_processor(request):
         footer_content = render_to_string(settings.FOOTER_TEMPLATE)
     return {'footer_content': footer_content}
 
+# Signed token giving access to the "manage my signature" page (no database field needed)
+MANAGE_SALT = "petition.signature.manage"
+
+def make_manage_token(signature):
+    return signing.dumps({"s": signature.pk, "p": signature.petition_id}, salt=MANAGE_SALT)
+
+def build_manage_url(request, signature):
+    return request.build_absolute_uri(reverse("manage_signature", args=[make_manage_token(signature)]))
+
 # Send Confirmation email
 def send_confirmation_email(request, signature):
     petition = signature.petition
     url = request.build_absolute_uri(reverse("confirm", args=[petition.id, signature.confirmation_hash]))
-    html_message = render_to_string("petition/confirmation_email.html", {'firstname': signature.first_name, 'url': url})
+    ctx = {'firstname': signature.first_name, 'url': url,
+           'petition_title': strip_tags(petition.title),
+           'petition_url': request.build_absolute_uri(petition.url),
+           'creator_name': petition.owner_name,
+           'manage_url': build_manage_url(request, signature),
+           'days': settings.UNCONFIRMED_SIGNATURE_RETENTION_DAYS}
+    html_message = render_to_string("petition/confirmation_email.html", ctx)
     message = strip_tags(html_message)
     with get_connection() as connection:
         msg = EmailMultiAlternatives(_("Confirm your signature to our petition"),
@@ -145,6 +161,22 @@ def send_confirmation_email(request, signature):
                            reply_to=[petition.confirmation_email_reply])
         msg.attach_alternative(html_message, "text/html")
         msg.send(fail_silently=False)
+
+# Tell an existing signatory that someone tried to sign again with their address
+def send_already_signed_email(request, signature):
+    _send_signature_link_email(request, signature, "petition/already_signed_email.txt")
+
+# Send a new link to the "manage my signature" page
+def send_manage_link_email(request, signature):
+    _send_signature_link_email(request, signature, "petition/manage_link_email.txt")
+
+def _send_signature_link_email(request, signature, template):
+    petition = signature.petition
+    ctx = {'petition_title': strip_tags(petition.title), 'manage_url': build_manage_url(request, signature)}
+    body = render_to_string(template, ctx)
+    with get_connection() as connection:
+        EmailMessage(_("Your signature on the petition"), body, to=[signature.email],
+                     reply_to=[settings.DEFAULT_NOREPLY_MAIL], connection=connection).send(fail_silently=False)
 
 # Send welcome mail on account creation
 def send_welcome_mail(user_infos):

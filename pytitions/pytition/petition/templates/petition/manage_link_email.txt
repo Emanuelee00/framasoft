@@ -1,0 +1,5 @@
+{% load i18n %}{% autoescape off %}{% blocktrans %}Hello, here is the link to view, download or delete your signature on the petition "{{ petition_title }}":{% endblocktrans %}
+{{ manage_url }}
+
+{% trans "Keep this message: this link is personal, do not share it." %}
+{% endautoescape %}

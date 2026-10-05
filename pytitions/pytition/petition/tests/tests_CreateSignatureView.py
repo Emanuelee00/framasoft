@@ -1,6 +1,9 @@
 from unittest import mock
 
-from django.test import TestCase
+from django.core import mail
+from django.core.cache import cache
+from django.conf import settings
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
@@ -24,6 +27,7 @@ class CreateSignatureViewTest(TestCase):
             'email': 'alan@john.org',
             'phone': '0605040302',
             'subscribed_to_mailinglist': False,
+            'consent': 'on',
         }
         petition = Petition.objects.filter(published=True).first()
         response = self.client.post(reverse('create_signature', args=[petition.id]), data, follow=True)
@@ -35,6 +39,7 @@ class CreateSignatureViewTest(TestCase):
         self.assertEqual(signature.first_name, 'Alan')
         self.assertEqual(signature.last_name, 'John')
         self.assertEqual(signature.subscribed_to_mailinglist, False)
+        self.assertEqual(signature.notice_version, settings.PRIVACY_NOTICE_VERSION)
 
     def test_CreateSignaturePOSTNok(self):
         data = {
@@ -101,3 +106,56 @@ class CreateSignatureViewTest(TestCase):
             self.client.post(reverse('create_signature', args=[petition.id]), data)
         petition.refresh_from_db()
         self.assertTrue(petition.moderated)
+
+    def test_CreateSignatureDuplicateSameResponse(self):
+        cache.clear()
+        petition = Petition.objects.filter(published=True).first()
+        Signature.objects.create(first_name='A', last_name='B', email='dup@example.org', petition=petition,
+                                 confirmed=True)
+        mail.outbox = []
+        url = reverse('create_signature', args=[petition.id])
+        base = {'first_name': 'Alan', 'last_name': 'John', 'subscribed_to_mailinglist': False, 'consent': 'on'}
+        r_new = self.client.post(url, dict(base, email='new@example.org'))
+        r_dup = self.client.post(url, dict(base, email='dup@example.org'))
+        self.assertEqual((r_new.status_code, r_new['Location']), (r_dup.status_code, r_dup['Location']))
+        self.assertEqual(Signature.objects.filter(email='dup@example.org').count(), 1)
+        self.assertEqual([m.to for m in mail.outbox], [['new@example.org'], ['dup@example.org']])
+        self.assertIn(petition.title, mail.outbox[1].body)
+        self.assertIn('/signature/manage/', mail.outbox[1].body)
+        self.assertIn('/signature/manage/', mail.outbox[1].body)
+        # a second attempt within the throttle window does not send another email
+        r_dup2 = self.client.post(url, dict(base, email='dup@example.org'), follow=True)
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertNotContains(r_dup2, 'already signed')
+
+    def test_CreateSignatureWithoutConsent(self):
+        data = {
+            'first_name': 'Alan',
+            'last_name': 'John',
+            'email': 'alan@john.org',
+        }
+        petition = Petition.objects.filter(published=True).first()
+        response = self.client.get(petition.url)
+        self.assertContains(response, 'name="consent"')
+        self.assertNotContains(response, 'name="consent" checked')
+        response = self.client.post(reverse('create_signature', args=[petition.id]), data)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'petition/petition_detail.html')
+        self.assertTrue(response.context['form'].has_error('consent'))
+        self.assertEqual(Signature.objects.count(), 0)
+
+    @override_settings(SIGNATURE_COLLECT_PHONE=False)
+    def test_CreateSignatureWithoutPhoneCollection(self):
+        data = {
+            'first_name': 'Alan',
+            'last_name': 'John',
+            'email': 'alan@john.org',
+            'phone': '0605040302',
+            'consent': 'on',
+        }
+        petition = Petition.objects.filter(published=True).first()
+        response = self.client.get(petition.url)
+        self.assertNotContains(response, 'name="phone"')
+        self.client.post(reverse('create_signature', args=[petition.id]), data)
+        signature = Signature.objects.get(email='alan@john.org')
+        self.assertEqual(str(signature.phone), '')

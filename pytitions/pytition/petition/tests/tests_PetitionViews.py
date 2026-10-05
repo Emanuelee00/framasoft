@@ -43,7 +43,8 @@ class PetitionViewTest(TestCase):
             'first_name': 'test first name',
             'last_name': 'test last name',
             'phone': '0123456789',
-            'email': 'toto@toto.com'
+            'email': 'toto@toto.com',
+            'consent': 'on',
         }
         # First, let's sign the petition
         response = self.client.post(reverse("create_signature", args=[petition.id]), data, follow=True)

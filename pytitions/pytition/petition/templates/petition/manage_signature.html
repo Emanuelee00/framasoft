@@ -1,0 +1,52 @@
+{% extends "layouts/layout.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Manage my signature" %}{% endblock %}
+
+{% block extrameta %}
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+{% endblock %}
+
+{% block main_content %}
+<div class="container">
+  <div class="row">
+    <div class="col-lg-8 offset-lg-2">
+      <h1 class="h3 mb-4">{% trans "Your signature" %}</h1>
+
+      <dl class="row">
+        <dt class="col-sm-5">{% trans "Petition" %}</dt>
+        <dd class="col-sm-7">{{ petition.title }}</dd>
+        <dt class="col-sm-5">{% trans "Signed on" %}</dt>
+        <dd class="col-sm-7">{{ signature.date|date:"DATETIME_FORMAT" }}</dd>
+        <dt class="col-sm-5">{% trans "Status" %}</dt>
+        <dd class="col-sm-7">{% if signature.confirmed %}{% trans "confirmed" %}{% else %}{% trans "awaiting confirmation" %}{% endif %}</dd>
+        <dt class="col-sm-5">{% trans "First name" %}</dt>
+        <dd class="col-sm-7">{{ signature.first_name }}</dd>
+        <dt class="col-sm-5">{% trans "Last name" %}</dt>
+        <dd class="col-sm-7">{{ signature.last_name }}</dd>
+        <dt class="col-sm-5">{% trans "Email address" %}</dt>
+        <dd class="col-sm-7">{{ signature.email }}</dd>
+        <dt class="col-sm-5">{% trans "Phone number" %}</dt>
+        <dd class="col-sm-7">{% if signature.phone %}{{ signature.phone }}{% else %}{% trans "not provided" %}{% endif %}</dd>
+        <dt class="col-sm-5">{% trans "Newsletter subscription" %}</dt>
+        <dd class="col-sm-7">{% if signature.subscribed_to_mailinglist %}{% trans "yes" %}{% else %}{% trans "no" %}{% endif %}</dd>
+      </dl>
+
+      <p><a href="{% url 'manage_signature_export' token %}" download>{% trans "Download my data (JSON)" %}</a></p>
+
+      <h2 class="h4 mt-5">{% trans "Delete my signature" %}</h2>
+      <p>{% blocktrans with site_name=settings.SITE_NAME %}Deletion is immediate and permanent: your signature will no longer be counted and your data will be erased from {{ site_name }}.{% endblocktrans %}
+      {% blocktrans %}If {{ creator_name }} has already exported the list of signatories, contact them directly about these copies.{% endblocktrans %}</p>
+      {% if signature.subscribed_to_mailinglist %}
+      <p>{% blocktrans %}You subscribed to the newsletter of {{ creator_name }}: to unsubscribe, use the link in their messages or contact them directly.{% endblocktrans %}</p>
+      {% endif %}
+      <form method="post" action="">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="delete">
+        <button type="submit" class="btn btn-danger">{% trans "Permanently delete my signature" %}</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

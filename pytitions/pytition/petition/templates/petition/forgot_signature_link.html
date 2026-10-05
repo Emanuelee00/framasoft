@@ -1,0 +1,32 @@
+{% extends "layouts/layout.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Lost link?" %}{% endblock %}
+
+{% block extrameta %}
+<meta name="robots" content="noindex">
+{% endblock %}
+
+{% block main_content %}
+<div class="container">
+  <div class="row">
+    <div class="col-lg-8 offset-lg-2">
+      <h1 class="h3 mb-4">{% trans "Lost link?" %}</h1>
+      <p>{% blocktrans with title=petition.title %}Petition: "{{ title }}"{% endblocktrans %}</p>
+      {% for message in messages %}
+      <div class="alert alert-info" role="status">{{ message }}</div>
+      {% endfor %}
+      <p>{% trans "Enter your email address: if a matching signature exists, you will receive a new link to view or delete it." %}</p>
+      <form method="post" action="">
+        {% csrf_token %}
+        <div class="form-group">
+          <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+          <input type="email" name="{{ form.email.html_name }}" id="{{ form.email.id_for_label }}" class="form-control{% if form.email.errors %} is-invalid{% endif %}" required autocomplete="email"{% if form.email.errors %} aria-describedby="{{ form.email.id_for_label }}-error"{% endif %} value="{{ form.email.value|default_if_none:'' }}">
+          {% if form.email.errors %}<div class="invalid-feedback" id="{{ form.email.id_for_label }}-error">{{ form.email.errors|join:" " }}</div>{% endif %}
+        </div>
+        <button type="submit" class="btn btn-primary">{% trans "Send me a new link" %}</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

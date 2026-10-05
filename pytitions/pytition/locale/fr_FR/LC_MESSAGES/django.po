@@ -3575,6 +3575,214 @@ msgstr "Italien"
 msgid "Occitan"
 msgstr "Occitan"
 
+#: pytition/petition/helpers.py:122
+msgid "Your signature on the petition"
+msgstr "Votre signature sur la pétition"
+
+#: pytition/petition/templates/petition/already_signed_email.txt:1
+#, python-format
+msgid "Hello, someone (maybe you) tried to sign the petition \"%(petition_title)s\" again with this address. Your existing signature is still valid and has not been changed."
+msgstr "Bonjour, quelqu'un (peut-être vous) a tenté de signer à nouveau la pétition « %(petition_title)s » avec cette adresse. Votre signature existante reste valable et n'a pas été modifiée."
+
+#: pytition/petition/templates/petition/already_signed_email.txt:3
+msgid "To view or delete it:"
+msgstr "Pour la consulter ou la supprimer :"
+
+#: pytition/petition/views.py
+msgid "Signature not found"
+msgstr "Signature introuvable"
+
+#: pytition/petition/views.py
+msgid "If a signature is associated with this address, an email has just been sent to you."
+msgstr "Si une signature est associée à cette adresse, un e-mail vient de vous être envoyé."
+
+#: pytition/petition/templates/petition/manage_signature.html:4
+msgid "Manage my signature"
+msgstr "Gérer ma signature"
+
+#: pytition/petition/templates/petition/manage_signature.html:15
+msgid "Your signature"
+msgstr "Votre signature"
+
+#: pytition/petition/templates/petition/manage_signature.html:20
+msgid "Signed on"
+msgstr "Signée le"
+
+#: pytition/petition/templates/petition/manage_signature.html:23
+msgid "confirmed"
+msgstr "confirmée"
+
+#: pytition/petition/templates/petition/manage_signature.html:23
+msgid "awaiting confirmation"
+msgstr "en attente de confirmation"
+
+#: pytition/petition/templates/petition/manage_signature.html:31
+msgid "not provided"
+msgstr "non renseigné"
+
+#: pytition/petition/templates/petition/manage_signature.html:32
+msgid "Newsletter subscription"
+msgstr "Inscription à la lettre d'information"
+
+#: pytition/petition/templates/petition/manage_signature.html:33
+msgid "yes"
+msgstr "oui"
+
+#: pytition/petition/templates/petition/manage_signature.html:33
+msgid "no"
+msgstr "non"
+
+#: pytition/petition/templates/petition/manage_signature.html:36
+msgid "Download my data (JSON)"
+msgstr "Télécharger mes données (JSON)"
+
+#: pytition/petition/templates/petition/manage_signature.html:38
+msgid "Delete my signature"
+msgstr "Supprimer ma signature"
+
+#: pytition/petition/templates/petition/manage_signature.html:39
+#, python-format
+msgid "Deletion is immediate and permanent: your signature will no longer be counted and your data will be erased from %(site_name)s."
+msgstr "La suppression est immédiate et définitive : votre signature ne sera plus comptée et vos données seront effacées de %(site_name)s."
+
+#: pytition/petition/templates/petition/manage_signature.html:40
+#, python-format
+msgid "If %(creator_name)s has already exported the list of signatories, contact them directly about these copies."
+msgstr "Si %(creator_name)s a déjà exporté la liste des signataires, adressez-vous directement à lui ou à elle pour ces copies."
+
+#: pytition/petition/templates/petition/manage_signature.html:42
+#, python-format
+msgid "You subscribed to the newsletter of %(creator_name)s: to unsubscribe, use the link in their messages or contact them directly."
+msgstr "Vous êtes inscrit·e à la lettre d'information de %(creator_name)s : pour vous désinscrire, utilisez le lien présent dans ses messages ou adressez-vous directement à lui ou à elle."
+
+#: pytition/petition/templates/petition/manage_signature.html:47
+msgid "Permanently delete my signature"
+msgstr "Supprimer définitivement ma signature"
+
+#: pytition/petition/templates/petition/signature_deleted.html:4
+msgid "Signature deleted"
+msgstr "Signature supprimée"
+
+#: pytition/petition/templates/petition/signature_deleted.html:15
+#, python-format
+msgid "Your signature has been deleted. Thank you for using %(site_name)s."
+msgstr "Votre signature a bien été supprimée. Merci d'avoir utilisé %(site_name)s."
+
+#: pytition/petition/templates/petition/forgot_signature_link.html:4
+msgid "Lost link?"
+msgstr "Lien perdu ?"
+
+#: pytition/petition/templates/petition/forgot_signature_link.html:15
+#, python-format
+msgid "Petition: \"%(title)s\""
+msgstr "Pétition : « %(title)s »"
+
+#: pytition/petition/templates/petition/forgot_signature_link.html:19
+msgid "Enter your email address: if a matching signature exists, you will receive a new link to view or delete it."
+msgstr "Saisissez votre adresse e-mail : si une signature correspondante existe, vous recevrez un nouveau lien pour la consulter ou la supprimer."
+
+#: pytition/petition/templates/petition/forgot_signature_link.html:27
+msgid "Send me a new link"
+msgstr "M'envoyer un nouveau lien"
+
+#: pytition/petition/templates/petition/manage_link_email.txt:1
+#, python-format
+msgid "Hello, here is the link to view, download or delete your signature on the petition \"%(petition_title)s\":"
+msgstr "Bonjour, voici le lien pour consulter, télécharger ou supprimer votre signature sur la pétition « %(petition_title)s » :"
+
+#: pytition/petition/templates/petition/manage_link_email.txt:4
+msgid "Keep this message: this link is personal, do not share it."
+msgstr "Conservez ce message : ce lien est personnel, ne le partagez pas."
+
+#: pytition/petition/forms.py:59
+#, python-brace-format
+msgid "By ticking this box, your email address will be sent to {creator} so that you receive their news, once your signature is confirmed. {site} does not manage this list: to unsubscribe, use the link in their messages."
+msgstr "En cochant cette case, votre adresse e-mail sera transmise à {creator} pour recevoir ses informations, une fois votre signature confirmée. {site} ne gère pas cette liste : pour vous désinscrire, utilisez le lien présent dans ses messages."
+
+#: pytition/petition/forms.py:59
+#, python-brace-format
+msgid "I agree that my data will be used to count my signature and send it to {creator}, knowing that it may reveal my opinions. I can withdraw my signature at any time."
+msgstr "J'accepte que mes données soient utilisées pour comptabiliser et transmettre ma signature à {creator}, en sachant qu'elle peut révéler mes opinions. Je peux retirer ma signature à tout moment."
+
+#: pytition/petition/templates/petition/privacy_notice.html:4
+msgid "Privacy notice"
+msgstr "Politique de confidentialité"
+
+#: pytition/petition/templates/petition/privacy_notice.html:11
+#, python-format
+msgid "Version %(version)s"
+msgstr "Version %(version)s"
+
+#: pytition/petition/templates/petition/privacy_notice.html:13
+msgid "Who processes your data"
+msgstr "Qui traite vos données"
+
+#: pytition/petition/templates/petition/privacy_notice.html:14
+#, python-format
+msgid "When you sign a petition, your data is sent to its author, who decides why it is collected. %(site_name)s hosts the petitions and processes your data to count signatures, prevent abuse and let you manage your signature."
+msgstr "Lorsque vous signez une pétition, vos données sont transmises à son auteur·ice, qui décide pourquoi elles sont collectées. %(site_name)s héberge les pétitions et traite vos données pour comptabiliser les signatures, lutter contre les abus et vous permettre de gérer votre signature."
+
+#: pytition/petition/templates/petition/privacy_notice.html:16
+msgid "What data is collected"
+msgstr "Quelles données sont collectées"
+
+#: pytition/petition/templates/petition/privacy_notice.html:17
+msgid "Your first name, last name and email address, your phone number if you provide it, whether you subscribed to the author's newsletter, the date of your signature and of its confirmation, and the version of this notice you accepted. To prevent abuse, an encrypted fingerprint of your IP address is also kept."
+msgstr "Vos prénom, nom et adresse e-mail, votre téléphone si vous le donnez, votre éventuelle inscription à la lettre d'information de l'auteur·ice, la date de votre signature et de sa confirmation, et la version de cette politique que vous avez acceptée. Pour lutter contre les abus, une empreinte chiffrée de votre adresse IP est aussi conservée."
+
+#: pytition/petition/templates/petition/privacy_notice.html:19
+msgid "Why this data is sensitive"
+msgstr "Pourquoi ces données sont sensibles"
+
+#: pytition/petition/templates/petition/privacy_notice.html:20
+msgid "Signing a petition may reveal your political, religious or philosophical opinions or your trade union membership. This is why your explicit consent is required to sign, why the list of signatories is never published (only their number is), and why subscribing to the author's newsletter is a separate, optional choice, effective only once your signature is confirmed."
+msgstr "Signer une pétition peut révéler vos opinions politiques, religieuses ou philosophiques ou votre appartenance syndicale. C'est pourquoi votre consentement explicite est demandé pour signer, que la liste des signataires n'est jamais publiée (seul leur nombre l'est), et que l'inscription à la lettre d'information de l'auteur·ice est un choix séparé et facultatif, effectif seulement une fois votre signature confirmée."
+
+#: pytition/petition/templates/petition/privacy_notice.html:22
+msgid "How long it is kept"
+msgstr "Combien de temps elles sont conservées"
+
+#: pytition/petition/templates/petition/privacy_notice.html:24
+#, python-format
+msgid "Unconfirmed signatures are deleted after %(days)s day."
+msgid_plural "Unconfirmed signatures are deleted after %(days)s days."
+msgstr[0] "Les signatures non confirmées sont supprimées au bout de %(days)s jour."
+msgstr[1] "Les signatures non confirmées sont supprimées au bout de %(days)s jours."
+
+#: pytition/petition/templates/petition/privacy_notice.html:25
+#, python-format
+msgid "The fingerprint of your IP address is erased after %(days)s day."
+msgid_plural "The fingerprint of your IP address is erased after %(days)s days."
+msgstr[0] "L'empreinte de votre adresse IP est effacée au bout de %(days)s jour."
+msgstr[1] "L'empreinte de votre adresse IP est effacée au bout de %(days)s jours."
+
+#: pytition/petition/templates/petition/privacy_notice.html:26
+#, python-format
+msgid "The IP address and browser of petition authors are erased after %(days)s day."
+msgid_plural "The IP address and browser of petition authors are erased after %(days)s days."
+msgstr[0] "L'adresse IP et le navigateur des auteur·ices de pétitions sont effacés au bout de %(days)s jour."
+msgstr[1] "L'adresse IP et le navigateur des auteur·ices de pétitions sont effacés au bout de %(days)s jours."
+
+#: pytition/petition/templates/petition/privacy_notice.html:27
+msgid "Confirmed signatures are kept as long as the petition exists, unless you delete yours."
+msgstr "Les signatures confirmées sont conservées tant que la pétition existe, sauf si vous supprimez la vôtre."
+
+#: pytition/petition/templates/petition/privacy_notice.html:30
+msgid "Your rights"
+msgstr "Vos droits"
+
+#: pytition/petition/templates/petition/privacy_notice.html:31
+msgid "You can view, download or delete your signature at any time with the personal link included in the confirmation email. If you lost it, you can ask for a new one from the petition page. Deleting your signature also withdraws your consent."
+msgstr "Vous pouvez consulter, télécharger ou supprimer votre signature à tout moment grâce au lien personnel présent dans l'e-mail de confirmation. Si vous l'avez perdu, vous pouvez en demander un nouveau depuis la page de la pétition. Supprimer votre signature retire aussi votre consentement."
+
+#: pytition/petition/templates/petition/privacy_notice.html:32
+msgid "If the author has already exported the list of signatories or added you to their newsletter, contact them directly about these copies."
+msgstr "Si l'auteur·ice a déjà exporté la liste des signataires ou vous a inscrit·e à sa lettre d'information, adressez-vous directement à lui ou à elle pour ces copies."
+
+#: pytition/petition/templates/petition/privacy_notice.html:33
+msgid "You can also lodge a complaint with the French data protection authority, the CNIL (<a href=\"https://www.cnil.fr/\">www.cnil.fr</a>)."
+msgstr "Vous pouvez aussi introduire une réclamation auprès de la CNIL (<a href=\"https://www.cnil.fr/\">www.cnil.fr</a>)."
+
 #, fuzzy
 #~| msgid "This petition is moderated"
 #~ msgid "This user moderated: "

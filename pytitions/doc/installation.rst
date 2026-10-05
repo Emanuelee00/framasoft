@@ -328,7 +328,7 @@ Next time, just run ``$ docker-compose up --build``
 Cron commands
 =====================================================
 
-In both installation methods, you need to call three commands with cron: two for spam management and one for the expiration of bins.
+In both installation methods, you need to call four commands with cron: two for spam management, one for the expiration of bins and one for data retention.
 
 The first one filters the petitions that need to have their signature numbers checked periodically and calls anti-spam functions on them.
 
@@ -342,9 +342,18 @@ The second one removes permissions from moderated users in their organizations.
 
   $ python3 pytition/manage.py cron_permissions
 
-The last one deletes petitions permanently after 3 months in the bin.
+The third one deletes petitions permanently after 3 months in the bin.
 
 .. code-block:: bash
 
   $ python3 pytition/manage.py cron_delete_bin
+
+A fourth one (daily) deletes or blanks personal data past its retention period: unconfirmed signatures,
+signature IP hashes and the IP address/user agent of petition creators. Retention periods are set by
+``UNCONFIRMED_SIGNATURE_RETENTION_DAYS``, ``SIGNATURE_IP_HASH_RETENTION_DAYS`` and ``CREATOR_IP_RETENTION_DAYS``.
+Use ``--dry-run`` to only print the counters.
+
+.. code-block:: bash
+
+  $ python3 pytition/manage.py purge_personal_data
 

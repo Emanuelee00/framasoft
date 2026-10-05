@@ -1,7 +1,10 @@
 import logging
+from datetime import timedelta
+from io import StringIO
 from django.test import TestCase
 from django.core.management import call_command
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 from petition.models import Organization, Permission, Petition, Signature
 
@@ -88,3 +91,37 @@ class CommandTestCase(TestCase):
         call_command('cron')
         pet.refresh_from_db()
         self.assertFalse(pet.cron_to_schedule)
+    def test_purge_personal_data_command(self):
+        user = User.objects.create_user(username="user", password="pass")
+        old_pet = Petition.objects.create(title="Old", user=user.pytitionuser, ipaddr="1.2.3.4", user_agent="UA")
+        new_pet = Petition.objects.create(title="New", user=user.pytitionuser, ipaddr="5.6.7.8", user_agent="UA")
+        Petition.objects.filter(pk=old_pet.pk).update(creation_date=timezone.now() - timedelta(days=31))
+        s_old = Signature.objects.create(first_name="A", last_name="B", email="a@b.org", petition=new_pet)
+        s_new = Signature.objects.create(first_name="C", last_name="D", email="c@d.org", petition=new_pet)
+        s_conf = Signature.objects.create(first_name="E", last_name="F", email="e@f.org", petition=new_pet,
+                                          confirmed=True, ipaddress="x")
+        s_conf_new = Signature.objects.create(first_name="G", last_name="H", email="g@h.org", petition=new_pet,
+                                              confirmed=True, ipaddress="y")
+        Signature.objects.filter(pk__in=[s_old.pk, s_conf.pk]).update(date=timezone.now() - timedelta(days=8))
+
+        out = StringIO()
+        call_command('purge_personal_data', '--dry-run', stdout=out)
+        self.assertIn("unconfirmed_signatures=1 signature_ip_hashes=1 creator_ip_ua=1 (dry-run)", out.getvalue())
+        self.assertEqual(Signature.objects.count(), 4)
+        self.assertEqual(Signature.objects.get(pk=s_conf.pk).ipaddress, "x")
+
+        call_command('purge_personal_data', stdout=StringIO())
+        self.assertFalse(Signature.objects.filter(pk=s_old.pk).exists())
+        self.assertTrue(Signature.objects.filter(pk=s_new.pk).exists())
+        self.assertIsNone(Signature.objects.get(pk=s_conf.pk).ipaddress)
+        self.assertTrue(Signature.objects.get(pk=s_conf.pk).confirmed)
+        self.assertEqual(Signature.objects.get(pk=s_conf_new.pk).ipaddress, "y")
+        old_pet.refresh_from_db()
+        new_pet.refresh_from_db()
+        self.assertIsNone(old_pet.ipaddr)
+        self.assertIsNone(old_pet.user_agent)
+        self.assertEqual(new_pet.ipaddr, "5.6.7.8")
+
+        out = StringIO()
+        call_command('purge_personal_data', stdout=out)  # idempotent
+        self.assertIn("unconfirmed_signatures=0 signature_ip_hashes=0 creator_ip_ua=0", out.getvalue())

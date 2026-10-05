@@ -619,14 +619,6 @@ class Signature(models.Model):
             models.Index(fields=["petition", "ipaddress", "date"], name="sig_pet_ip_date_idx"),
         ]
 
-    def clean(self):
-        if self.petition.already_signed(self.email):
-            if self.petition.signature_set.filter(email = self.email).get(confirmed = True).id != self.id:
-                ModerationReason.msg = "Too many signatures from this email adress."
-                moderation_email = "admin@test.fr"
-                send_mail_to_moderation(moderation_email, self.first_name, ModerationReason.msg, "user")
-                raise ValidationError(_("You already signed the petition"))
-
     def save(self, *args, **kwargs):
         self.clean()
         if not self.confirmation_hash:
@@ -638,6 +630,8 @@ class Signature(models.Model):
         super().save(*args, **kwargs)
 
     def confirm(self):
+        if not self.confirmed:
+            self.confirmed_at = timezone.now()
         self.confirmed = True
 
     def __str__(self):

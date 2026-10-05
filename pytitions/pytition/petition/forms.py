@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/5.1/topics/forms/modelforms/
 
 from django.forms import ModelForm, ValidationError
 from django import forms
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.forms import UserCreationForm, UsernameField
 from django.contrib.auth import get_user_model
@@ -31,6 +32,12 @@ class SignatureForm(ModelForm):
                                     ),
                                     label_suffix="",
                                     required=False)
+    consent = forms.BooleanField(
+                                    widget=forms.CheckboxInput(
+                                        attrs={'class': 'form-check-input', 'group_class': 'form-check'}
+                                    ),
+                                    label_suffix="",
+                                    required=True)
     class Meta:
         model = Signature
         fields = ['first_name', 'last_name', 'phone', 'email', 'subscribed_to_mailinglist']
@@ -50,10 +57,23 @@ class SignatureForm(ModelForm):
     def __init__(self, petition=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.instance.petition = petition
+        self.fields['consent'].label = _(
+            "I agree that my data will be used to count my signature and send it to {creator}, knowing that "
+            "it may reveal my opinions. I can withdraw my signature at any time.").format(creator=petition.owner_name)
+        if not getattr(settings, 'SIGNATURE_COLLECT_PHONE', True):
+            del self.fields['phone']
         if not petition.has_newsletter:
             del self.fields['subscribed_to_mailinglist']
         else:
             self.fields['subscribed_to_mailinglist'].label = self.instance.petition.newsletter_text
+            self.fields['subscribed_to_mailinglist'].help_text = _(
+                "By ticking this box, your email address will be sent to {creator} so that you receive their news, "
+                "once your signature is confirmed. {site} does not manage this list: to unsubscribe, use the link "
+                "in their messages.").format(creator=petition.owner_name, site=settings.SITE_NAME)
+
+class SignatureLinkRequestForm(forms.Form):
+    email = forms.EmailField(label=_("Email address"))
+
 
 class PetitionCreationStep1(forms.Form):
     ### Ask for title ###

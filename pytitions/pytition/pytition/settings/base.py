@@ -300,7 +300,7 @@ SIGNATURES_TOTAL_STRONG = 100000 # if a user or an organization has more than 10
 SIGNATURES_TOTAL_AVERAGE = 10000 # if a user or an organization has more than 10000 signatures in all their petitions, they are monitored with an average priority.
 SIGNATURES_TOTAL_LOW = 1000 # if a user or an organization has more than 1000 signatures in all their petitions, they are monitored with a low priority.
 
-MODERATION_EMAIL = "admin@test.fr" # moderation email
+MODERATION_EMAIL = os.environ.get("ADMIN_MODERATION_EMAIL", "root@localhost") # moderation email (framapetitions: GD-02)
 
 REASONS = {
     "owner_petition_number": gettext_lazy("This owner has created too many petitions in one day."),
@@ -388,6 +388,26 @@ SIGNATURE_COUNT_CACHE_TTL = 30
 
 # --- framapetitions: gdpr ---
 # (settings di questo filone)
+# framapetitions: GD-04 — retention in days for purge_personal_data (to be confirmed by Framasoft)
+UNCONFIRMED_SIGNATURE_RETENTION_DAYS = 7
+SIGNATURE_IP_HASH_RETENTION_DAYS = 7  # must stay longer than SIGNATURE_THROTTLE_TIMING (1 day)
+CREATOR_IP_RETENTION_DAYS = 30
+# framapetitions: GD-03 — to be bumped whenever the privacy notice or the consent text changes
+PRIVACY_NOTICE_VERSION = "2026-10"
+# framapetitions: GD-10 — collect the (optional) phone number of signatories.
+# Kept enabled until Framasoft decides; False is recommended (data minimisation, GDPR art. 5.1.c / 25.2).
+SIGNATURE_COLLECT_PHONE = True
+# framapetitions: GD-09 — Akismet (only used when AKISMET_KEY is set). Current behaviour kept until Framasoft decides;
+# recommended: AKISMET_SEND_EMAIL = False (the creator's email is optional for Akismet), AKISMET_IS_TEST = False in production.
+AKISMET_IS_TEST = True
+AKISMET_SEND_EMAIL = True
+# framapetitions: GD-08 — audit log of signature exports (IDs and counters only, no personal data)
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "loggers": {"petition.audit": {"handlers": ["console"], "level": "INFO", "propagate": False}},
+}
 
 
 
