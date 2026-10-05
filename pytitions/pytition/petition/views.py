@@ -31,7 +31,6 @@ from django.utils.html import format_html
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.db import transaction, IntegrityError
-from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import PasswordChangeForm
 from django.urls import reverse
@@ -39,6 +38,7 @@ from django.utils.decorators import method_decorator
 from django.utils.timezone import now
 from django.core.files.storage import FileSystemStorage
 from django.core.paginator import Paginator
+from django.core.cache import cache
 from django.views.generic.edit import CreateView
 
 from formtools.wizard.views import SessionWizardView
@@ -48,7 +48,7 @@ from .models import SlugModel, ModerationReason, Moderation, MonitoringReason, M
 from .forms import SignatureForm, ContentFormPetition, EmailForm, NewsletterForm, SocialNetworkForm, ContentFormTemplate
 from .forms import StyleForm, PetitionCreationStep1, PetitionCreationStep2, PetitionCreationStep3, UpdateInfoForm
 from .forms import DeleteAccountForm, OrgCreationForm
-from .helpers import get_client_ip, get_session_user, petition_from_id
+from .helpers import get_client_ip, get_session_user, petition_from_id, signature_ip_hash
 from .helpers import check_petition_is_accessible
 from .helpers import send_confirmation_email, subscribe_to_newsletter, send_welcome_mail, send_moderation_mail, send_mail_to_moderation, send_mail_to_moderation_monitor, send_monitoring_mail, send_mail_to_moderation_info
 from .helpers import get_update_form, petition_detail_meta
@@ -148,8 +148,8 @@ def search(request):
     q = request.GET.get('q', '')
     if q != "":
         petitions = Petition.objects.filter(Q(title__icontains=q) | Q(text__icontains=q)).filter(published=True,
-                                                                                                 moderated=False)[:15]
-        petitions = remove_user_moderated(petitions)
+                                                                                                 moderated=False)
+        petitions = remove_user_moderated(petitions)[:15]
         orgs = Organization.objects.filter(name__icontains=q)
     else:
         petitions = Petition.objects.filter(published=True, moderated=False).order_by('-id')
@@ -286,36 +286,40 @@ def create_signature(request, petition_id):
         if not form.is_valid():
             return render(request, 'petition/petition_detail.html', ctx)
 
-        ipaddr = make_password(
-                get_client_ip(request),
-                salt=petition.salt.encode('utf-8'))
+        ipaddr = signature_ip_hash(petition, get_client_ip(request))
         since = now() - timedelta(seconds=settings.SIGNATURE_THROTTLE_TIMING)
         signatures = Signature.objects.filter(
             petition=petition,
             ipaddress=ipaddr,
             date__gt=since)
             
-        # If there are too many signatures from the same IP address, an error message and an email to moderation are sent
+        # If there are too many signatures from the same IP address, the signature is refused (429)
+        # and the moderation is informed once per petition and address during the throttle period
         if signatures.count() > settings.SIGNATURE_THROTTLE:
-            signature = form.save()
+            if cache.add("signature-throttle:{}:{}".format(petition.pk, ipaddr), True, settings.SIGNATURE_THROTTLE_TIMING):
+                send_mail_to_moderation_info(settings.MODERATION_EMAIL,
+                    _("Too many signatures from the same IP address on the petition \"{title}\" (id {id}): further signatures from this address are refused.")\
+                    .format(title=petition.title, id=petition.pk))
             messages.error(request, _("Too many signatures from your IP address, please try again later."))
-            ModerationReason.msg = "Too many signatures from this IP adress."
-            send_mail_to_moderation(settings.MODERATION_EMAIL, signature.first_name, ModerationReason.msg, "user")
-            return render(request, 'petition/petition_detail.html', ctx)
+            response = render(request, 'petition/petition_detail.html', ctx, status=429)
+            response['Retry-After'] = str(settings.SIGNATURE_THROTTLE_TIMING)
+            return response
         else:
             # The owner chose to check the number of signatures at each signature. If the petition is moderated, redirect to index
+            # cron_to_schedule is updated alone: saving the whole petition here would rewrite
+            # all its fields (and last_modification_date) at each signature
             if petition.check_signatures_at_each_signature:
                 if petition.cron_to_schedule:
+                    Petition.objects.filter(pk=petition.pk, cron_to_schedule=True).update(cron_to_schedule=False)
                     petition.cron_to_schedule = False
-                    petition.save()
                 if check_signature_number(petition) or check_signature_variation(petition, "yesterday") or check_signature_variation(petition, "last week") or check_unconfirmed_signatures(petition) or check_creation_signatures(petition):
                     return redirect("index")
 
-            else:
+            elif not petition.cron_to_schedule:
+                Petition.objects.filter(pk=petition.pk, cron_to_schedule=False).update(cron_to_schedule=True)
                 petition.cron_to_schedule = True
-                petition.save()
 
-            signature = form.save()
+            signature = form.save(commit=False)
             signature.ipaddress = ipaddr
             signature.save()
             send_confirmation_email(request, signature)

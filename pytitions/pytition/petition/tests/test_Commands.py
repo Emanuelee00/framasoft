@@ -80,3 +80,11 @@ class CommandTestCase(TestCase):
 
         call_command('gen_sig', pet.id, '--number', '8')
         self.assertEqual(Signature.objects.count(), 10)
+
+    def test_cron_command_unschedules_checked_petitions(self):
+        user = User.objects.create_user(username="user", password="pass")
+        pet = Petition.objects.create(title="Test", user=user.pytitionuser, published=True,
+                                      cron_to_schedule=True)
+        call_command('cron')
+        pet.refresh_from_db()
+        self.assertFalse(pet.cron_to_schedule)

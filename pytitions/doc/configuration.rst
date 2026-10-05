@@ -24,6 +24,7 @@ Pytition specific settings
 .. autodata:: pytition.settings.base.USE_MAIL_QUEUE
 .. autodata:: pytition.settings.base.ALLOW_REGISTER
 .. autodata:: pytition.settings.base.DEFAULT_NOREPLY_MAIL
+.. autodata:: pytition.settings.base.PYTITION_TRUSTED_PROXY_COUNT
 
 Django settings
 ---------------

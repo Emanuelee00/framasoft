@@ -360,3 +360,41 @@ MAINTENANCE_MODE_STATE_FILE_PATH = os.path.join(BASE_DIR, 'maintenance_mode_stat
 # The +33 prefix for France is therefore optional, but it might be mandatory to add a prefix for 
 # other countries. This does not change anything for translations.
 PHONENUMBER_DEFAULT_REGION = "FR"
+
+
+# --- framapetitions: scalability ---
+# (settings di questo filone)
+# framapetitions: BE-02
+#:| Number of trusted reverse proxies in front of Pytition that append the client address
+#:| to the ``X-Forwarded-For`` header.
+#:| With ``0`` (default) the header is ignored and ``REMOTE_ADDR`` is used, which is the right
+#:| value when nginx talks to uwsgi directly (``uwsgi_pass``). Set it to ``1`` if a single proxy
+#:| sets ``X-Forwarded-For`` (e.g. nginx with ``proxy_pass``), ``2`` if there is also a CDN, etc.
+PYTITION_TRUSTED_PROXY_COUNT = 0
+# framapetitions: BE-01
+#:| Secret key used to pseudonymise the IP address of signers (HMAC-SHA256, used by the
+#:| per-IP signature throttle). Read from the ``SIGNATURE_IP_HMAC_KEY`` environment variable;
+#:| when empty, ``SECRET_KEY`` is used. Never store it in the database.
+#:| Changing it only resets the throttle counters (at most ``SIGNATURE_THROTTLE_TIMING``).
+SIGNATURE_IP_HMAC_KEY = os.environ.get("SIGNATURE_IP_HMAC_KEY", "")
+# framapetitions: BE-07
+#:| Number of seconds during which the number of signatures displayed on petition pages
+#:| and lists is cached. ``0`` disables the cache (exact number, one COUNT per display).
+SIGNATURE_COUNT_CACHE_TTL = 30
+
+
+
+
+
+# --- framapetitions: gdpr ---
+# (settings di questo filone)
+
+
+
+
+
+# --- framapetitions: ux ---
+# (settings di questo filone)
+
+
+

@@ -16,6 +16,7 @@ from django.core.exceptions import ValidationError
 from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
 from django.conf import settings
+from django.core.cache import cache
 from django.contrib.auth.hashers import get_hasher
 from django.db import transaction
 from django.urls import reverse
@@ -496,9 +497,19 @@ class Petition(models.Model):
         else:
             return self.user
 
+    # Number of confirmed signatures for display: cached for SIGNATURE_COUNT_CACHE_TTL seconds
+    # (a COUNT on a big petition is costly and is done on each view of the petition and of each list)
     @property
     def signature_number(self):
-        return self.get_signature_number(True)
+        ttl = settings.SIGNATURE_COUNT_CACHE_TTL
+        if ttl <= 0:
+            return self.get_signature_number(True)
+        key = "petition-signature-number:{}".format(self.pk)
+        number = cache.get(key)
+        if number is None:
+            number = self.get_signature_number(True)
+            cache.set(key, number, ttl)
+        return number
 
     @property
     def raw_twitter_description(self):
@@ -594,7 +605,19 @@ class Signature(models.Model):
     petition = models.ForeignKey(Petition, on_delete=models.CASCADE, verbose_name=gettext_lazy("Petition"))
     subscribed_to_mailinglist = models.BooleanField(default=False, verbose_name=gettext_lazy("Subscribed to mailing list"))
     date = models.DateTimeField(blank=True, auto_now_add=True, verbose_name=gettext_lazy("Date"))
-    ipaddress = models.TextField(blank=True, null=True)
+    ipaddress = models.CharField(max_length=128, blank=True, null=True)
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    newsletter_consent_at = models.DateTimeField(null=True, blank=True)
+    notice_version = models.CharField(max_length=16, null=True, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["confirmation_hash"], name="sig_conf_hash_idx"),
+            models.Index(fields=["petition", "confirmed", "email"], name="sig_pet_conf_email_idx"),
+            models.Index(fields=["petition", "date"], name="sig_pet_date_idx"),
+            models.Index(fields=["confirmed", "date"], name="sig_conf_date_idx"),
+            models.Index(fields=["petition", "ipaddress", "date"], name="sig_pet_ip_date_idx"),
+        ]
 
     def clean(self):
         if self.petition.already_signed(self.email):

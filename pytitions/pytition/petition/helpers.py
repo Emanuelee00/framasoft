@@ -4,6 +4,8 @@
 It defines actions to help the developper across the project.
 """
 
+import ipaddress
+import logging
 import requests
 import lxml
 from lxml.html.clean import Cleaner
@@ -12,14 +14,22 @@ from django.conf import settings
 from django.urls import reverse
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
+from django.utils.crypto import salted_hmac
 from django.core.mail import get_connection, EmailMultiAlternatives, EmailMessage
 from django.utils.translation import gettext as _
 from django.contrib.auth.models import User
 
-# Remove all moderated instances of Petition
+logger = logging.getLogger(__name__)
+
+# Timeouts (in seconds) of the calls made to the newsletter of a petition during a signature
+NEWSLETTER_HTTP_TIMEOUT = 5
+NEWSLETTER_SMTP_TIMEOUT = 10
+
+# Remove the petitions whose owner is moderated (petitions is a queryset, filtered in SQL).
+# Owners and slugs are loaded with the petitions, as lists display them.
 def remove_user_moderated(petitions):
-    petitions = [p for p in petitions if not p.is_moderated]
-    return petitions
+    return petitions.exclude(org__moderated=True).exclude(user__moderated=True)\
+        .select_related('org', 'user__user').prefetch_related('slugmodel_set')
 
 # Remove all javascripts from HTML code
 def sanitize_html(unsecure_html_content):
@@ -38,14 +48,36 @@ def sanitize_html(unsecure_html_content):
         secure_html_content = b''
     return secure_html_content.decode()
 
-# Get the client IP address, considering proxies and RP
+# Get the client IP address, considering only the trusted reverse proxies
+# (settings.PYTITION_TRUSTED_PROXY_COUNT): each of them appends to X-Forwarded-For,
+# so the client address is the n-th element starting from the right.
 def get_client_ip(request):
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0]
-    else:
-        ip = request.META.get('REMOTE_ADDR')
-    return ip
+    trusted_proxies = getattr(settings, 'PYTITION_TRUSTED_PROXY_COUNT', 0)
+    if trusted_proxies > 0:
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR', '')
+        chain = [ip.strip() for ip in x_forwarded_for.split(',') if ip.strip()]
+        if len(chain) >= trusted_proxies:
+            return chain[-trusted_proxies]
+    return request.META.get('REMOTE_ADDR')
+
+# Normalize an IP address for hashing: IPv6 addresses are reduced to their /64 network
+# (a single host usually owns a whole /64), IPv4 addresses are kept. Invalid value -> ''
+def normalize_ip(ip):
+    try:
+        addr = ipaddress.ip_address((ip or '').strip())
+    except ValueError:
+        return ''
+    if addr.version == 6:
+        return str(ipaddress.ip_network('{}/64'.format(addr), strict=False).network_address)
+    return str(addr)
+
+
+# Pseudonymised IP address of a signer, specific to the petition (HMAC-SHA256)
+def signature_ip_hash(petition, ip):
+    value = '{}:{}'.format(petition.pk, normalize_ip(ip))
+    secret = settings.SIGNATURE_IP_HMAC_KEY or settings.SECRET_KEY
+    return salted_hmac('petition.signature.ip', value, secret=secret, algorithm='sha256').hexdigest()
+
 
 # Get the user of the current session
 def get_session_user(request):
@@ -204,12 +236,20 @@ def subscribe_to_newsletter(petition, email):
             data = json.loads(data)
         if petition.newsletter_subscribe_http_mailfield != '':
             data[petition.newsletter_subscribe_http_mailfield] = email
-    if petition.newsletter_subscribe_method == "POST":
-        requests.post(petition.newsletter_subscribe_http_url, data)
-    elif petition.newsletter_subscribe_method == "GET":
-        requests.get(petition.newsletter_subscribe_http_url, data)
-    elif petition.newsletter_subscribe_method == "MAIL":
-        with get_connection(host=petition.newsletter_subscribe_mail_smtp_host,
+    # the newsletter is an external service: it must never break or block the signature
+    try:
+        if petition.newsletter_subscribe_method == "POST":
+            requests.post(petition.newsletter_subscribe_http_url, data, timeout=NEWSLETTER_HTTP_TIMEOUT)
+        elif petition.newsletter_subscribe_method == "GET":
+            requests.get(petition.newsletter_subscribe_http_url, data, timeout=NEWSLETTER_HTTP_TIMEOUT)
+    except requests.RequestException as e:
+        logger.warning("Newsletter subscription failed for petition %s: %s", petition.pk, type(e).__name__)
+    if petition.newsletter_subscribe_method == "MAIL":
+        # explicit SMTP backend: the mail queue backend (USE_MAIL_QUEUE) would ignore the
+        # SMTP server of the petition
+        with get_connection(backend="django.core.mail.backends.smtp.EmailBackend", fail_silently=True,
+                            timeout=NEWSLETTER_SMTP_TIMEOUT,
+                            host=petition.newsletter_subscribe_mail_smtp_host,
                             port=petition.newsletter_subscribe_mail_smtp_port,
                             username=petition.newsletter_subscribe_mail_smtp_user,
                             password=petition.newsletter_subscribe_mail_smtp_password,

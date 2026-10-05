@@ -22,5 +22,8 @@ class Command(BaseCommand):
                     
                 check_creation_signatures(petition)
 
+                # checked: wait for a new signature before checking this petition again
+                Petition.objects.filter(pk=petition.pk).update(cron_to_schedule=False)
+
         else:
             pass

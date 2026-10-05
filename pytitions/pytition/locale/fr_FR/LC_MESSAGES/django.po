@@ -3143,6 +3143,14 @@ msgid "Too many signatures from your IP address, please try again later."
 msgstr ""
 "Trop de signatures depuis votre adresse IP, merci de venir signer plus tard."
 
+#: pytition/petition/views.py:300
+msgid ""
+"Too many signatures from the same IP address on the petition \"{title}\" (id "
+"{id}): further signatures from this address are refused."
+msgstr ""
+"Trop de signatures depuis la même adresse IP sur la pétition « {title} » (id "
+"{id}) : les signatures suivantes depuis cette adresse sont refusées."
+
 #: pytition/petition/views.py:323
 msgid ""
 "Thank you for signing this petition, an email has just been sent to you at "
