@@ -28,7 +28,7 @@ nav.navbar {
     .presentation {
         flex-grow: 1;
         padding: 15px;
-        text-align:justify;
+        text-align: start;
     }
 }
 
@@ -252,7 +252,7 @@ a.share-item:hover {
 }
 .invalid-feedback {
     font-weight: bold;
-    color: red;
+    color: var(--fp-danger, #c42719);
     font-size: inherit;
 }
 

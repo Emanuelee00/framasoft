@@ -415,6 +415,8 @@ LOGGING = {
 
 # --- framapetitions: ux ---
 # (settings di questo filone)
+# framapetitions: FE-08 - one moderation report per (petition, client IP) during this delay, in seconds
+REPORT_THROTTLE_TIMING = 60 * 60
 
 
 

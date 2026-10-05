@@ -12,10 +12,12 @@
     <title>{% block title %}{% trans "Homepage" %}{% endblock title %} – {{ settings.SITE_NAME }}</title>
 
     <!-- Bootstrap -->
-    <link href="{% static "vendor/bootstrap-4.3.1/css/bootstrap.min.css" %}" rel="stylesheet">
+    <link href="{% static "vendor/bootstrap-4.6.2/css/bootstrap.min.css" %}" rel="stylesheet">
     <link href="{% static "vendor/open-iconic-1.1.1/font/css/open-iconic-bootstrap.min.css" %}" rel="stylesheet">
     <link href="{% static "css/common.css" %}" rel="stylesheet">
     <link href="{% static "css/custom.css" %}" rel="stylesheet">
+    <link href="{% static "css/fp-tokens.css" %}" rel="stylesheet">
+    <link href="{% static "css/fp-components.css" %}" rel="stylesheet">
     {% load static %}
 
     <!-- Extra media -->
@@ -34,6 +36,7 @@
     {% endblock %}
 </head>
 <body>
+    <a class="fp-skip-link" href="#main">{% trans "Skip to content" %}</a>
     <div id="modalContainer">
 {% block modal %}
 {% endblock modal %}
@@ -49,8 +52,10 @@
     ">
     {% block nav %}{% include 'layouts/nav.html' %}{% endblock nav %}
 
+      <main id="main" tabindex="-1" class="fp-main">
       {% block main_content %}
       {% endblock %}
+      </main>
 
       <!-- Footer -->
       {% block footer %}
@@ -61,9 +66,9 @@
       {% include 'petition/image_upload_url.js' %}
     </script>
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-    <script src="{% static "vendor/jquery-3.3.1/jquery-3.3.1.min.js" %}"></script>
-    <script src="{% static "vendor/popper-1.14.6/popper.min.js" %}"></script>
-    <script src="{% static "vendor/bootstrap-4.3.1/js/bootstrap.min.js" %}"></script>
+    <script src="{% static "vendor/jquery-3.7.1.min.js" %}"></script>
+    <script src="{% static "vendor/popper-1.16.1.min.js" %}"></script>
+    <script src="{% static "vendor/bootstrap-4.6.2/js/bootstrap.min.js" %}"></script>
     <script src="https://framasoft.org/nav/nav.js" defer></script>
     {% block extrajs %}
     {% endblock %}

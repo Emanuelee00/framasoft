@@ -152,7 +152,8 @@ def send_confirmation_email(request, signature):
            'petition_url': request.build_absolute_uri(petition.url),
            'creator_name': petition.owner_name,
            'manage_url': build_manage_url(request, signature),
-           'days': settings.UNCONFIRMED_SIGNATURE_RETENTION_DAYS}
+           'days': settings.UNCONFIRMED_SIGNATURE_RETENTION_DAYS,
+           'privacy_url': request.build_absolute_uri(reverse("privacy_notice"))}
     html_message = render_to_string("petition/confirmation_email.html", ctx)
     message = strip_tags(html_message)
     with get_connection() as connection:

@@ -21,7 +21,7 @@ class SignatureThrottleTest(TestCase):
         self.petition = Petition.objects.filter(published=True).first()
 
     def sign(self, i, ip='1.2.3.4'):
-        data = {'first_name': 'Alan%d' % i, 'last_name': 'John', 'email': 'alan%d@john.org' % i, 'phone': ''}
+        data = {'first_name': 'Alan%d' % i, 'last_name': 'John', 'email': 'alan%d@john.org' % i, 'phone': '', 'consent': 'on'}
         return self.client.post(reverse('create_signature', args=[self.petition.id]), data, REMOTE_ADDR=ip)
 
     def moderation_mails(self):

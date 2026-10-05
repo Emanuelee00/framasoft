@@ -1,0 +1,363 @@
+/* Framapétitions components (signer pages). Relies on fp-tokens.css. */
+
+.fp-tap {
+  min-height: var(--fp-tap);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--fp-s2);
+}
+
+.fp-narrow {
+  max-width: 42rem;
+}
+
+/* Report link, dialog and fallback page (FE-08) */
+.fp-report {
+  text-align: end;
+}
+
+.fp-report-link {
+  color: var(--fp-accent-text);
+  text-decoration: underline;
+  padding: 0 var(--fp-s2);
+}
+
+.fp-report-link:hover {
+  color: var(--fp-text);
+}
+
+.fp-dialog {
+  width: min(32rem, calc(100vw - 2rem));
+  max-width: 100%;
+  border: 1px solid var(--fp-border-strong);
+  border-radius: var(--fp-radius);
+  padding: var(--fp-s6);
+  color: var(--fp-text);
+  text-align: start;
+}
+
+.fp-dialog::backdrop {
+  background: rgba(26, 30, 44, .6);
+}
+
+.fp-dialog-title {
+  font-size: 1.25rem;
+  margin-bottom: var(--fp-s4);
+}
+
+.fp-legend {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.fp-check {
+  min-height: var(--fp-tap);
+  display: flex;
+  align-items: center;
+  gap: var(--fp-s2);
+}
+
+.fp-check .form-check-input {
+  position: static;
+  margin: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+}
+
+.fp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--fp-s2);
+}
+
+.fp-actions .btn-link {
+  color: var(--fp-primary);
+  text-decoration: underline;
+}
+
+.fp-actions .btn-danger {
+  background-color: var(--fp-danger);
+  border-color: var(--fp-danger);
+}
+
+/* Signature form (FE-01) */
+.fp-sign-form label {
+  font-weight: 600;
+  margin-bottom: var(--fp-s1);
+}
+
+.fp-sign-form .form-check-label {
+  font-weight: normal;
+}
+
+.fp-sign-form .form-control {
+  min-height: var(--fp-tap);
+}
+
+.fp-hint {
+  color: var(--fp-text-muted);
+  font-size: .875rem;
+}
+
+.fp-field-error {
+  color: var(--fp-danger);
+  font-weight: 600;
+  margin: var(--fp-s1) 0 0;
+}
+
+.fp-error-summary {
+  border: 2px solid var(--fp-danger);
+  border-radius: var(--fp-radius);
+  background: var(--fp-danger-bg);
+  color: var(--fp-text);
+  padding: var(--fp-s4);
+  margin-bottom: var(--fp-s4);
+}
+
+.fp-error-summary-title {
+  font-size: 1.125rem;
+  color: var(--fp-danger);
+}
+
+.fp-error-summary ul {
+  margin: 0;
+  padding-left: var(--fp-s6);
+}
+
+.fp-error-summary a {
+  color: var(--fp-danger);
+  text-decoration: underline;
+}
+
+.fp-sign-btn {
+  min-height: var(--fp-tap);
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+/* Alerts and signature states (FE-02): icon and text, never colour alone */
+.fp-alert,
+.fp-state {
+  display: flex;
+  gap: var(--fp-s3);
+  align-items: flex-start;
+  border: 1px solid currentColor;
+  border-left-width: 4px;
+  border-radius: var(--fp-radius);
+  padding: var(--fp-s4);
+  margin-bottom: var(--fp-s4);
+  color: var(--fp-text);
+}
+
+.fp-state {
+  display: block;
+}
+
+.fp-alert p:last-child,
+.fp-state p:last-child {
+  margin-bottom: 0;
+}
+
+.fp-alert-icon {
+  flex-shrink: 0;
+  margin-top: .15rem;
+}
+
+.fp-alert-title,
+.fp-state-title {
+  font-weight: 700;
+}
+
+.fp-state-title {
+  font-size: 1.25rem;
+  display: flex;
+  gap: var(--fp-s2);
+  align-items: center;
+}
+
+.fp-alert-success { border-color: var(--fp-success); background: var(--fp-success-bg); }
+.fp-alert-success .fp-alert-icon, .fp-alert-success .fp-state-title { color: var(--fp-success); }
+.fp-alert-danger { border-color: var(--fp-danger); background: var(--fp-danger-bg); }
+.fp-alert-danger .fp-alert-icon { color: var(--fp-danger); }
+.fp-alert-warning { border-color: var(--fp-warning); background: var(--fp-warning-bg); }
+.fp-alert-warning .fp-alert-icon, .fp-alert-warning .fp-state-title { color: var(--fp-warning); }
+.fp-alert-info { border-color: var(--fp-primary); background: var(--fp-primary-soft); }
+.fp-alert-info .fp-alert-icon { color: var(--fp-primary); }
+
+.fp-state a,
+.fp-alert a {
+  color: var(--fp-primary-strong);
+  text-decoration: underline;
+}
+
+.fp-state-title:focus {
+  outline: none;
+}
+
+/* GDPR notice and consents (FE-12) */
+.fp-gdpr {
+  font-size: .875rem;
+  color: var(--fp-text);
+  background: var(--fp-primary-soft);
+  border-radius: var(--fp-radius);
+  padding: var(--fp-s3) var(--fp-s4);
+  margin: var(--fp-s4) 0;
+}
+
+.fp-gdpr p {
+  margin-bottom: var(--fp-s2);
+}
+
+.fp-gdpr a {
+  color: var(--fp-primary-strong);
+  text-decoration: underline;
+}
+
+.fp-details summary {
+  cursor: pointer;
+  color: var(--fp-primary-strong);
+  font-weight: 600;
+  display: list-item;
+  padding: .625rem 0;
+}
+
+.fp-details[open] summary {
+  margin-bottom: var(--fp-s2);
+}
+
+.fp-check-help {
+  margin: 0 0 var(--fp-s3) calc(1.25rem + var(--fp-s2));
+}
+
+.fp-sign-form .fp-check {
+  align-items: flex-start;
+  padding-left: 0;
+  margin-bottom: var(--fp-s3);
+}
+
+.fp-sign-form .fp-check .form-check-input {
+  margin-top: .15rem;
+}
+
+.fp-check-invalid .form-check-label {
+  color: var(--fp-danger);
+}
+
+.fp-disclaimer {
+  margin-top: var(--fp-s3);
+}
+
+/* Petition page, mobile first (FE-04) */
+.petition-details .fp-petition-head > h1 {
+  padding: var(--fp-s6) 0 var(--fp-s4);
+  font-size: 1.75rem;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 768px) {
+  .petition-details .fp-petition-head > h1 {
+    padding: var(--fp-s8) 0;
+    font-size: 2.25rem;
+  }
+}
+
+.fp-summary {
+  margin-bottom: var(--fp-s6);
+}
+
+.fp-progress {
+  margin-bottom: var(--fp-s4);
+}
+
+.fp-progress-count {
+  margin-bottom: var(--fp-s2);
+  color: var(--fp-text);
+}
+
+.fp-progress-count strong {
+  font-size: 1.75rem;
+  color: var(--fp-primary);
+}
+
+.fp-progress-goal {
+  color: var(--fp-text-muted);
+}
+
+.fp-progress-bar {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: .75rem;
+  border: 1px solid var(--fp-primary);
+  border-radius: 999px;
+  background: var(--fp-primary-soft);
+  overflow: hidden;
+}
+
+.fp-progress-bar::-webkit-progress-bar {
+  background: var(--fp-primary-soft);
+}
+
+.fp-progress-bar::-webkit-progress-value {
+  background: var(--fp-primary);
+}
+
+.fp-progress-bar::-moz-progress-bar {
+  background: var(--fp-primary);
+}
+
+.fp-progress-done {
+  margin: var(--fp-s2) 0 0;
+  font-weight: 600;
+  color: var(--fp-success);
+}
+
+.petition-details .presentation {
+  max-width: 100%;
+  overflow-wrap: break-word;
+}
+
+.petition-details .presentation > * {
+  max-width: 68ch;
+}
+
+.petition-details a.btn-primary,
+.petition-details a.btn-primary:hover {
+  color: #fff;
+}
+
+/* Global accessibility (FE-13) */
+.fp-skip-link {
+  position: absolute;
+  left: var(--fp-s2);
+  top: -10rem;
+  z-index: 1100;
+  padding: var(--fp-s2) var(--fp-s4);
+  background: var(--fp-primary-strong);
+  color: #fff;
+  border-radius: var(--fp-radius);
+}
+
+.fp-skip-link:focus {
+  top: var(--fp-s2);
+  color: #fff;
+}
+
+.fp-main:focus {
+  outline: none;
+}
+
+/* Warning before exporting signatories (GD-08) */
+.fp-export {
+  max-width: 68ch;
+  margin-bottom: var(--fp-s4);
+}
+
+.fp-export-warning {
+  border-left: 4px solid var(--fp-warning);
+  background: var(--fp-warning-bg);
+  color: var(--fp-text);
+  padding: var(--fp-s3);
+}

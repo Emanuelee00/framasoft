@@ -16,15 +16,25 @@
         <form method="POST" id="signatureForm">
         {% csrf_token %}
         <div class="col">
+                <details class="fp-details fp-export">
+                    <summary>{% trans "Export signatures as CSV" %}</summary>
+                    <p class="fp-export-warning">{% blocktrans trimmed %}
+                        You are about to download the personal data of your signatories. Signing a petition may reveal
+                        political, religious or trade union opinions: these data must only be used for the purpose of
+                        this petition. Following the recommendations of the CNIL, signatories are not "regular contacts":
+                        do not reuse them for marketing. Keep this file safe and delete it when the petition is over.
+                        You are responsible for this file.
+                    {% endblocktrans %}</p>
+                    <a href="{% url "get_csv_signature" petition.id %}" class="btn btn-primary">
+                        <span class="oi oi-spreadsheet"></span>
+                        {% trans "Export <strong>ALL</strong> signatures as CSV" %}
+                    </a>
+                    <a href="{% url "get_csv_confirmed_signature" petition.id %}" class="btn btn-primary">
+                        <span class="oi oi-spreadsheet"></span>
+                        {% trans "Export <strong>confirmed</strong> signatures as CSV" %}
+                    </a>
+                </details>
             <p>
-                <a href="{% url "get_csv_signature" petition.id %}" class="btn btn-primary">
-                    <span class="oi oi-spreadsheet"></span>
-                    {% trans "Export <strong>ALL</strong> signatures as CSV" %}
-                </a>
-                <a href="{% url "get_csv_confirmed_signature" petition.id %}" class="btn btn-primary">
-                    <span class="oi oi-spreadsheet"></span>
-                    {% trans "Export <strong>confirmed</strong> signatures as CSV" %}
-                </a>
                 <a>
                     <button class="btn btn-primary" id="show-signature-graph">
                     <span class="oi oi-spreadsheet"></span>
@@ -47,7 +57,7 @@
                     <div class="modal-header">
                       <h4 class="modal-title">
                           {% trans "copy/paste the following text block into Sympa's mass-subscribe formular" %}</h4>
-                      <button type="button" class="close" data-dismiss="modal">&times;</button>
+                      <button type="button" class="close" data-dismiss="modal" aria-label="{% trans 'Close' %}"><span aria-hidden="true">&times;</span></button>
                     </div>
 
                     <div class="modal-body" id="sympa_content">
@@ -93,7 +103,9 @@
                     <th>{% trans "First name" %}</th>
                     <th>{% trans "Last name" %}</th>
                     <th>{% trans "E-Mail" %}</th>
+                    {% if settings.SIGNATURE_COLLECT_PHONE is not False %}
                     <th>{% trans "Phone" %}</th>
+                    {% endif %}
                     <th>{% trans "Confirmed?" %}</th>
                     <th>{% trans "Subscribed to newsletter?" %}</th>
                     <th>{% trans "Date" %}</th>
@@ -118,9 +130,11 @@
                     <td>
                         {{ signature.email }}
                     </td>
+                    {% if settings.SIGNATURE_COLLECT_PHONE is not False %}
                     <td>
                         {{ signature.phone }}
                     </td>
+                    {% endif %}
                     <td>
                         {% if signature.confirmed %}
                             <span class="oi oi-circle-check text-success"></span>

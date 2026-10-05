@@ -1,0 +1,58 @@
+{% extends 'layouts/layout.html' %}
+{% load i18n %}
+{% load static %}
+
+{# Context: petition, state ("confirm", "confirmed", "already_confirmed" or "invalid_link"), #}
+{# confirmation_hash (for "confirm"), manage_url (optional) #}
+
+{% block title %}{% trans "Confirm my signature" %}{% endblock title %}
+
+{% block extrameta %}
+<meta name="robots" content="noindex">
+<meta name="referrer" content="no-referrer">
+{% endblock %}
+
+{% block main_content %}
+<div class="container fp-narrow fp-confirm mb-4">
+  {% if state == "confirm" %}
+  <h1 class="h2">{% trans "Confirm my signature" %}</h1>
+  <p>{% blocktrans trimmed with title=petition.title|striptags %}
+    One last step: confirm your signature to the petition “{{ title }}” so that it is counted.
+  {% endblocktrans %}</p>
+  <form method="post" action="{% url 'confirm' petition.id confirmation_hash %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-primary btn-block fp-sign-btn">{% trans "Confirm my signature" %}</button>
+  </form>
+  <p class="fp-hint mt-3">{% trans "You did not sign this petition? Do nothing: the signature will be deleted automatically." %}</p>
+
+  {% elif state == "confirmed" or state == "already_confirmed" %}
+  <div class="fp-state fp-alert-success" role="status">
+    <h1 class="fp-state-title h3" tabindex="-1" data-autofocus>
+      {% include "components/alert_icon.html" with kind="success" %}
+      {% if state == "confirmed" %}{% trans "Thank you! Your signature is counted" %}{% else %}{% trans "Your signature was already confirmed" %}{% endif %}
+    </h1>
+    <p>{% blocktrans trimmed with title=petition.title|striptags %}
+      Petition: “{{ title }}”
+    {% endblocktrans %}</p>
+    {% if manage_url %}
+    <p>{% trans "You can view, download or delete your signature at any time:" %} <a href="{{ manage_url }}">{% trans "Manage my signature" %}</a></p>
+    {% endif %}
+  </div>
+  <p><a href="{{ petition.url }}" class="fp-tap">{% trans "Back to the petition" %}</a></p>
+
+  {% else %}
+  <div class="fp-state fp-alert-warning" role="alert">
+    <h1 class="fp-state-title h3" tabindex="-1" data-autofocus>
+      {% include "components/alert_icon.html" with kind="warning" %}
+      {% trans "This confirmation link is not valid" %}
+    </h1>
+    <p>{% trans "It may be incomplete, or the unconfirmed signature may have been deleted. You can sign the petition again." %}</p>
+  </div>
+  <p><a href="{{ petition.url }}#signer" class="fp-tap">{% trans "Back to the petition" %}</a></p>
+  {% endif %}
+</div>
+{% endblock main_content %}
+
+{% block extrajs %}
+<script src="{% static "js/sign.js" %}" defer></script>
+{% endblock %}

@@ -55,6 +55,7 @@ class ThrottleClientIpTest(TestCase):
                 'last_name': 'John',
                 'email': 'alan%d@john.org' % i,
                 'phone': '',
+                'consent': 'on',
             }
             response = self.client.post(reverse('create_signature', args=[petition.id]), data,
                                         HTTP_X_FORWARDED_FOR='10.0.0.%d' % i)

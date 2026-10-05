@@ -69,6 +69,7 @@ class CreateSignatureViewTest(TestCase):
             'last_name': 'John',
             'email': 'alan@john.org',
             'phone': '',
+            'consent': 'on',
         }
         petition = Petition.objects.filter(published=True).first()
         with CaptureQueriesContext(connection) as ctx:
@@ -84,7 +85,7 @@ class CreateSignatureViewTest(TestCase):
         before = petition.last_modification_date
         self.assertFalse(petition.cron_to_schedule)
         for i in range(2):
-            data = {'first_name': 'Alan', 'last_name': 'John', 'email': 'alan%d@john.org' % i, 'phone': ''}
+            data = {'first_name': 'Alan', 'last_name': 'John', 'email': 'alan%d@john.org' % i, 'phone': '', 'consent': 'on'}
             self.client.post(reverse('create_signature', args=[petition.id]), data)
         petition.refresh_from_db()
         self.assertEqual(petition.last_modification_date, before)
@@ -101,7 +102,7 @@ class CreateSignatureViewTest(TestCase):
             Petition.objects.filter(pk=petition_id).update(moderated=True)
             return loaded
 
-        data = {'first_name': 'Alan', 'last_name': 'John', 'email': 'alan@john.org', 'phone': ''}
+        data = {'first_name': 'Alan', 'last_name': 'John', 'email': 'alan@john.org', 'phone': '', 'consent': 'on'}
         with mock.patch('petition.views.petition_from_id', side_effect=load_then_moderate):
             self.client.post(reverse('create_signature', args=[petition.id]), data)
         petition.refresh_from_db()

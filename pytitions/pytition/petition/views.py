@@ -44,6 +44,7 @@ from django.core.cache import cache
 from django.core import signing
 from django.utils.html import strip_tags
 from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_http_methods
 from django.views.generic.edit import CreateView
 
 from formtools.wizard.views import SessionWizardView
@@ -52,7 +53,7 @@ from .models import Petition, Signature, Organization, PytitionUser, PetitionTem
 from .models import SlugModel, ModerationReason, Moderation, MonitoringReason, Monitoring
 from .forms import SignatureForm, ContentFormPetition, EmailForm, NewsletterForm, SocialNetworkForm, ContentFormTemplate
 from .forms import StyleForm, PetitionCreationStep1, PetitionCreationStep2, PetitionCreationStep3, UpdateInfoForm
-from .forms import DeleteAccountForm, OrgCreationForm, SignatureLinkRequestForm
+from .forms import DeleteAccountForm, OrgCreationForm, SignatureLinkRequestForm, ReportForm
 from .helpers import get_client_ip, get_session_user, petition_from_id, signature_ip_hash
 from .helpers import check_petition_is_accessible
 from .helpers import send_already_signed_email, send_manage_link_email, MANAGE_SALT
@@ -173,16 +174,24 @@ def search(request):
         }
     )
 
+SIGN_STATES = ("pending_email", "confirmed", "closed")
+
+# Pick the state shown instead of the sign form from the messages' extra_tags.
+# Untagged SUCCESS messages are still understood (signature sent, or just confirmed).
 def hide_sign_form_if_user_just_signed(request, ctx):
     storage = get_messages(request)
     for message in storage:
-        if message.level == messages.SUCCESS:
-            just_confirmed = request.session.get('just_confirmed', False)
-            if just_confirmed:
-                ctx.update({'signature_is_confirmed': True})
+        tags = (message.extra_tags or "").split()
+        state = next((tag for tag in SIGN_STATES if tag in tags), None)
+        if state is None and message.level == messages.SUCCESS:
+            state = "pending_email"
+        if state == "pending_email" and request.session.get('just_confirmed', False):
+            state = "confirmed"
+        if state:
+            if state == "confirmed":
                 request.session['just_confirmed'] = False
-            else:
-                ctx.update({'petition_is_signed': True})
+            ctx.update({'sign_state': state})
+
 
 # /<int:petition_id>/
 # Show information on a petition
@@ -194,11 +203,10 @@ def detail(request, petition_id):
     except:
         pytitionuser = None
 
-    reasons = ModerationReason.objects.all()
     sign_form = SignatureForm(petition=petition)
     ctx = {"user": pytitionuser, 'petition': petition, 'form': sign_form,
            'meta': petition_detail_meta(request, petition_id),
-           'moderation_reasons': reasons,
+           'report_form': ReportForm(),
            'og_image_absolute_url': request.build_absolute_uri(petition.twitter_image)}
 
     # If we've just signed successfully the petition, do not show the sign form
@@ -348,7 +356,7 @@ def create_signature(request, petition_id):
                 send_mail_to_moderation_info(settings.MODERATION_EMAIL,
                     _("Too many signatures from the same IP address on the petition \"{title}\" (id {id}): further signatures from this address are refused.")\
                     .format(title=petition.title, id=petition.pk))
-            messages.error(request, _("Too many signatures from your IP address, please try again later."))
+            messages.error(request, _("Too many signatures from your IP address, please try again later."), extra_tags="throttled")
             response = render(request, 'petition/petition_detail.html', ctx, status=429)
             response['Retry-After'] = str(settings.SIGNATURE_THROTTLE_TIMING)
             return response
@@ -1982,10 +1990,9 @@ def slug_show_petition(request, orgslugname=None, username=None, petitionname=No
     check_petition_is_accessible(request, petition)
     sign_form = SignatureForm(petition=petition)
 
-    reasons = ModerationReason.objects.all()
     ctx = {"user": pytitionuser, "petition": petition, "form": sign_form,
            'meta': petition_detail_meta(request, petition.id),
-           'moderation_reasons': reasons,
+           'report_form': ReportForm(),
            'og_image_absolute_url': request.build_absolute_uri(petition.twitter_image)}
 
     # If we've just signed successfully the petition, do not show the sign form
@@ -2203,18 +2210,20 @@ class PytitionUserCreateView(CreateView):
         form.send_success_email()
         return super().form_valid(form)
 
-# /<int:petition_id>/report/<int:reason_id>
-# Report a petition to moderation
-def report_petition(request, petition_id, reason_id=None):
+# /<int:petition_id>/report
+# Report a petition to moderation (GET shows the form, POST records the report)
+@require_http_methods(["GET", "POST"])
+def report_petition(request, petition_id):
     petition = petition_from_id(petition_id)
-    if reason_id:
-        try:
-            reason = ModerationReason.objects.get(pk=reason_id)
-        except:
-            return HttpResponse(status=500)
-
-    if reason_id:
-        Moderation.objects.create(petition=petition, reason=reason)
-    else:
-        Moderation.objects.create(petition=petition)
-    return HttpResponse(status=200)
+    check_petition_is_accessible(request, petition)
+    form = ReportForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        # One report per (petition, client) per REPORT_THROTTLE_TIMING; the answer is the same either way
+        key = "report:{}:{}".format(petition.pk, get_client_ip(request))
+        if cache.add(key, 1, settings.REPORT_THROTTLE_TIMING):
+            Moderation.objects.create(petition=petition, reason=form.cleaned_data["reason"])
+        messages.info(request, _("Thank you, your report has been sent to the moderation team."), extra_tags="reported")
+        return redirect(petition.url)
+    response = render(request, "petition/report.html", {"petition": petition, "report_form": form})
+    response["X-Robots-Tag"] = "noindex"
+    return response

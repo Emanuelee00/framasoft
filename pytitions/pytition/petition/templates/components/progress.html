@@ -1,0 +1,17 @@
+{% load i18n %}
+{% load petition_extras %}
+{% with count=petition.signature_number target=petition.target %}
+<div class="fp-progress">
+  <p class="fp-progress-count">
+    <strong>{{ count|grouped }}</strong>
+    {% blocktrans trimmed count counter=count %}signature{% plural %}signatures{% endblocktrans %}
+    {% if target > 0 %}<span class="fp-progress-goal">{% blocktrans trimmed with goal=target|grouped %}out of {{ goal }}{% endblocktrans %}</span>{% endif %}
+  </p>
+  {% if target > 0 %}
+  {% with percent=count|progress_percent:target %}
+  <progress class="fp-progress-bar" max="100" value="{{ percent }}" aria-label="{% trans 'Progress towards the goal' %}">{{ percent }}%</progress>
+  {% endwith %}
+  {% if count >= target %}<p class="fp-progress-done">{% trans "Goal reached!" %}</p>{% endif %}
+  {% endif %}
+</div>
+{% endwith %}

@@ -8,7 +8,7 @@ function addUser(user) {
         $("#user_search_result").html("");
         var html = `
         <div class="alert alert-success alert-dismissible show fade">
-        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <button type="button" class="close" data-dismiss="alert" aria-label="{% trans 'Close' %}"><span aria-hidden="true">&times;</span></button>
         <div class="row">
             <div class="col-1 alert-icon-col">
                 <span class="oi oi-check"></span>
@@ -24,7 +24,7 @@ function addUser(user) {
         if (typeof data === "undefined") {
             html = `
             <div class="alert alert-danger alert-dismissible show fade">
-                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <button type="button" class="close" data-dismiss="alert" aria-label="{% trans 'Close' %}"><span aria-hidden="true">&times;</span></button>
                 <div class="row">
                     <div class="col-1 alert-icon-col">
                         <span class="oi oi-warning"></span>
@@ -40,7 +40,7 @@ function addUser(user) {
         } else {
             html = `
             <div class="alert alert-danger alert-dismissible show fade">
-            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <button type="button" class="close" data-dismiss="alert" aria-label="{% trans 'Close' %}"><span aria-hidden="true">&times;</span></button>
             <div class="row">
                 <div class="col-1 alert-icon-col">
                     <span class="oi oi-warning"></span>

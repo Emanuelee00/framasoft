@@ -1,0 +1,11 @@
+{% load i18n %}
+<section class="container fp-report mb-4" aria-label="{% trans 'Moderation' %}">
+  <a href="{% url 'report_petition' petition.id %}" class="fp-report-link fp-tap" data-report-open="fp-report" rel="nofollow">
+    <svg aria-hidden="true" focusable="false" width="16" height="16" viewBox="0 0 16 16"><path fill="currentColor" d="M2 1h1v14H2zM4 2h9l-2 3.5L13 9H4z"/></svg>
+    {% trans "Report this petition" %}
+  </a>
+  <dialog id="fp-report" class="fp-dialog" aria-labelledby="fp-report-title">
+    <h2 id="fp-report-title" class="fp-dialog-title">{% trans "Report this petition to moderation" %}</h2>
+    {% include "components/report_form.html" with in_dialog=True %}
+  </dialog>
+</section>

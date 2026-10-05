@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Pytition\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-09 12:20-0500\n"
-"PO-Revision-Date: 2024-03-31 22:24+0200\n"
+"POT-Creation-Date: 2025-11-04 05:17-0600\n"
+"PO-Revision-Date: 2025-11-04 12:19+0100\n"
 "Last-Translator: Fares Sellaouti <fares@rhone.pcf.fr>\n"
 "Language-Team: French (France) <https://weblate.framasoft.org/projects/"
 "pytition/pytitions/fr_FR/>\n"
@@ -17,7 +17,154 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n > 1;\n"
-"X-Generator: Poedit 3.0.1\n"
+"X-Generator: Poedit 3.8\n"
+
+msgid "Export signatures as CSV"
+msgstr "Exporter les signatures en CSV"
+
+msgid "You are about to download the personal data of your signatories. Signing a petition may reveal political, religious or trade union opinions: these data must only be used for the purpose of this petition. Following the recommendations of the CNIL, signatories are not \"regular contacts\": do not reuse them for marketing. Keep this file safe and delete it when the petition is over. You are responsible for this file."
+msgstr "Vous allez télécharger les données personnelles de vos signataires. Signer une pétition peut révéler des opinions politiques, religieuses ou syndicales : ces données doivent servir uniquement à l'objet de cette pétition. Conformément aux recommandations de la CNIL, les signataires ne sont pas des « contacts réguliers » : ne les réutilisez pas pour de la prospection. Conservez ce fichier en sécurité et supprimez-le lorsque la pétition est terminée. Vous êtes responsable de ce fichier."
+
+msgid "Skip to content"
+msgstr "Aller au contenu"
+
+msgid "Language"
+msgstr "Langue"
+
+#, python-format
+msgid "Hello %(firstname)s,"
+msgstr "Bonjour %(firstname)s,"
+
+#, python-format
+msgid "You have just signed the petition “%(title)s” on Framapétitions. To have your signature counted, confirm it by clicking on this link:"
+msgstr "Vous venez de signer la pétition « %(title)s » sur Framapétitions. Pour que votre signature soit comptée, confirmez-la en cliquant sur ce lien :"
+
+#, python-format
+msgid "Without confirmation within %(days)s days, your signature and your data will be deleted automatically."
+msgstr "Sans confirmation de votre part sous %(days)s jours, votre signature et vos données seront automatiquement supprimées."
+
+msgid "You did not sign this petition?"
+msgstr "Vous n'êtes pas à l'origine de cette signature ?"
+
+msgid "Do nothing: the signature will be deleted."
+msgstr "Ne faites rien : elle sera effacée."
+
+msgid "At any time, you can view, download or delete your signature here:"
+msgstr "À tout moment, vous pouvez consulter, télécharger ou supprimer votre signature ici :"
+
+#, python-format
+msgid "Your signature is sent to %(creator)s, author of the petition. If you reply to this email, your reply will go directly to them."
+msgstr "Votre signature est transmise à %(creator)s, auteur·ice de la pétition. Si vous répondez à cet e-mail, votre réponse lui parviendra directement."
+
+msgid "More information about your data:"
+msgstr "Plus d'informations sur vos données :"
+
+msgid "Framapétitions, a service of the Framasoft association"
+msgstr "Framapétitions, un service de l'association Framasoft"
+
+msgid "signature"
+msgid_plural "signatures"
+msgstr[0] "signature"
+msgstr[1] "signatures"
+
+#, python-format
+msgid "out of %(goal)s"
+msgstr "sur %(goal)s"
+
+msgid "Progress towards the goal"
+msgstr "Progression vers l'objectif"
+
+msgid "Goal reached!"
+msgstr "Objectif atteint !"
+
+#, python-format
+msgid "Published on %(date)s"
+msgstr "Publiée le %(date)s"
+
+msgid "Confirm my signature"
+msgstr "Confirmer ma signature"
+
+#, python-format
+msgid "One last step: confirm your signature to the petition “%(title)s” so that it is counted."
+msgstr "Dernière étape : confirmez votre signature de la pétition « %(title)s » pour qu'elle soit comptée."
+
+msgid "You did not sign this petition? Do nothing: the signature will be deleted automatically."
+msgstr "Vous n'êtes pas à l'origine de cette signature ? Ne faites rien : elle sera effacée automatiquement."
+
+msgid "Thank you! Your signature is counted"
+msgstr "Merci ! Votre signature est comptée"
+
+msgid "Your signature was already confirmed"
+msgstr "Votre signature était déjà confirmée"
+
+msgid "You can view, download or delete your signature at any time:"
+msgstr "Vous pouvez consulter, télécharger ou supprimer votre signature à tout moment :"
+
+msgid "Back to the petition"
+msgstr "Retour à la pétition"
+
+msgid "This confirmation link is not valid"
+msgstr "Ce lien de confirmation n'est pas valide"
+
+msgid "It may be incomplete, or the unconfirmed signature may have been deleted. You can sign the petition again."
+msgstr "Il est peut-être incomplet, ou la signature non confirmée a été supprimée. Vous pouvez signer à nouveau la pétition."
+
+msgid "Your data."
+msgstr "Vos données."
+
+#, python-format
+msgid "Your name, your email address (and your phone number if you give it) are sent to %(creator)s, author of this petition, and hosted by the Framasoft association, in France."
+msgstr "Votre nom, votre adresse e-mail (et votre téléphone si vous le donnez) sont transmis à %(creator)s, auteur·ice de cette pétition, et hébergés par l'association Framasoft, en France."
+
+msgid "More about your data"
+msgstr "En savoir plus sur vos données"
+
+#, python-format
+msgid "Signing a petition may reveal your opinions: we never publish the list of signatories, only their number. An unconfirmed signature is deleted after %(days)s days. An encrypted fingerprint of your IP address is kept for %(ip_days)s days to fight abuse. You can view or delete your signature at any time with the link received by email. You can also lodge a complaint with the CNIL."
+msgstr "Signer une pétition peut révéler vos opinions : nous ne publions jamais la liste des signataires, seulement leur nombre. Une signature non confirmée est supprimée au bout de %(days)s jours. Une empreinte chiffrée de votre adresse IP est conservée %(ip_days)s jours pour lutter contre les abus. Vous pouvez consulter ou supprimer votre signature à tout moment grâce au lien reçu par e-mail. Vous pouvez aussi saisir la CNIL."
+
+msgid "Read more about your personal data"
+msgstr "En savoir plus sur vos données personnelles"
+
+msgid "Check your mailbox"
+msgstr "Consultez votre boîte e-mail"
+
+msgid "This is not my address: sign again"
+msgstr "Ce n'est pas mon adresse : signer à nouveau"
+
+msgid "This petition no longer accepts signatures"
+msgstr "Cette pétition n'accepte plus de signatures"
+
+msgid "Your signature has not been recorded"
+msgstr "Votre signature n'a pas été enregistrée"
+
+msgid "This can happen on a shared connection (school, office, public Wi-Fi). Please try again later."
+msgstr "Cela peut arriver sur une connexion partagée (école, bureau, Wi-Fi public). Merci de réessayer plus tard."
+
+msgid "Phone number (optional)"
+msgstr "Numéro de téléphone (facultatif)"
+
+msgid "Please correct the following fields"
+msgstr "Merci de corriger les champs suivants"
+
+msgid "Fields marked with * are required."
+msgstr "Les champs marqués d'un * sont obligatoires."
+
+msgid "Sign the petition"
+msgstr "Signer la pétition"
+
+msgid "Goal"
+msgstr "Objectif"
+
+msgid "Report this petition"
+msgstr "Signaler cette pétition"
+
+msgid "Thank you, your report has been sent to the moderation team."
+msgstr "Merci, votre signalement a été transmis à l'équipe de modération."
+
+#, python-format
+msgid "Petition: “%(title)s”"
+msgstr "Pétition : « %(title)s »"
 
 #: pytition/petition/admin.py:71 pytition/petition/admin.py:108
 #: pytition/petition/spam_management/detectors/akismet_detector.py:29
@@ -2720,11 +2867,21 @@ msgstr ""
 "Cette pétition est modérée. Vous la voyez uniquement car vous êtes son "
 "créateur ou sa créatrice."
 
-#: pytition/petition/templates/petition/petition_detail.html:271
+#: pytition/petition/templates/petition/petition_detail.html:257
 msgid ""
-"The content of this petition is neither approved nor endorsed by Framasoft"
+"Your contact information will be accessible to the petition creators. Be "
+"sure to only provide it to petitions you trust."
 msgstr ""
-"Le contenu de cette pétition n'est ni validé, ni cautionné par Framasoft"
+"Vos coordonnées seront accessibles aux auteurs de la pétition. Veillez à ne "
+"les fournir qu'aux pétitions auxquelles vous faites confiance."
+
+#: pytition/petition/templates/petition/petition_detail.html:258
+msgid ""
+"The content of this petition is neither approved nor endorsed by the "
+"Framasoft association."
+msgstr ""
+"Le contenu de cette pétition n'est ni validé, ni cautionné par l'association "
+"Framasoft."
 
 #: pytition/petition/templates/petition/petition_detail.html:281
 #: pytition/petition/templates/petition/petition_detail.html:314

@@ -17,6 +17,7 @@ from django.utils.text import slugify
 from django.utils.html import mark_safe, strip_tags
 
 from .models import Signature, PetitionTemplate, Petition, Organization, PytitionUser, SlugModel
+from .models import ModerationReason
 from .widgets import SwitchField
 from .helpers import send_welcome_mail
 
@@ -27,32 +28,29 @@ from colorfield.fields import ColorWidget
 
 class SignatureForm(ModelForm):
     subscribed_to_mailinglist = forms.BooleanField(
-                                    widget=forms.CheckboxInput(
-                                        attrs={'class': 'form-check-input', 'group_class': 'form-check'}
-                                    ),
+                                    widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
                                     label_suffix="",
                                     required=False)
     consent = forms.BooleanField(
-                                    widget=forms.CheckboxInput(
-                                        attrs={'class': 'form-check-input', 'group_class': 'form-check'}
-                                    ),
+                                    widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
                                     label_suffix="",
                                     required=True)
     class Meta:
         model = Signature
         fields = ['first_name', 'last_name', 'phone', 'email', 'subscribed_to_mailinglist']
         widgets = {
-            'first_name': forms.TextInput(attrs={'placeholder': _('First name *'), 'class': 'form-control has-feedback eaFullWidthContent',
-                                                 'group_class': 'form-group has-feedback'}),
-            'last_name': forms.TextInput(attrs={'placeholder': _('Last name *'), 'class': 'form-control has-feedback eaFullWidthContent',
-                                                'group_class': 'form-group has-feedback'}),
-            'phone': forms.TextInput(attrs={'placeholder': _('Phone number'), 'class': 'form-control has-feedback eaFullWidthContent',
-                                            'group_class': 'form-group has-feedback'}),
-            'email': forms.EmailInput(attrs={'placeholder': _('Email address *'), 'class': 'form-control has-feedback eaFullWidthContent',
-                                             'group_class': 'form-group has-feedback'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control', 'autocomplete': 'given-name'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control', 'autocomplete': 'family-name'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control', 'autocomplete': 'tel', 'inputmode': 'tel'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control', 'autocomplete': 'email'}),
         }
 
-        labels = { f : '' for f in  ['first_name', 'last_name', 'phone', 'email'] }
+        labels = {
+            'first_name': _('First name'),
+            'last_name': _('Last name'),
+            'phone': _('Phone number (optional)'),
+            'email': _('Email address'),
+        }
 
     def __init__(self, petition=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -74,6 +72,18 @@ class SignatureForm(ModelForm):
 class SignatureLinkRequestForm(forms.Form):
     email = forms.EmailField(label=_("Email address"))
 
+
+class ReportForm(forms.Form):
+    reason = forms.ModelChoiceField(
+        queryset=ModerationReason.objects.filter(visible=True),
+        widget=forms.RadioSelect,
+        required=False,
+        empty_label=None,
+        label=_("Why do you want to report this petition?"))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['reason'].label_from_instance = lambda reason: reason.text
 
 class PetitionCreationStep1(forms.Form):
     ### Ask for title ###

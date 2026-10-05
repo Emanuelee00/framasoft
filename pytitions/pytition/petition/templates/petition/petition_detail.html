@@ -8,14 +8,18 @@
 
 <!-- Extra meta -->
 {% block extrameta %}
-<meta name="description" content="{{ petition.title }}"/>
+{% if petition.twitter_description %}
+<meta name="description" content="{{ petition.raw_twitter_description|truncatechars:160 }}"/>
+{% else %}
+<meta name="description" content="{{ petition.raw_text|truncatechars:160 }}"/>
+{% endif %}
 
 <meta property="og:title" content="{{ petition.title }}"/>
 {% if petition.twitter_description %}
 <meta property="og:description"
-content="{{ petition.raw_twitter_description|safe }}"/>
+content="{{ petition.raw_twitter_description|truncatechars:300 }}"/>
 {% else %}
-<meta property="og:description" content="{{ petition.raw_text|safe }}"/>
+<meta property="og:description" content="{{ petition.raw_text|truncatechars:300 }}"/>
 {% endif %}
 <meta property="og:type" content="website"/>
 <meta property="og:url" content="{{ meta.petition_url }}" />
@@ -27,21 +31,19 @@ content="{{ petition.raw_twitter_description|safe }}"/>
 <meta itemprop="name" content="{{ petition.title }}"/>
 {% if petition.twitter_description %}
 <meta itemprop="description"
-content="{{ petition.raw_twitter_description|safe }}"/>
+content="{{ petition.raw_twitter_description|truncatechars:300 }}"/>
 {% else %}
-<meta itemprop="description" content="{{ petition.raw_text|safe }}"/>
+<meta itemprop="description" content="{{ petition.raw_text|truncatechars:300 }}"/>
 {% endif %}
 <!-- FIXME: <meta itemprop="url" content=""/> //-->
 
 <meta name="twitter:card" content="summary"/>
-<meta name="twitter:creator" content="@yannsionneau"/>
-<meta name="twitter:site" content="{{ petition.org_twitter_handle }}"/>
 <meta name="twitter:title" content="{{ petition.title }}"/>
 {% if petition.twitter_description %}
 <meta name="twitter:description"
-content="{{ petition.raw_twitter_description|safe }}"/>
+content="{{ petition.raw_twitter_description|truncatechars:300 }}"/>
 {% else %}
-<meta name="twitter:description" content="{{ petition.raw_text|safe }}"/>
+<meta name="twitter:description" content="{{ petition.raw_text|truncatechars:300 }}"/>
 {% endif %}
 {% if petition.twitter_image %}
 <meta name="twitter:image" content="{{ og_image_absolute_url }}"/>
@@ -54,24 +56,6 @@ content="{{ petition.raw_twitter_description|safe }}"/>
 {% if petition.has_any_share_button %}
     <link href="{% static "css/rrssb.css" %}" rel="stylesheet" type="text/css">
 {% endif %}
-<style type="text/css">
-{% if petition.bgcolor != "#FFFFFF" %}
-body {
-  background-color: {{ petition.bgcolor }};
-}
-{% endif %}
-{% if petition.linear_gradient_direction != petition.NO %}
-body {
-  background: linear-gradient({{ petition.linear_gradient_direction}}, {{ petition.gradient_from }}, {{ petition.gradient_to }});
-}
-{% endif %}
-</style>
-{% endblock %}
-
-{% block extrajshead %}
-<script>
-dataLayer = [];
-</script>
 {% endblock %}
 
 {% block container_type %}container petition{% endblock container_type %}
@@ -82,55 +66,6 @@ dataLayer = [];
 {% endblock navbar %}
 
 {% block modal %}
-{% if petition_is_signed %}
-  <div class="modal fade" id="show_sign_success">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h4 class="modal-title">{% trans "Thank you!" %}</h4>
-          <button type="button" class="close" data-dismiss="modal">&times;</button>
-        </div>
-
-        <div class="modal-body">
-          {% blocktrans trimmed %}
-            Thank you for signing this petition!
-            Your signature will be accounted for as soon as you click on the link in the e-mail
-            we've just sent you.
-          {% endblocktrans %}
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-success" data-dismiss="modal">{% trans "Ok" %}</button>
-        </div>
-
-      </div>
-    </div>
-  </div>
-{% endif %}
-{% if signature_is_confirmed %}
-  <div class="modal fade" id="show_confirm_success">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h4 class="modal-title">{% trans "Thank you!" %}</h4>
-          <button type="button" class="close" data-dismiss="modal">&times;</button>
-        </div>
-
-        <div class="modal-body">
-          {% blocktrans trimmed %}
-            Thank you for confirming your signature to this petition!
-            Your signature is now accounted for. See you soon!
-          {% endblocktrans %}
-        </div>
-
-        <div class="modal-footer">
-          <button type="button" class="btn btn-success" data-dismiss="modal">{% trans "Ok" %}</button>
-        </div>
-
-      </div>
-    </div>
-  </div>
-{% endif %}
     {% if petition.has_mastodon_share_button %}
     <div class="modal fade" id="MastodonModal" tabindex="-1" role="dialog" aria-labelledby="MastodonModalLabel" aria-hidden="true">
       <div class="modal-dialog" role="document">
@@ -158,12 +93,6 @@ dataLayer = [];
 {% endblock modal %}
 
 {% block main_content %}
-<div class="show-form" id="show-form">
-  <div class="wrapper">
-    <button type="button" class="btn btn-primary btn-block">{% trans "SIGN" %}</button>
-  </div>
-</div>
-
 <div class="container petition-details">
   {% if not petition.published %}
   <div class="alert alert-warning alert-dismissible fade show" role="alert">
@@ -177,105 +106,44 @@ dataLayer = [];
     </button>
   </div>
   {% endif %}
-  <div>
+  <div class="fp-petition-head">
     <h1>{{ petition.title|html_sanitize|striptags|safe }}</h1>
     {% if petition.is_moderated %}
-    <h2 class="text-danger">{% trans "This petition is moderated. You only see it because you are its creator" %}</h2>
+    <div class="fp-alert fp-alert-danger" role="alert">
+      {% include "components/alert_icon.html" with kind="danger" %}
+      <p>{% trans "This petition is moderated. You only see it because you are its creator" %}</p>
+    </div>
+    {% endif %}
+  </div>
+  <div class="fp-summary d-lg-none">
+    {% include "components/progress.html" %}
+    {% if not sign_state %}
+    <a href="#signer" class="btn btn-primary btn-block fp-sign-btn">{% trans "Sign the petition" %}</a>
     {% endif %}
   </div>
   <div class="row petition-wrapper">
-      <div class="col-lg-4 formular form-wrapper order-lg-1" id="petition">
+      <div class="col-lg-4 formular form-wrapper {% if sign_state or form.errors or messages %}order-first{% else %}order-last{% endif %} order-lg-1" id="petition">
           {% if petition.side_text %}
             <div class="intro" id="intro">
                 {{ petition.side_text|html_sanitize|safe }}
             </div>
           {% endif %}
-          <p class="sign text-primary"><strong>Signez la pétition&nbsp;!</strong></p>
-          <div class="counter" id="counter">
-            <div class="progress">
-              <div class="progress-bar bg-primary" role="progressbar" id="progress-bar"
-              data-target="{{ petition.target }}">
-              </div>
-            </div>
-            <div class="counter-stats">
-              <div class="counter-stats-ongoing">
-                <span id="nb-signatures" class="counter-stats-number">{{ petition.signature_number }}</span>
-                <br>
-                <span>Signatures</span>
-              </div>
-              <div class="counter-stats-target">
-                <span class="counter-stats-number">{{ petition.target }}</span>
-                <br>
-                <span>Objectif</span>
-              </div>
-            </div>
+          <h2 class="sign text-primary">{% trans "Sign the petition!" %}</h2>
+          <div class="d-none d-lg-block">
+            {% include "components/progress.html" %}
           </div>
           <div id="form-sticky" class="form-sticky">
-            {% for message in messages %}
-            <div
-            {% if message.level == DEFAULT_MESSAGE_LEVELS.ERROR %}
-            class="alert alert-danger" role="alert">
-            {% elif message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
-            class="alert alert-success" role="alert">
-            {% else %}
-            class="alert {{ message.tags }}" role="alert">
-            {% endif %}
-              {{ message }}
-            </div>
-            {% endfor %}
-            <div class="fields" {% if petition_is_signed %}hidden{% endif %}>
-              <form method='POST' name='petition' class='form-group'
-              action='{% url "create_signature" petition.id %}'>
-                {% csrf_token %}
-                {% for hidden_field in form.hidden_fields %}
-                {{ hidden_field }}
-                {% endfor %}
-
-                {% if form.non_field_errors %}
-                <div class="alert alert-danger" role="alert">
-                  {% for error in form.non_field_errors %}
-                  {{ error }}
-                  {% endfor %}
-                </div>
-                {% endif %}
-
-                {% for field in form.visible_fields %}
-                <div class="{{ field.field.widget.attrs.group_class }}">
-                  {% if field.field.widget.attrs.group_class != "form-check" %}
-                    {% if field.label %}
-                    {{ field.label_tag }}
-                    {% endif %}
-                  {% endif %}
-                  {% if form.is_bound %}
-                    {% if field.errors %}
-                      {{ field|add_class:"is-invalid" }}
-                      {% for error in field.errors %}
-                        <span class="invalid-feedback">{{ error }}</span>
-                      {% endfor %}
-                    {% else %}
-                      {{ field|add_class:"is-valid" }}
-                    {% endif %}
-                  {% else %}
-                    {{ field }}
-                  {% endif %}
-                  {% if field.field.widget.attrs.group_class == "form-check" %}
-                    {{ field.label_tag }}
-                  {% endif %}
-
-                  {% if field.help_text %}
-                    <small class="form-text text-muted">{{ field.help_text }}</small>
-                  {% endif %}
-                </div>
-                {% endfor %}
-
-                <p><small>{% trans "The content of this petition is neither approved nor endorsed by Framasoft" %}</small></p>
-
-                <span class="eaSubmitResetButtonGroup mb-1" id="eaFormButtonGroup_1"><input
-                  type="submit" class="btn btn-primary eaSubmitButton" value="Signer"></span>
+            <div class="fields" id="signer">
+              {% if sign_state %}
+              {% include "components/sign_state.html" %}
+              {% else %}
+              {% include "components/alerts.html" %}
+              {% include "components/sign_form.html" %}
+              {% endif %}
                 {% if petition.has_any_share_button %}
                 <div>
                   <ul class="rrssb-buttons">
-                    {% if petition.has_email_share_button %}  
+                    {% if petition.has_email_share_button %}
                     <li class="rrssb-email">
                       <!-- Replace subject with your message using URL Endocding: http://meyerweb.com/eric/tools/dencoder/ -->
                       <a href="mailto:?Subject={{ petition.title|html_sanitize|striptags|safe }}: {% trans "Sign the petition!" %}&body={{ request.build_absolute_uri }}">
@@ -286,7 +154,7 @@ dataLayer = [];
                       </a>
                     </li>
                     {% endif %}
-                    {% if petition.has_facebook_share_button %}  
+                    {% if petition.has_facebook_share_button %}
                     <li class="rrssb-facebook">
                       <!--  Replace with your URL. For best results, make sure you page has the proper FB Open Graph tags in header:
                             https://developers.facebook.com/docs/opengraph/howtos/maximizing-distribution-media-content/ -->
@@ -298,7 +166,7 @@ dataLayer = [];
                       </a>
                     </li>
                     {% endif %}
-                    {% if petition.has_tumblr_share_button %}  
+                    {% if petition.has_tumblr_share_button %}
                     <li class="rrssb-tumblr">
                       <a href="http://tumblr.com/share/link?url={{ request.build_absolute_uri  }}&name={{ petition.title|html_sanitize|striptags|safe }}">
                         <span class="rrssb-icon">
@@ -308,7 +176,7 @@ dataLayer = [];
                       </a>
                     </li>
                     {% endif %}
-                    {% if petition.has_linkedin_share_button %}  
+                    {% if petition.has_linkedin_share_button %}
                     <li class="rrssb-linkedin">
                       <!-- Replace href with your meta and URL information -->
                       <a href="http://www.linkedin.com/shareArticle?mini=true&amp;url={{ request.build_absolute_uri }}&amp;title={{ petition.title|html_sanitize|striptags|safe }}&amp;summary={% trans "Sign the petition!" %}" class="popup">
@@ -319,7 +187,7 @@ dataLayer = [];
                       </a>
                     </li>
                     {% endif %}
-                    {% if petition.has_twitter_share_button %}  
+                    {% if petition.has_twitter_share_button %}
                     <li class="rrssb-twitter">
                       <!-- Replace href with your Meta and URL information  -->
                       <a href="https://twitter.com/intent/tweet?text={{ petition.title|html_sanitize|striptags|safe }}:%0A{{ request.build_absolute_uri }}%0A{% trans "Sign the petition!" %}"
@@ -331,7 +199,7 @@ dataLayer = [];
                       </a>
                     </li>
                     {% endif %}
-                    {% if petition.has_mastodon_share_button %}  
+                    {% if petition.has_mastodon_share_button %}
                       <li class="rrssb-mastodon">
                       <a class="mastodon-share-button" data-target="{{ petition.title|html_sanitize|striptags|safe }}:%0A{{ request.build_absolute_uri }}%0A{% trans "Sign the petition!" %}">
                         <span class="rrssb-icon">
@@ -344,7 +212,7 @@ dataLayer = [];
                       </a>
                     </li>
                     {% endif %}
-                    {% if petition.has_whatsapp_share_button %}  
+                    {% if petition.has_whatsapp_share_button %}
                     <li class="rrssb-whatsapp">
                       <a href="whatsapp://send?text={{ request.build_absolute_uri }}" data-action="share/whatsapp/share">
                         <span class="rrssb-icon">
@@ -357,10 +225,9 @@ dataLayer = [];
                   </ul>
                 </div>
                 {% endif %}
-              </form>
             </div>
             <div class="reassurance" id="reassurance">
-              <p style="text-align:justify">
+              <p>
                 {{ petition.sign_form_footer }}
               </p>
             </div>
@@ -368,9 +235,9 @@ dataLayer = [];
         </div>
       <div class="col-lg-8 presentation">
         {% if petition.publication_date and petition.show_publication_date %}
-        <div class="font-weight-light font-italic">
-          {% trans "Published on: "%} {{ petition.publication_date|date:"SHORT_DATE_FORMAT" }}
-        </div>
+        <p class="font-weight-light font-italic">
+          {% blocktrans trimmed with date=petition.publication_date|date:"SHORT_DATE_FORMAT" %}Published on {{ date }}{% endblocktrans %}
+        </p>
         {% endif %}
         {{ petition.text|html_sanitize|safe }}
       </div>
@@ -380,7 +247,7 @@ dataLayer = [];
 {% endblock main_content %}
 
 {% block extrajs %}
-<script type="text/javascript" src="{% static "js/petition.js" %}"></script>
+<script src="{% static "js/sign.js" %}" defer></script>
 {% if petition.has_any_share_button %}
 <script type="text/javascript" src="{% static "vendor/rrssb/js/rrssb.min.js" %}"></script>
 <script>
@@ -402,31 +269,25 @@ dataLayer = [];
 </script>
 <script type="text/javascript" src="{% static "vendor/msb/js/mastodon.js" %}"></script>
 {% endif %}
-{% if petition_is_signed %}
-<script type="text/javascript">
-$("#show_sign_success").modal("show");
-</script>
-{% endif %}
-{% if signature_is_confirmed %}
-<script type="text/javascript">
-$("#show_confirm_success").modal("show");
-</script>
-{% endif %}
 {% endblock %}
 
 {% block footer %}
 {% if petition.footer_links|trim or petition.footer_text|trim %}
 <div class="container">
-<div class="row footer-wrapper">
-    <footer role="contentinfo" class="footer col-12">
-        <div class="footer-links ml-2">
-            {{ petition.footer_links|html_sanitize|safe }}
-        </div>
-        <div class="footer-text ml-2">
-            {{ petition.footer_text|html_sanitize|safe }}
-        </div>
-    </footer>
-</div>
+  <div class="row footer-wrapper">
+      <footer role="contentinfo" class="footer col-12">
+          <div class="footer-links ml-2">
+              {{ petition.footer_links|html_sanitize|safe }}
+          </div>
+          <div class="footer-text ml-2">
+              {{ petition.footer_text|html_sanitize|safe }}
+          </div>
+      </footer>
+  </div>
 </div>
 {% endif %}
+
+
+{% include "components/report_dialog.html" %}
+
 {% endblock %}

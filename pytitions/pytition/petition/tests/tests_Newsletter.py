@@ -36,12 +36,17 @@ class NewsletterSubscriptionTest(TestCase):
 
     def test_signature_ok_when_newsletter_times_out(self):
         data = {'first_name': 'Alan', 'last_name': 'John', 'email': 'alan@john.org', 'phone': '',
-                'subscribed_to_mailinglist': 'on'}
+                'subscribed_to_mailinglist': 'on', 'consent': 'on'}
+        response = self.client.post(reverse('create_signature', args=[self.petition.id]), data)
+        self.assertEqual(response.status_code, 302)
+        signature = Signature.objects.get(petition=self.petition, email='alan@john.org')
+        # the subscription happens on confirmation (GD-06)
         with mock.patch('petition.helpers.requests.post', side_effect=requests.Timeout) as post:
-            response = self.client.post(reverse('create_signature', args=[self.petition.id]), data)
+            response = self.client.get(reverse('confirm', args=[self.petition.id, signature.confirmation_hash]))
         self.assertTrue(post.called)
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(Signature.objects.filter(petition=self.petition, email='alan@john.org').exists())
+        signature.refresh_from_db()
+        self.assertTrue(signature.confirmed)
 
     def test_mail_method_uses_the_smtp_server_of_the_petition(self):
         self.petition.newsletter_subscribe_method = 'MAIL'

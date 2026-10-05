@@ -1,0 +1,17 @@
+{% extends 'layouts/layout.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Report this petition to moderation" %}{% endblock title %}
+
+{% block extrameta %}
+<meta name="robots" content="noindex">
+{% endblock %}
+
+{% block main_content %}
+<div class="container fp-narrow mb-4">
+  <h1 class="h2">{% trans "Report this petition to moderation" %}</h1>
+  <p>{% blocktrans trimmed with title=petition.title|striptags %}Petition: “{{ title }}”{% endblocktrans %}</p>
+  {% include "components/report_form.html" %}
+</div>
+{% endblock main_content %}

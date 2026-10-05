@@ -1,0 +1,77 @@
+/*
+ * Framapétitions design tokens and accessibility baseline.
+ * Loaded after custom.css; no build step. Colours come from the
+ * framasoft.org palette (--f-*). Contrast ratios are against white.
+ */
+:root {
+  --fp-primary: #725794;          /* 5.99:1 */
+  --fp-primary-strong: #50386e;   /* 9.85:1, focus ring */
+  --fp-primary-soft: #fbf5ff;
+  --fp-accent: #cc4e13;           /* borders and large text only */
+  --fp-accent-text: #9c3c1c;      /* 6.83:1 */
+  --fp-text: #1a1e2c;             /* 16.59:1 */
+  --fp-text-muted: #4a5268;       /* 7.78:1 */
+  --fp-border: #e2e7f0;
+  --fp-border-strong: #677490;    /* 4.69:1, input borders */
+  --fp-success: #29573b;
+  --fp-success-bg: #f2fff5;
+  --fp-danger: #c42719;
+  --fp-danger-bg: #fff6f5;
+  --fp-warning: #9c3c1c;
+  --fp-warning-bg: #fff9f0;
+  --color-main: var(--fp-primary);
+  --color-accent: var(--fp-accent);
+
+  --fp-font: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  --fp-s1: .25rem;
+  --fp-s2: .5rem;
+  --fp-s3: .75rem;
+  --fp-s4: 1rem;
+  --fp-s6: 1.5rem;
+  --fp-s8: 2rem;
+  --fp-s12: 3rem;
+  --fp-s16: 4rem;
+  --fp-radius: 12px;
+  --fp-tap: 44px;
+}
+
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--fp-primary-strong);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+html {
+  scroll-padding-top: 5rem;
+}
+
+.form-control,
+.custom-select {
+  border-color: var(--fp-border-strong);
+  font-size: 1rem;
+}
+
+.form-control:focus,
+.custom-select:focus,
+.btn:focus,
+.btn.focus {
+  box-shadow: none;
+}
+
+.invalid-feedback,
+.text-danger {
+  color: var(--fp-danger) !important;
+}
+
+.form-control.is-invalid {
+  border-color: var(--fp-danger);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

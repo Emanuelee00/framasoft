@@ -24,7 +24,7 @@ h1 {
     font-size: 40;
 }
 
-div[id="section"] {
+div.section {
     background-color: rgb(222, 239, 239); 
     padding: 30; 
     margin-top: 20px; 
@@ -40,7 +40,7 @@ div[id="subsection2"] {
     padding-bottom: 20;
 }
 
-h2[id="title"] {
+h2.title {
     font-size: 30; 
     margin-top: 0
 }

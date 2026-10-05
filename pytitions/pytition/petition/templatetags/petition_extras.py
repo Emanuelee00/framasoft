@@ -1,4 +1,5 @@
 from django import template
+from django.utils.formats import number_format
 from petition.helpers import sanitize_html
 
 register = template.Library()
@@ -34,3 +35,20 @@ def html_sanitize(html):
 @register.filter
 def trim(text):
     return text.strip("\r\n ")
+
+@register.filter
+def progress_percent(count, target):
+    """Share of the goal reached, as an integer between 0 and 100"""
+    try:
+        count, target = int(count), int(target)
+    except (TypeError, ValueError):
+        return 0
+    if target <= 0:
+        return 0
+    return max(0, min(100, count * 100 // target))
+
+
+@register.filter
+def grouped(value):
+    """Localized number with thousands separators (1 234 567 in French)"""
+    return number_format(value, force_grouping=True)

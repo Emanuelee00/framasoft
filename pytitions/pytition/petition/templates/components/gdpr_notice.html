@@ -1,0 +1,24 @@
+{% load i18n %}
+{% url 'privacy_notice' as privacy_url %}
+<div class="fp-gdpr" id="fp-gdpr-notice">
+  <p>
+    <strong>{% trans "Your data." %}</strong>
+    {% blocktrans trimmed with creator=petition.owner_name %}
+      Your name, your email address (and your phone number if you give it) are sent to {{ creator }},
+      author of this petition, and hosted by the Framasoft association, in France.
+    {% endblocktrans %}
+  </p>
+  <details class="fp-details">
+    <summary>{% trans "More about your data" %}</summary>
+    <p>
+      {% blocktrans trimmed with days=settings.UNCONFIRMED_SIGNATURE_RETENTION_DAYS|default:7 ip_days=settings.SIGNATURE_IP_HASH_RETENTION_DAYS|default:7 %}
+        Signing a petition may reveal your opinions: we never publish the list of signatories, only their number.
+        An unconfirmed signature is deleted after {{ days }} days.
+        An encrypted fingerprint of your IP address is kept for {{ ip_days }} days to fight abuse.
+        You can view or delete your signature at any time with the link received by email.
+        You can also lodge a complaint with the CNIL.
+      {% endblocktrans %}
+    </p>
+    <p><a href="{{ privacy_url|default:'https://framasoft.org/cgu' }}">{% trans "Read more about your personal data" %}</a></p>
+  </details>
+</div>

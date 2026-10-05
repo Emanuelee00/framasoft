@@ -1,0 +1,28 @@
+{% load i18n %}
+{% for message in messages %}
+{% if "throttled" in message.extra_tags %}
+<div class="fp-alert fp-alert-warning" role="alert">
+  {% include "components/alert_icon.html" with kind="warning" %}
+  <div>
+    <p class="fp-alert-title">{% trans "Your signature has not been recorded" %}</p>
+    <p>{{ message }}</p>
+    <p>{% trans "This can happen on a shared connection (school, office, public Wi-Fi). Please try again later." %}</p>
+  </div>
+</div>
+{% elif message.level == DEFAULT_MESSAGE_LEVELS.ERROR or message.level == DEFAULT_MESSAGE_LEVELS.WARNING %}
+<div class="fp-alert fp-alert-danger" role="alert">
+  {% include "components/alert_icon.html" with kind="danger" %}
+  <p>{{ message }}</p>
+</div>
+{% elif message.level == DEFAULT_MESSAGE_LEVELS.SUCCESS %}
+<div class="fp-alert fp-alert-success" role="status">
+  {% include "components/alert_icon.html" with kind="success" %}
+  <p>{{ message }}</p>
+</div>
+{% else %}
+<div class="fp-alert fp-alert-info" role="status">
+  {% include "components/alert_icon.html" with kind="info" %}
+  <p>{{ message }}</p>
+</div>
+{% endif %}
+{% endfor %}
