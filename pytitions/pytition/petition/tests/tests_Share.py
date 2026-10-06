@@ -28,7 +28,7 @@ class ShareTest(TestCase):
         self.assertNotIn('http://www.linkedin.com', html)
         self.assertNotIn('http://tumblr.com', html)
         self.assertIn('<a href="#MastodonModal" role="button" class="mastodon-share-button"', html)
-        self.assertLess(html.index('</form>', html.index('<form')), html.index('class="fp-share"'))
+        self.assertLess(html.index('</form>', html.index('<form')), html.index('class="fp-share '))
 
     def test_share_stays_visible_after_signing(self):
         data = {'first_name': 'Alan', 'last_name': 'John', 'email': 'alan@john.org', 'consent': 'on'}
@@ -36,7 +36,7 @@ class ShareTest(TestCase):
         html = response.content.decode()
         self.assertIn('Check your mailbox', html)  # signature state shown instead of the form
         self.assertNotIn('class="fp-sign-form"', html)
-        self.assertIn('class="fp-share"', html)
+        self.assertIn('class="fp-share ', html)
         self.assertIn('Share the petition', html)
 
     def test_no_share_block_without_share_buttons(self):
@@ -44,4 +44,4 @@ class ShareTest(TestCase):
             setattr(self.petition, 'has_%s_share_button' % flag, False)
         self.petition.save()
         html = self.client.get(reverse('detail', args=[self.petition.id])).content.decode()
-        self.assertNotIn('class="fp-share"', html)
+        self.assertNotIn('class="fp-share ', html)

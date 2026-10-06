@@ -36,7 +36,7 @@
     <div class="fp-dash-section-head">
       <h2 id="orgs-settings-title">{% trans "Organizations" %}</h2>
       {% if not settings.RESTRICT_ORG_CREATION or request.user.is_superuser %}
-      <a href="{% url 'org_create' %}" class="fp-btn fp-btn-secondary">{% include "components/icon.html" with name="plus" %}{% trans "New organization" %}</a>
+      <a href="{% url 'org_create' %}" class="fp-btn fp-btn-secondary fp-anim-turn">{% include "components/icon.html" with name="plus" %}{% trans "New organization" %}</a>
       {% endif %}
     </div>
     {% if orgs %}

@@ -44,7 +44,7 @@
 
   {% include "components/gdpr_notice.html" %}
 
-  <button type="submit" class="fp-btn fp-btn-primary fp-btn-lg fp-btn-block fp-sign-btn">{% trans "Sign the petition" %}</button>
+  <button type="submit" class="fp-btn fp-btn-primary fp-btn-lg fp-btn-block fp-sign-btn fp-anim-tilt">{% include "components/icon.html" with name="signature" %}{% trans "Sign the petition" %}</button>
 
   <p class="fp-help fp-disclaimer">{% trans "The content of this petition is neither approved nor endorsed by the Framasoft association." %}</p>
 </form>

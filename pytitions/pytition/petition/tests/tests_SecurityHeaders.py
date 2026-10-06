@@ -120,6 +120,8 @@ class SecurityHeadersTest(TestCase):
         policy = build_policy({'script-src': ["'self'", '{nonce}'], 'object-src': ["'none'"]}, 'abc')
         self.assertEqual(policy, "script-src 'self' 'nonce-abc'; object-src 'none'")
 
+    # PYTITION_HTTPS=0 (local runs) sets SECURE_HSTS_SECONDS to 0: force the production value here
+    @override_settings(SECURE_HSTS_SECONDS=31536000)
     def test_hsts_on_https(self):
         response = self.client.get(reverse('login'), secure=True)
         self.assertEqual(response['Strict-Transport-Security'],

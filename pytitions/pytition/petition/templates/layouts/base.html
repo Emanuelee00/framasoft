@@ -25,6 +25,7 @@
     <!-- Design system: tokens, then components -->
     <link href="{% static "css/fp-tokens.css" %}" rel="stylesheet">
     <link href="{% static "css/fp-components.css" %}" rel="stylesheet">
+    <link href="{% static "css/fp-motion.css" %}" rel="stylesheet">
 
     <!-- Extra media -->
     {% block media %}
@@ -70,6 +71,7 @@
     <script src="{% static "vendor/popper-1.16.1.min.js" %}"></script>
     <script src="{% static "vendor/bootstrap-4.6.2/js/bootstrap.min.js" %}"></script>
     <script src="{% static "js/fp-ui.js" %}" defer></script>
+    <script src="{% static "js/fp-motion.js" %}" defer></script>
     <!-- Framasoft top bar: deferred, never blocks rendering -->
     <script src="https://framasoft.org/nav/nav.js" defer></script>
     {% block extrajs %}

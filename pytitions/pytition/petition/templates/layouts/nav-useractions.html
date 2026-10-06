@@ -1,7 +1,7 @@
 {% load i18n %}
 <div class="fp-header-user">
   {% if user.is_authenticated or settings.ALLOW_REGISTER %}
-  <a class="fp-btn fp-btn-primary" href="{% url "user_petition_wizard" %}">
+  <a class="fp-btn fp-btn-primary fp-anim-turn" href="{% url "user_petition_wizard" %}">
     {% include "components/icon.html" with name="plus" %}
     {% trans "Create a petition" %}
   </a>

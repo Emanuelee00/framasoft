@@ -5299,3 +5299,45 @@ msgstr "Illustrations : <a href=\"https://www.davidrevoy.com\">David Revoy</a>, 
 
 msgid "Illustration: David Revoy, CC BY 4.0."
 msgstr "Illustration : David Revoy, CC BY 4.0."
+
+msgid "Why Framapétitions?"
+msgstr "Pourquoi Framapétitions ?"
+
+msgid "Free of charge"
+msgstr "Gratuit"
+
+msgid "Creating, signing and sharing a petition costs nothing. The service is funded by donations, not by your data."
+msgstr "Créer, signer et partager une pétition ne coûte rien. Le service est financé par des dons, pas par vos données."
+
+msgid "Data that does not stay forever"
+msgstr "Des données qui ne restent pas éternellement"
+
+msgid "Each petition has a deletion date, one year after its creation by default, which its author can push back. On that day the petition and its signatures are permanently deleted; a reminder is sent beforehand."
+msgstr "Chaque pétition a une date de suppression, un an après sa création par défaut, que son auteur·ice peut repousser. Ce jour-là, la pétition et ses signatures sont supprimées définitivement ; un rappel est envoyé avant."
+
+msgid "Accessible to everyone"
+msgstr "Accessible à toutes et à tous"
+
+msgid "Pages designed to be used with a keyboard or a screen reader, with readable contrasts, on a phone as well as on a computer."
+msgstr "Des pages pensées pour être utilisées au clavier ou avec un lecteur d'écran, avec des contrastes lisibles, sur téléphone comme sur ordinateur."
+
+msgid "How does it work?"
+msgstr "Comment ça marche ?"
+
+msgid "Write your petition"
+msgstr "Rédigez votre pétition"
+
+msgid "A title, a text and, if you wish, a goal and a picture. Nothing is public until you decide to publish."
+msgstr "Un titre, un texte et, si vous le souhaitez, un objectif et une image. Rien n'est public tant que vous n'avez pas décidé de publier."
+
+msgid "Spread the word"
+msgstr "Faites-la connaître"
+
+msgid "Each petition has its own address: send it by e-mail or share it on Mastodon and other networks."
+msgstr "Chaque pétition a sa propre adresse : envoyez-la par e-mail ou partagez-la sur Mastodon et d'autres réseaux."
+
+msgid "Follow the signatures"
+msgstr "Suivez les signatures"
+
+msgid "Each signature is confirmed by e-mail. Follow the count from your dashboard and download the list before the deletion date."
+msgstr "Chaque signature est confirmée par e-mail. Suivez le décompte depuis votre tableau de bord et téléchargez la liste avant la date de suppression."

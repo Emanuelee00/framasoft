@@ -19,7 +19,7 @@
     <p class="fp-petition-card-meta">{% blocktrans with owner=petition.owner %}by {{ owner }}{% endblocktrans %}</p>
     <p class="fp-petition-card-excerpt">{{ petition.text|striptags|truncatewords:40 }}</p>
     {% with count=petition.signature_number %}
-    <p class="fp-petition-card-count"><strong>{{ count|grouped }}</strong> {% blocktrans trimmed count counter=count %}signature{% plural %}signatures{% endblocktrans %}</p>
+    <p class="fp-petition-card-count"><strong data-fp-countup>{{ count|grouped }}</strong> {% blocktrans trimmed count counter=count %}signature{% plural %}signatures{% endblocktrans %}</p>
     {% if petition.target > 0 %}
     <progress class="fp-progress-bar fp-progress-bar-sm" max="100" value="{{ count|progress_percent:petition.target }}" aria-label="{% trans 'Progress towards the goal' %}">{{ count|progress_percent:petition.target }}%</progress>
     {% endif %}

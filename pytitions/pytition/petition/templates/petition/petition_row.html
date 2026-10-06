@@ -6,7 +6,7 @@
   Actions are POST forms (data-fp-async) or dialogs; see js/fp-dashboard.js.
 {% endcomment %}
 {% with pid=petition.id moderated=petition.is_moderated count=petition.signature_number %}
-<li class="fp-prow{% if moderated %} fp-prow-moderated{% endif %}" id="petition-{{ pid }}">
+<li class="fp-prow fp-anim-turn{% if moderated %} fp-prow-moderated{% endif %}" id="petition-{{ pid }}">
   <div class="fp-prow-main">
     <h3 class="fp-prow-title" id="petition-{{ pid }}-title">
       {% if not in_bin and not org or not in_bin and user_permissions.can_modify_petitions %}
@@ -38,7 +38,7 @@
   <dl class="fp-prow-stats">
     <div class="fp-prow-stat">
       <dt>{% trans "Signatures" %}</dt>
-      <dd><strong class="fp-prow-count">{{ count|grouped }}</strong>{% if petition.target > 0 %} <span class="fp-muted">{% blocktrans with target=petition.target|grouped %}of {{ target }}{% endblocktrans %}</span>{% endif %}</dd>
+      <dd><strong class="fp-prow-count" data-fp-countup>{{ count|grouped }}</strong>{% if petition.target > 0 %} <span class="fp-muted">{% blocktrans with target=petition.target|grouped %}of {{ target }}{% endblocktrans %}</span>{% endif %}</dd>
       {% if petition.target > 0 %}
       <dd><progress class="fp-progress-bar fp-progress-bar-sm" max="100" value="{{ count|progress_percent:petition.target }}" aria-label="{% trans 'Progress towards the goal' %}">{{ count|progress_percent:petition.target }}%</progress></dd>
       {% endif %}
@@ -60,7 +60,7 @@
     {% if in_bin %}
       {% if not org or user_permissions.can_create_petitions %}
       <form method="post" action="{% url "petition_restore" pid %}">{% csrf_token %}
-        <button type="submit" class="fp-btn fp-btn-secondary">{% include "components/icon.html" with name="action-undo" %}{% trans "Restore" %}</button>
+        <button type="submit" class="fp-btn fp-btn-secondary fp-anim-back">{% include "components/icon.html" with name="action-undo" %}{% trans "Restore" %}</button>
       </form>
       {% endif %}
       {% if not org or user_permissions.can_delete_petitions %}
@@ -68,33 +68,33 @@
       {% endif %}
     {% else %}
       {% if not org or user_permissions.can_modify_petitions %}
-      <a class="fp-btn fp-btn-secondary" href="{% url "edit_petition" pid %}">{% include "components/icon.html" with name="pencil" %}{% trans "Edit" %}<span class="fp-sr-only"> {{ petition.title|striptags }}</span></a>
+      <a class="fp-btn fp-btn-secondary fp-anim-tilt" href="{% url "edit_petition" pid %}">{% include "components/icon.html" with name="pencil" %}{% trans "Edit" %}<span class="fp-sr-only"> {{ petition.title|striptags }}</span></a>
       {% endif %}
       <details class="fp-menu">
         <summary class="fp-btn fp-btn-tertiary">{% trans "More" %}<span class="fp-sr-only"> {% blocktrans with title=petition.title|striptags %}actions for {{ title }}{% endblocktrans %}</span></summary>
         <div class="fp-menu-panel">
           <ul class="fp-menu-list">
-            <li><a class="fp-menu-item" href="{{ petition.url }}">{% include "components/icon.html" with name="eye" %}{% trans "View the petition" %}</a></li>
+            <li><a class="fp-menu-item fp-anim-blink" href="{{ petition.url }}">{% include "components/icon.html" with name="eye" %}{% trans "View the petition" %}</a></li>
             {% if not org or user_permissions.can_view_signatures %}
-            <li><a class="fp-menu-item" href="{% url "show_signatures" pid %}">{% include "components/icon.html" with name="spreadsheet" %}{% trans "Signatures and export" %}</a></li>
+            <li><a class="fp-menu-item fp-anim-drop" href="{% url "show_signatures" pid %}">{% include "components/icon.html" with name="spreadsheet" %}{% trans "Signatures and export" %}</a></li>
             {% endif %}
             {% if not moderated %}{% if not org or user_permissions.can_modify_petitions %}
             <li>
               {% if petition.published %}
               <form method="post" action="{% url "petition_unpublish" pid %}" data-fp-async>{% csrf_token %}
-                <button type="submit" class="fp-menu-item">{% include "components/icon.html" with name="lock-locked" %}{% trans "Unpublish" %}</button>
+                <button type="submit" class="fp-menu-item fp-anim-pop">{% include "components/icon.html" with name="lock-locked" %}{% trans "Unpublish" %}</button>
               </form>
               {% else %}
               <form method="post" action="{% url "petition_publish" pid %}" data-fp-async>{% csrf_token %}
-                <button type="submit" class="fp-menu-item">{% include "components/icon.html" with name="globe" %}{% trans "Publish" %}</button>
+                <button type="submit" class="fp-menu-item fp-anim-turn">{% include "components/icon.html" with name="globe" %}{% trans "Publish" %}</button>
               </form>
               {% endif %}
             </li>
             {% endif %}{% endif %}
-            <li><a class="fp-menu-item" href="{% url "transfer_petition" pid %}">{% include "components/icon.html" with name="share-boxed" %}{% trans "Transfer to someone else" %}</a></li>
+            <li><a class="fp-menu-item fp-anim-nudge" href="{% url "transfer_petition" pid %}">{% include "components/icon.html" with name="share-boxed" %}{% trans "Transfer to someone else" %}</a></li>
             {% if not org or user_permissions.can_delete_petitions %}
             <li class="fp-menu-sep" role="presentation"></li>
-            <li><button type="button" class="fp-menu-item fp-js-only" data-fp-dialog-open="bin-{{ pid }}">{% include "components/icon.html" with name="trash" %}{% trans "Move to the bin" %}</button></li>
+            <li><button type="button" class="fp-menu-item fp-anim-tilt fp-js-only" data-fp-dialog-open="bin-{{ pid }}">{% include "components/icon.html" with name="trash" %}{% trans "Move to the bin" %}</button></li>
             {% endif %}
           </ul>
         </div>

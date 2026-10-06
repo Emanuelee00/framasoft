@@ -3,7 +3,7 @@
 {% with count=petition.signature_number target=petition.target %}
 <div class="fp-progress">
   <p class="fp-progress-count">
-    <strong>{{ count|grouped }}</strong>
+    <strong data-fp-countup>{{ count|grouped }}</strong>
     {% blocktrans trimmed count counter=count %}signature{% plural %}signatures{% endblocktrans %}
     {% if target > 0 %}<span class="fp-progress-goal">{% blocktrans trimmed with goal=target|grouped %}out of {{ goal }}{% endblocktrans %}</span>{% endif %}
   </p>

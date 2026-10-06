@@ -577,6 +577,13 @@ summary.fp-nav-link {
   height: 1.5em;
 }
 
+/* Heading led by an icon badge (fp-motion.css) */
+.fp-heading-icon {
+  display: flex;
+  align-items: center;
+  gap: var(--fp-s3);
+}
+
 /* 6. Buttons ---------------------------------------------------------- */
 
 .fp-btn {
@@ -2045,25 +2052,6 @@ summary.fp-nav-link {
 .fp-art-frame img {
   border-radius: var(--fp-radius);
   box-shadow: var(--fp-shadow-md);
-}
-
-/* Icon in a ring, Framasoft style: violet and orange alternate */
-.fp-icon-ring {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 3.5rem;
-  height: 3.5rem;
-  border: 2px solid var(--fp-violet-6);
-  border-radius: 50%;
-  background: var(--fp-surface);
-  color: var(--fp-primary);
-  font-size: 1.5rem;
-}
-
-.fp-icon-ring-orange {
-  border-color: var(--fp-orange-5);
-  color: var(--fp-orange-6);           /* 3.55:1, icon only */
 }
 
 /* Credits line of the footer */

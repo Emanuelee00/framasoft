@@ -7,9 +7,9 @@
   {% include "petition/form_fields.html" with form=form %}
   {% if form.expires_at %}{% include "petition/expiry_field.html" with field=form.expires_at %}{% endif %}
   <div class="fp-actions fp-wizard-actions">
-    <button type="submit" class="fp-btn fp-btn-primary">{% trans "Next: publication" %}{% include "components/icon.html" with name="arrow-right" %}</button>
+    <button type="submit" class="fp-btn fp-btn-primary fp-anim-nudge">{% trans "Next: publication" %}{% include "components/icon.html" with name="arrow-right" %}</button>
     {% if wizard.steps.prev %}
-    <button name="wizard_goto_step" class="fp-btn fp-btn-tertiary" type="submit" value="{{ wizard.steps.prev }}" formnovalidate>{% include "components/icon.html" with name="arrow-left" %}{% trans "Back" %}</button>
+    <button name="wizard_goto_step" class="fp-btn fp-btn-tertiary fp-anim-back" type="submit" value="{{ wizard.steps.prev }}" formnovalidate>{% include "components/icon.html" with name="arrow-left" %}{% trans "Back" %}</button>
     {% endif %}
   </div>
 </form>

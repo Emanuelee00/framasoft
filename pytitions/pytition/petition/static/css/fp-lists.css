@@ -91,9 +91,11 @@
   }
 }
 
-/* Home: commitments ----------------------------------------------------- */
+/* Home: commitments and steps ----------------------------------------------------- */
 
-.fp-values h2 {
+/* Section title on a tilted orange label, as on the Framasoft landing pages */
+.fp-values-title {
+  font-size: var(--fp-text-xl);
   margin-bottom: var(--fp-s6);
 }
 

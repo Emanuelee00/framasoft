@@ -11,6 +11,7 @@
 
 {% block extracss %}
 <link href="{% static "css/styleguide.css" %}" rel="stylesheet">
+<link href="{% static "css/fp-lists.css" %}" rel="stylesheet">
 {% endblock extracss %}
 
 {% block main_content %}
@@ -18,7 +19,7 @@
   <div class="fp-page-header">
     <p class="fp-kicker">Framapetitions</p>
     <h1>Design system</h1>
-    <p class="fp-lead">Tokens, components and layout blocks. Every example is live markup: open "Markup" under it and copy. Sources: <code>static/css/fp-tokens.css</code>, <code>static/css/fp-components.css</code>, <code>static/js/fp-ui.js</code>, <code>templates/components/</code>.</p>
+    <p class="fp-lead">Tokens, components and layout blocks. Every example is live markup: open "Markup" under it and copy. Sources: <code>static/css/fp-tokens.css</code>, <code>static/css/fp-components.css</code>, <code>static/css/fp-motion.css</code>, <code>static/js/fp-ui.js</code>, <code>static/js/fp-motion.js</code>, <code>templates/components/</code>.</p>
   </div>
 
   <div class="sg-layout">
@@ -43,6 +44,7 @@
         <li><a href="#empty">Empty state</a></li>
         <li><a href="#progress">Progress</a></li>
         <li><a href="#dialog">Dialog</a></li>
+        <li><a href="#motion">Motion</a></li>
       </ol>
     </nav>
 
@@ -376,10 +378,10 @@
 
       <section id="progress" class="sg-section">
         <h2>Progress</h2>
-        <p>Native <code>&lt;progress&gt;</code> with a label: readable without JavaScript, no animation. The count is written in full next to it (<code>components/progress.html</code> on the petition page).</p>
+        <p>Native <code>&lt;progress&gt;</code> with a label: readable without JavaScript. The count is written in full next to it (<code>components/progress.html</code> on the petition page). When they come into view, <code>fp-motion.js</code> fills the bar and counts the number marked <code>data-fp-countup</code> up from 0 (700 ms, once; screen readers get the final value only; nothing with reduced motion).</p>
         {% fp_example "Markup" %}
         <div class="fp-progress">
-          <p class="fp-progress-count"><strong>1 284</strong> signatures <span class="fp-progress-goal">out of 2 000</span></p>
+          <p class="fp-progress-count"><strong data-fp-countup>1 284</strong> signatures <span class="fp-progress-goal">out of 2 000</span></p>
           <progress class="fp-progress-bar" max="100" value="64" aria-label="Progress towards the goal">64%</progress>
         </div>
         <progress class="fp-progress-bar fp-progress-bar-sm" max="100" value="30" aria-label="Upload">30%</progress>
@@ -402,6 +404,53 @@
             <button class="fp-btn fp-btn-danger" value="confirm">Delete</button>
           </form>
         </dialog>
+        {% endfp_example %}
+      </section>
+
+      <section id="motion" class="sg-section">
+        <h2>Motion</h2>
+        <p>Micro-interactions tell people that the page heard them: short, once, never in a loop. Tokens: <code>--fp-duration-fast</code> 120 ms (press, colour), <code>--fp-duration</code> 200 ms (hover), <code>--fp-duration-slow</code> 300 ms (icon, entrance); <code>--fp-ease</code> for state changes, <code>--fp-ease-out</code> for entrances, <code>--fp-ease-spring</code> for a small bounce; <code>--fp-lift</code> and <code>--fp-press</code> for the movement. Rules:</p>
+        <ul class="sg-list">
+          <li>Only <code>transform</code>, <code>opacity</code> and colours: nothing moves the layout.</li>
+          <li>Every hover sits in <code>@media (hover: hover)</code> and has a <code>:focus-visible</code> twin; nothing sticks on touch screens.</li>
+          <li><code>prefers-reduced-motion: reduce</code>: no movement, no count-up, colour changes only.</li>
+          <li>Choose the icon animation by meaning, not at random.</li>
+        </ul>
+
+        <h3>Icon badge</h3>
+        <p><code>.fp-icon-badge</code> (violet) or <code>.fp-icon-badge-orange</code>, <code>-sm</code> next to a heading (<code>.fp-heading-icon</code>). Put an <code>fp-anim-*</code> class on the element that reacts (a point, a card, a button, a section): on hover or keyboard focus the circle fills and the icon moves once; pressed, it shrinks a little. When it comes into view, a ring spreads out once. Animations: <code>pop</code> (yes, protect), <code>tilt</code> (speak, write), <code>turn</code> (time, add), <code>rise</code> (up), <code>drop</code> (download), <code>nudge</code> / <code>back</code> (go forward, go back), <code>blink</code> (hide).</p>
+        {% fp_example "Markup" %}
+        <ul class="fp-grid fp-grid-3 fp-values-list">
+          <li class="fp-value fp-anim-turn"><span class="fp-icon-badge fp-value-icon">{% include "components/icon.html" with name="hourglass-half" %}</span><h4>turn</h4><p>Deletion date</p></li>
+          <li class="fp-value fp-anim-blink"><span class="fp-icon-badge fp-icon-badge-orange fp-value-icon">{% include "components/icon.html" with name="eye-slash" %}</span><h4>blink</h4><p>No trackers</p></li>
+          <li class="fp-value fp-anim-pop"><span class="fp-icon-badge fp-value-icon">{% include "components/icon.html" with name="user-shield" %}</span><h4>pop</h4><p>Your data</p></li>
+        </ul>
+        <h4 class="fp-heading-icon fp-anim-tilt"><span class="fp-icon-badge fp-icon-badge-sm fp-icon-badge-orange">{% include "components/icon.html" with name="signature" %}</span>Heading with a small badge</h4>
+        {% endfp_example %}
+
+        <h3>Buttons, cards, links</h3>
+        <p>Buttons lift by 1px with a shadow and are pressed on click (<code>--fp-press</code>); their icon follows its <code>fp-anim-*</code>. <code>.fp-card-interactive</code> lifts with a deeper shadow, the picture of a petition card zooms slightly. Dashboard rows (<code>.fp-prow</code>) stay in place, only their frame answers. Navigation links get an underline that grows from the left; links in text keep their underline and thicken it.</p>
+        {% fp_example "Markup" %}
+        <div class="fp-actions">
+          <button type="button" class="fp-btn fp-btn-primary fp-anim-turn">{% include "components/icon.html" with name="plus" %}New petition</button>
+          <button type="button" class="fp-btn fp-btn-secondary fp-anim-drop">{% include "components/icon.html" with name="data-transfer-download" %}Download</button>
+          <button type="button" class="fp-btn fp-btn-primary fp-anim-nudge">Next{% include "components/icon.html" with name="arrow-right" %}</button>
+          <button type="button" class="fp-btn fp-btn-tertiary fp-anim-back">{% include "components/icon.html" with name="arrow-left" %}Back</button>
+        </div>
+        <p>A <a href="#motion">link in running text</a> and a <a class="fp-nav-link" href="#motion">navigation link</a>.</p>
+        {% endfp_example %}
+
+        <h3>Fields and checkbox</h3>
+        <p>The focus ring closes in on the field. In <code>.fp-check</code>, the tick of a checkbox springs in (a plain square with forced colours).</p>
+        {% fp_example "Markup" %}
+        <div class="fp-field"><label class="fp-label" for="sg-motion-input">Email</label><input class="fp-input" type="email" id="sg-motion-input"></div>
+        <div class="fp-check"><input class="fp-check-input" type="checkbox" id="sg-motion-check"><label for="sg-motion-check">I agree</label></div>
+        {% endfp_example %}
+
+        <h3>Alerts and confirmation</h3>
+        <p>Alerts and states enter with a short fade and rise. In a success state the circle and the tick draw themselves (<code>pathLength="1"</code> in <code>components/alert_icon.html</code>). The stepper fills the line to the current step and settles its marker.</p>
+        {% fp_example "Markup" %}
+        <div class="fp-state fp-alert-success" role="status"><p class="fp-state-title">{% include "components/alert_icon.html" with kind="success" %}Thank you! Your signature is counted</p></div>
         {% endfp_example %}
       </section>
 

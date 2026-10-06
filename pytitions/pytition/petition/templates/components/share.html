@@ -5,8 +5,8 @@ Params: petition, meta (petition_url).
 {% endcomment %}
 {% if petition.has_any_share_button %}
 {% with share_url=meta.petition_url|urlencode:"" share_title=petition.title|striptags %}
-<div class="fp-share">
-  <h3 class="fp-share-title" id="share-title">{% trans "Share the petition" %}</h3>
+<div class="fp-share fp-anim-nudge">
+  <h3 class="fp-share-title fp-heading-icon" id="share-title"><span class="fp-icon-badge fp-icon-badge-sm fp-icon-badge-orange">{% include "components/icon.html" with name="share-nodes" %}</span>{% trans "Share the petition" %}</h3>
   <p class="fp-share-copy" hidden><button type="button" class="fp-btn fp-btn-secondary" data-share-copy="{{ meta.petition_url }}" data-share-copied="{% trans "Link copied" %}">{% trans "Copy the link" %}</button>
   <button type="button" class="fp-btn fp-btn-secondary" data-share-native="{{ meta.petition_url }}" data-share-text="{{ share_title }}" hidden>{% trans "Share…" %}</button>
   <span class="fp-share-status" role="status"></span></p>

@@ -11,7 +11,7 @@
   </div>
   {% if not settings.DISABLE_USER_PETITION %}
   <div class="fp-actions">
-    <a class="fp-btn fp-btn-primary" href="{% url "user_petition_wizard" %}">{% include "components/icon.html" with name="plus" %}{% trans "New petition" %}</a>
+    <a class="fp-btn fp-btn-primary fp-anim-turn" href="{% url "user_petition_wizard" %}">{% include "components/icon.html" with name="plus" %}{% trans "New petition" %}</a>
   </div>
   {% endif %}
 </div>
@@ -25,7 +25,7 @@
   <section class="fp-dash-section" aria-labelledby="templates-title" id="templates">
     <div class="fp-dash-section-head">
       <h2 class="fp-dash-section-title" id="templates-title">{% trans "Petition templates" %}</h2>
-      <a class="fp-btn fp-btn-secondary" href="{% url "user_new_template" %}">{% include "components/icon.html" with name="plus" %}{% trans "New template" %}</a>
+      <a class="fp-btn fp-btn-secondary fp-anim-turn" href="{% url "user_new_template" %}">{% include "components/icon.html" with name="plus" %}{% trans "New template" %}</a>
     </div>
     <p class="fp-help">{% trans "Reuse the same texts and settings in several petitions." %}</p>
     {% include "petition/template_list.html" with templates=user.petitiontemplate_set.all owner=user %}

@@ -105,7 +105,7 @@ class DashboardTest(TestCase):
         make_user("lea")
         self.client.login(username="lea", password="lea")
         html = self.client.get(reverse("user_dashboard")).content.decode()
-        self.assertIn('class="fp-empty"', html)
+        self.assertIn('class="fp-empty ', html)
         self.assertIn(reverse("user_petition_wizard"), html)
 
 

@@ -4,7 +4,7 @@
   {% trans "No petition yet" as empty_title %}
   {% include "components/empty_state.html" with icon="clipboard" title=empty_title text=empty_text action_url=url action_label=label %}
 {% endcomment %}
-<div class="fp-empty">
+<div class="fp-empty fp-anim-pop">
   <div class="fp-art-round fp-empty-art">
     {% include "components/picture.html" with name="shoal" widths="240 480" fallback="480" width="480" height="480" sizes="7rem" %}
     <span class="fp-art-badge">{% include "components/icon.html" with name=icon|default:"document" %}</span>

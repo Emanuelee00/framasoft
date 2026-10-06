@@ -11,7 +11,7 @@
   </div>
   {% if can_create_petition %}
   <div class="fp-actions">
-    <a class="fp-btn fp-btn-primary" href="{% url "org_petition_wizard" org.slugname %}">{% include "components/icon.html" with name="plus" %}{% trans "New petition" %}</a>
+    <a class="fp-btn fp-btn-primary fp-anim-turn" href="{% url "org_petition_wizard" org.slugname %}">{% include "components/icon.html" with name="plus" %}{% trans "New petition" %}</a>
   </div>
   {% endif %}
 </div>
@@ -26,7 +26,7 @@
     <div class="fp-dash-section-head">
       <h2 class="fp-dash-section-title" id="templates-title">{% trans "Petition templates" %}</h2>
       {% if user_permissions.can_create_templates %}
-      <a class="fp-btn fp-btn-secondary" href="{% url "org_new_template" org.slugname %}">{% include "components/icon.html" with name="plus" %}{% trans "New template" %}</a>
+      <a class="fp-btn fp-btn-secondary fp-anim-turn" href="{% url "org_new_template" org.slugname %}">{% include "components/icon.html" with name="plus" %}{% trans "New template" %}</a>
       {% endif %}
     </div>
     <p class="fp-help">{% trans "Reuse the same texts and settings in several petitions." %}</p>

@@ -1,0 +1,363 @@
+/*
+ * Framapétitions micro-interactions (MI-01), reference: /petition/styleguide#motion.
+ * Only transform, opacity and colours move. Hover effects sit in (hover: hover) and have a
+ * keyboard twin; nothing loops. Reduced motion: last block. js/fp-motion.js hides nothing.
+ */
+
+/* 1. Icon badge: icon in a bordered circle; violet and orange alternate */
+.fp-icon-badge {
+  --fp-badge: var(--fp-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 3.5rem;
+  height: 3.5rem;
+  border: 2px solid var(--fp-violet-6);
+  border-radius: 50%;
+  background: var(--fp-surface);
+  color: var(--fp-primary);
+  font-size: 1.5rem;
+  transition: background-color var(--fp-duration) var(--fp-ease), border-color var(--fp-duration) var(--fp-ease), color var(--fp-duration) var(--fp-ease), transform var(--fp-duration-fast) var(--fp-ease);
+}
+
+.fp-icon-badge-orange {
+  --fp-badge: var(--fp-orange-7);
+  border-color: var(--fp-orange-5);
+  color: var(--fp-orange-6);           /* 3.55:1, icon only */
+}
+
+.fp-icon-badge-sm {
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 1.125rem;
+}
+
+/* In view (fp-motion.js): a ring spreads out once */
+.fp-icon-badge.is-inview {
+  animation: fp-ring calc(var(--fp-duration-slow) * 2) var(--fp-ease-out) both;
+}
+
+@keyframes fp-ring {
+  from { box-shadow: 0 0 0 0 var(--fp-violet-3); }
+  to { box-shadow: 0 0 0 .75rem rgba(220, 188, 250, 0); }
+}
+
+/* 2. Icon animations, on the element that reacts (point, card, button, section): its own icon
+ * and the icons of its badges move once. By meaning: pop = yes/protect, tilt = speak/write,
+ * turn = time, rise = up, drop = download, nudge/back = go, blink = hide */
+[class*="fp-anim-"] {
+  --fp-run: none;
+  --fp-turn: 0deg;
+}
+
+.fp-anim-pop { --fp-anim: fp-pop; }
+.fp-anim-tilt { --fp-anim: fp-tilt; }
+.fp-anim-rise { --fp-anim: fp-rise; }
+.fp-anim-drop { --fp-anim: fp-rise; --fp-dir: 1; }
+.fp-anim-nudge { --fp-anim: fp-nudge; }
+.fp-anim-back { --fp-anim: fp-nudge; --fp-dir: -1; }
+.fp-anim-blink { --fp-anim: fp-blink; }
+
+[class*="fp-anim-"] > .fp-icon,
+[class*="fp-anim-"] :is(.fp-icon-badge, .fp-badge, .fp-art-badge) > .fp-icon {
+  animation: var(--fp-run) var(--fp-duration-slow) var(--fp-ease-spring);
+}
+
+.fp-anim-turn > .fp-icon,
+.fp-anim-turn :is(.fp-icon-badge, .fp-badge, .fp-art-badge) > .fp-icon {
+  transform: rotate(var(--fp-turn));
+  transition: transform var(--fp-duration-slow) var(--fp-ease-spring);
+}
+
+@keyframes fp-pop { 50% { transform: scale(1.2); } }
+@keyframes fp-tilt { 30% { transform: rotate(-12deg); } 70% { transform: rotate(8deg); } }
+@keyframes fp-rise { 50% { transform: translateY(calc(var(--fp-dir, -1) * 18%)); } }
+@keyframes fp-nudge { 50% { transform: translateX(calc(var(--fp-dir, 1) * 25%)); } }
+@keyframes fp-blink { 50% { transform: scaleY(.15); } }
+
+/* Hot state: the circle fills, the icon moves */
+@media (hover: hover) {
+  [class*="fp-anim-"]:hover {
+    --fp-run: var(--fp-anim, none);
+    --fp-turn: 180deg;
+  }
+
+  [class*="fp-anim-"]:hover .fp-icon-badge {
+    border-color: var(--fp-badge);
+    background: var(--fp-badge);
+    color: #fff;
+  }
+}
+
+[class*="fp-anim-"]:is(:focus-visible, :has(:focus-visible)) {
+  --fp-run: var(--fp-anim, none);
+  --fp-turn: 180deg;
+}
+
+[class*="fp-anim-"]:is(:focus-visible, :has(:focus-visible)) .fp-icon-badge {
+  border-color: var(--fp-badge);
+  background: var(--fp-badge);
+  color: #fff;
+}
+
+[class*="fp-anim-"]:active .fp-icon-badge {
+  transform: scale(var(--fp-press));
+}
+
+/* 3. Buttons: lift on hover, pressed on click */
+.fp-btn {
+  transition: background-color var(--fp-duration) var(--fp-ease), border-color var(--fp-duration) var(--fp-ease), color var(--fp-duration) var(--fp-ease), box-shadow var(--fp-duration) var(--fp-ease), transform var(--fp-duration) var(--fp-ease);
+}
+
+@media (hover: hover) {
+  .fp-btn:not(.fp-btn-tertiary, :disabled, [aria-disabled="true"]):hover {
+    transform: translateY(calc(var(--fp-lift) / 2));
+    box-shadow: var(--fp-shadow-md);
+  }
+}
+
+.fp-btn:not(.fp-btn-tertiary, :disabled, [aria-disabled="true"]):focus-visible {
+  transform: translateY(calc(var(--fp-lift) / 2));
+}
+
+.fp-btn:not(:disabled, [aria-disabled="true"]):active {
+  transform: scale(var(--fp-press));
+  box-shadow: none;
+  transition-duration: var(--fp-duration-fast);
+}
+
+/* 4. Cards lift, the picture zooms a little */
+.fp-card-interactive {
+  transition: border-color var(--fp-duration) var(--fp-ease), box-shadow var(--fp-duration) var(--fp-ease), transform var(--fp-duration) var(--fp-ease);
+}
+
+.fp-petition-card {
+  overflow: hidden;
+}
+
+.fp-petition-card :is(.fp-petition-card-img, .fp-petition-card-art) {
+  transition: transform var(--fp-duration-slow) var(--fp-ease-out);
+}
+
+@media (hover: hover) {
+  .fp-card-interactive:hover {
+    transform: translateY(var(--fp-lift));
+    box-shadow: var(--fp-shadow-lg);
+  }
+
+  .fp-petition-card:hover :is(.fp-petition-card-img, .fp-petition-card-art) {
+    transform: scale(1.04);
+  }
+}
+
+.fp-card-interactive:focus-within {
+  transform: translateY(var(--fp-lift));
+  box-shadow: var(--fp-shadow-lg);
+}
+
+.fp-card-interactive:active {
+  transform: none;
+  transition-duration: var(--fp-duration-fast);
+}
+
+/* Dashboard rows stay in place, only the frame answers */
+.fp-prow {
+  transition: border-color var(--fp-duration) var(--fp-ease), box-shadow var(--fp-duration) var(--fp-ease);
+}
+
+@media (hover: hover) {
+  .fp-prow:hover {
+    border-color: var(--fp-violet-3);
+    box-shadow: var(--fp-shadow-md);
+  }
+}
+
+.fp-prow:focus-within {
+  border-color: var(--fp-violet-3);
+  box-shadow: var(--fp-shadow-md);
+}
+
+/* 5. Links: underline grows (navigation) or thickens (text) */
+.fp-nav-link:not([aria-current]) {
+  background-image: linear-gradient(currentColor, currentColor);
+  background-position: var(--fp-s3) calc(100% - .5rem);
+  background-size: 0 2px;
+  background-repeat: no-repeat;
+  transition: background-size var(--fp-duration) var(--fp-ease-out), background-color var(--fp-duration) var(--fp-ease), color var(--fp-duration) var(--fp-ease);
+}
+
+@media (hover: hover) {
+  .fp-nav-link:not([aria-current]):hover {
+    background-size: calc(100% - 2 * var(--fp-s3)) 2px;
+  }
+}
+
+.fp-nav-link:not([aria-current]):focus-visible {
+  background-size: calc(100% - 2 * var(--fp-s3)) 2px;
+}
+
+:where(p, li, dd, td, th, figcaption, label, .fp-help, .fp-prose) > a:not([class]),
+.fp-footer-link {
+  text-decoration-thickness: 1px;
+  transition: text-decoration-color var(--fp-duration) var(--fp-ease), text-decoration-thickness var(--fp-duration) var(--fp-ease), color var(--fp-duration) var(--fp-ease);
+}
+
+:where(p, li, dd, td, th, figcaption, label, .fp-help, .fp-prose) > a:not([class]):focus-visible,
+.fp-footer-link:is(:hover, :focus-visible) {
+  text-decoration-thickness: 2px;
+}
+
+/* 6. Fields: the focus ring closes in on the field */
+:is(.fp-input, .fp-textarea, .fp-select, .form-control, .custom-select) {
+  outline: 3px solid transparent;
+  outline-offset: 6px;
+  transition: outline-offset var(--fp-duration) var(--fp-ease-out), outline-color var(--fp-duration) var(--fp-ease), border-color var(--fp-duration-fast) var(--fp-ease);
+}
+
+:is(.fp-input, .fp-textarea, .fp-select, .form-control, .custom-select):focus {
+  border-color: var(--fp-primary);
+}
+
+/* 7. Checkbox: the tick springs in */
+.fp-check [type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: inline-grid;
+  place-content: center;
+  border: 2px solid var(--fp-border-strong);
+  border-radius: 4px;
+  background: var(--fp-surface);
+  cursor: pointer;
+  transition: background-color var(--fp-duration-fast) var(--fp-ease), border-color var(--fp-duration-fast) var(--fp-ease);
+}
+
+.fp-check [type="checkbox"]::before {
+  content: "";
+  width: .75rem;
+  height: .75rem;
+  background: #fff;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0, 43% 62%);
+  transform: scale(0);
+  transition: transform var(--fp-duration) var(--fp-ease-spring);
+}
+
+.fp-check [type="checkbox"]:checked {
+  border-color: var(--fp-primary);
+  background: var(--fp-primary);
+}
+
+.fp-check [type="checkbox"]:checked::before {
+  transform: scale(1);
+}
+
+@media (hover: hover) {
+  .fp-check [type="checkbox"]:hover {
+    border-color: var(--fp-primary);
+  }
+}
+
+.fp-check [type="checkbox"][aria-invalid="true"] {
+  border-color: var(--fp-danger);
+}
+
+.fp-check [type="checkbox"]:disabled {
+  border-color: var(--fp-border);
+  background: var(--fp-disabled-bg);
+  cursor: not-allowed;
+}
+
+@media (forced-colors: active) {
+  .fp-check [type="checkbox"] {
+    border-color: ButtonText;
+  }
+
+  .fp-check [type="checkbox"]::before {
+    background: CanvasText;
+  }
+}
+
+/* 8. Numbers and progress: fp-motion.js counts up when they come into view */
+[data-fp-countup] {
+  display: inline-block;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* 9. Alerts and states enter softly; a success tick draws itself */
+.fp-alert,
+.fp-state {
+  animation: fp-enter var(--fp-duration-slow) var(--fp-ease-out) both;
+}
+
+@keyframes fp-enter {
+  from { opacity: 0; transform: translateY(.5rem); }
+}
+
+.fp-state-title .fp-alert-icon {
+  width: 2rem;
+  height: 2rem;
+}
+
+.fp-alert-success .fp-alert-icon :is(circle, path) {
+  stroke-dasharray: 1;
+  animation: fp-draw var(--fp-duration-slow) var(--fp-ease-out) var(--fp-duration) both;
+}
+
+.fp-alert-success .fp-alert-icon path {
+  animation-delay: calc(var(--fp-duration) + var(--fp-duration-slow));
+}
+
+@keyframes fp-draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+
+/* Round paintings of empty, error and confirmation pages */
+:is(.fp-empty-art, .fp-error-art, .fp-confirm-art) {
+  animation: fp-enter-scale var(--fp-duration-slow) var(--fp-ease-out) both;
+}
+
+@keyframes fp-enter-scale {
+  from { opacity: 0; transform: scale(.92); }
+}
+
+/* 10. Stepper: the line to the current step fills, its marker settles */
+.fp-step.is-done + .fp-step[aria-current="step"]::before {
+  transform-origin: left;
+  animation: fp-grow-x var(--fp-duration-slow) var(--fp-ease-out) both;
+}
+
+.fp-step[aria-current="step"] .fp-step-marker {
+  animation: fp-settle var(--fp-duration-slow) var(--fp-ease-spring) var(--fp-duration) both;
+}
+
+@keyframes fp-grow-x {
+  from { transform: scaleX(0); }
+}
+
+@keyframes fp-settle {
+  from { transform: scale(.6); }
+}
+
+/* Reduced motion: no movement at all, colour changes stay */
+@media (prefers-reduced-motion: reduce) {
+  [class*="fp-anim-"] .fp-icon,
+  .fp-icon-badge,
+  .fp-alert,
+  .fp-state,
+  .fp-alert-icon *,
+  :is(.fp-empty-art, .fp-error-art, .fp-confirm-art),
+  .fp-step::before,
+  .fp-step-marker,
+  .fp-petition-card :is(.fp-petition-card-img, .fp-petition-card-art),
+  .fp-check [type="checkbox"]::before {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .fp-check [type="checkbox"]:not(:checked)::before {
+    opacity: 0;
+  }
+}

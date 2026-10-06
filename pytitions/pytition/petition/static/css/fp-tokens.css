@@ -160,10 +160,17 @@
   --fp-bp-lg: 992px;
   --fp-bp-xl: 1200px;
 
-  /* Motion */
+  /* Motion (MI-01): short, only transform/opacity/colour, patterns in fp-motion.css.
+   * fast = press and colour feedback, base = hover, slow = icon animations and entrances.
+   * Exits use the fast duration (about 60% of the entrance) */
   --fp-duration-fast: 120ms;
   --fp-duration: 200ms;
-  --fp-ease: cubic-bezier(.2, 0, 0, 1);
+  --fp-duration-slow: 300ms;
+  --fp-ease: cubic-bezier(.2, 0, 0, 1);           /* standard, state changes */
+  --fp-ease-out: cubic-bezier(.16, 1, .3, 1);     /* deceleration, entrances */
+  --fp-ease-spring: cubic-bezier(.34, 1.56, .64, 1); /* small overshoot, icon bounce */
+  --fp-lift: -2px;                /* card and button lift on hover */
+  --fp-press: .97;                /* scale of a pressed button */
 
   /* Layers */
   --fp-z-header: 100;
@@ -218,6 +225,12 @@ html {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  /* Nothing moves: only colour and opacity changes remain, without delay */
+  :root {
+    --fp-lift: 0px;
+    --fp-press: 1;
+  }
+
   *, *::before, *::after {
     animation-duration: .01ms !important;
     animation-iteration-count: 1 !important;

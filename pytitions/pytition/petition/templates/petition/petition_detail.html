@@ -126,7 +126,7 @@ content="{{ petition.raw_twitter_description|truncatechars:300 }}"/>
   <div class="fp-summary">
     {% include "components/progress.html" %}
     {% if not sign_state %}
-    <a href="#signer" class="fp-btn fp-btn-primary fp-btn-lg fp-btn-block fp-sign-btn">{% trans "Sign the petition" %}</a>
+    <a href="#signer" class="fp-btn fp-btn-primary fp-btn-lg fp-btn-block fp-sign-btn fp-anim-tilt">{% include "components/icon.html" with name="signature" %}{% trans "Sign the petition" %}</a>
     {% endif %}
   </div>
 
@@ -135,13 +135,13 @@ content="{{ petition.raw_twitter_description|truncatechars:300 }}"/>
       {{ petition.text|html_sanitize|safe }}
     </div>
 
-    <section class="fp-sign-panel" id="petition" aria-labelledby="sign-title">
+    <section class="fp-sign-panel fp-anim-tilt" id="petition" aria-labelledby="sign-title">
       {% if petition.side_text %}
       <div class="fp-sign-intro">
         {{ petition.side_text|html_sanitize|safe }}
       </div>
       {% endif %}
-      <h2 class="fp-sign-title" id="sign-title">{% trans "Sign the petition!" %}</h2>
+      <h2 class="fp-sign-title fp-heading-icon" id="sign-title"><span class="fp-icon-badge fp-icon-badge-sm">{% include "components/icon.html" with name="signature" %}</span>{% trans "Sign the petition!" %}</h2>
       <div class="fp-sign-progress">
         {% include "components/progress.html" %}
       </div>

@@ -40,7 +40,7 @@ class SignerPagesDesignTest(TestCase):
         html = self.client.get(reverse('manage_signature', args=[make_manage_token(self.signature)])).content.decode()
         self.assertIn('<dl class="fp-datalist">', html)
         self.assertIn('<span class="fp-badge fp-badge-warning">awaiting confirmation</span>', html)
-        self.assertIn('class="fp-signer-section fp-danger-zone"', html)
+        self.assertIn('class="fp-signer-section fp-danger-zone ', html)
         # every petition has a deletion date (EXP-01), shown to the signer
         self.assertIn('class="fp-expiry"', html)
 

@@ -22,7 +22,7 @@
   <div class="fp-actions fp-wizard-actions">
     <button type="submit" name="redirect" value="1" class="fp-btn fp-btn-primary">{% trans "Create and finish the settings" %}</button>
     <button type="submit" name="redirect" value="0" class="fp-btn fp-btn-secondary">{% trans "Create and go to the dashboard" %}</button>
-    <button name="wizard_goto_step" class="fp-btn fp-btn-tertiary" type="submit" value="{{ wizard.steps.prev }}" formnovalidate>{% include "components/icon.html" with name="arrow-left" %}{% trans "Back" %}</button>
+    <button name="wizard_goto_step" class="fp-btn fp-btn-tertiary fp-anim-back" type="submit" value="{{ wizard.steps.prev }}" formnovalidate>{% include "components/icon.html" with name="arrow-left" %}{% trans "Back" %}</button>
   </div>
 </form>
 {% endblock %}

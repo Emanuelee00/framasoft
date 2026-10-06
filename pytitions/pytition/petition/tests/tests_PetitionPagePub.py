@@ -24,8 +24,9 @@ class PetitionPageDesignTest(TestCase):
     def test_owner_is_linked_and_form_uses_design_system(self):
         html = self.get_html()
         self.assertIn('Petition by <a href="{}">Vélo Lyon</a>'.format(reverse('org_profile', args=['velo-lyon'])), html)
-        self.assertIn('<section class="fp-sign-panel" id="petition" aria-labelledby="sign-title">', html)
-        self.assertIn('class="fp-btn fp-btn-primary fp-btn-lg fp-btn-block fp-sign-btn">Sign the petition</button>', html)
+        self.assertIn('<section class="fp-sign-panel fp-anim-tilt" id="petition" aria-labelledby="sign-title">', html)
+        self.assertRegex(html, r'class="fp-btn fp-btn-primary fp-btn-lg fp-btn-block fp-sign-btn fp-anim-tilt">'
+                               r'<svg class="fp-icon"[^>]*><use href="[^"]*#signature"></use></svg>Sign the petition</button>')
         self.assertNotIn('Fields marked with * are required.', html)
         self.assertNotIn('css/petition.css', html)
 

@@ -23,8 +23,8 @@
 
   {% include "components/alerts.html" %}
 
-  <section class="fp-signer-section" aria-labelledby="data-title">
-    <h2 id="data-title">{% trans "Your data" %}</h2>
+  <section class="fp-signer-section fp-anim-pop" aria-labelledby="data-title">
+    <h2 id="data-title" class="fp-heading-icon"><span class="fp-icon-badge fp-icon-badge-sm">{% include "components/icon.html" with name="user-shield" %}</span>{% trans "Your data" %}</h2>
     <div class="fp-signer-card">
       <dl class="fp-datalist">
         <div><dt>{% trans "Status" %}</dt><dd>{% if signature.confirmed %}<span class="fp-badge fp-badge-success">{% trans "confirmed" %}</span>{% else %}<span class="fp-badge fp-badge-warning">{% trans "awaiting confirmation" %}</span>{% endif %}</dd></div>
@@ -36,13 +36,13 @@
         <div><dt>{% trans "Newsletter subscription" %}</dt><dd>{% if signature.subscribed_to_mailinglist %}{% trans "yes" %}{% else %}{% trans "no" %}{% endif %}</dd></div>
       </dl>
       {% include "components/expiry_notice.html" %}
-      <p><a class="fp-btn fp-btn-secondary" href="{% url 'manage_signature_export' token %}" download>{% include "components/icon.html" with name="data-transfer-download" %}{% trans "Download my data (JSON)" %}</a></p>
+      <p><a class="fp-btn fp-btn-secondary fp-anim-drop" href="{% url 'manage_signature_export' token %}" download>{% include "components/icon.html" with name="data-transfer-download" %}{% trans "Download my data (JSON)" %}</a></p>
     </div>
   </section>
 
   {% if signature.subscribed_to_mailinglist %}
-  <section class="fp-signer-section" aria-labelledby="newsletter-title">
-    <h2 id="newsletter-title">{% trans "Newsletter subscription" %}</h2>
+  <section class="fp-signer-section fp-anim-rise" aria-labelledby="newsletter-title">
+    <h2 id="newsletter-title" class="fp-heading-icon"><span class="fp-icon-badge fp-icon-badge-sm fp-icon-badge-orange">{% include "components/icon.html" with name="envelope-closed" %}</span>{% trans "Newsletter subscription" %}</h2>
     <p>{% blocktrans %}You subscribed to the newsletter of {{ creator_name }}: to unsubscribe, use the link in their messages or contact them directly.{% endblocktrans %}</p>
     <form method="post" action="">
       {% csrf_token %}
@@ -52,8 +52,8 @@
   </section>
   {% endif %}
 
-  <section class="fp-signer-section fp-danger-zone" aria-labelledby="delete-title">
-    <h2 id="delete-title">{% trans "Delete my signature" %}</h2>
+  <section class="fp-signer-section fp-danger-zone fp-anim-tilt" aria-labelledby="delete-title">
+    <h2 id="delete-title" class="fp-heading-icon"><span class="fp-icon-badge fp-icon-badge-sm fp-icon-badge-orange">{% include "components/icon.html" with name="trash" %}</span>{% trans "Delete my signature" %}</h2>
     <p>{% blocktrans with site_name=settings.SITE_NAME %}Deletion is immediate and permanent: your signature will no longer be counted and your data will be erased from {{ site_name }}.{% endblocktrans %}
     {% blocktrans %}If {{ creator_name }} has already exported the list of signatories, contact them directly about these copies.{% endblocktrans %}</p>
 
@@ -67,7 +67,7 @@
           <label for="confirm-delete">{% trans "I understand that this deletion is permanent" %}</label>
         </div>
       </div>
-      <button type="submit" class="fp-btn fp-btn-danger">{% include "components/icon.html" with name="trash" %}{% trans "Permanently delete my signature" %}</button>
+      <button type="submit" class="fp-btn fp-btn-danger fp-anim-tilt">{% include "components/icon.html" with name="trash" %}{% trans "Permanently delete my signature" %}</button>
     </form>
   </section>
 

@@ -3,7 +3,7 @@
   <div class="fp-dash-section-head">
     <h2 class="fp-dash-section-title" id="orgs-title">{% trans "Your organizations" %}</h2>
     {% if not settings.RESTRICT_ORG_CREATION or request.user.is_superuser %}
-    <a class="fp-btn fp-btn-secondary" href="{% url "org_create" %}">{% include "components/icon.html" with name="plus" %}{% trans "New organization" %}</a>
+    <a class="fp-btn fp-btn-secondary fp-anim-turn" href="{% url "org_create" %}">{% include "components/icon.html" with name="plus" %}{% trans "New organization" %}</a>
     {% endif %}
   </div>
   <p class="fp-help">{% trans "Create petitions together with other people and share the list of signatories." %}</p>

@@ -213,6 +213,25 @@
   margin-top: var(--fp-s2);
 }
 
+/* Share buttons lift like the others (MI-02) */
+.fp-share .rrssb-buttons a {
+  transition: background-color var(--fp-duration) var(--fp-ease), transform var(--fp-duration) var(--fp-ease);
+}
+
+@media (hover: hover) {
+  .fp-share .rrssb-buttons a:hover {
+    transform: translateY(var(--fp-lift));
+  }
+}
+
+.fp-share .rrssb-buttons a:focus-visible {
+  transform: translateY(var(--fp-lift));
+}
+
+.fp-share .rrssb-buttons a:active {
+  transform: scale(var(--fp-press));
+}
+
 /* Petition: author's footer and report link ----------------------------- */
 
 .fp-petition-footer {

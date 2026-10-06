@@ -37,7 +37,7 @@ class PublicListsTest(TestCase):
 
     def test_search_without_result_shows_an_empty_state(self):
         html = self.client.get(reverse('search') + '?q=nothing-here').content.decode()
-        self.assertIn('class="fp-empty"', html)
+        self.assertIn('class="fp-empty ', html)
         self.assertIn('No petition found', html)
         self.assertNotIn('<style>', html)
 

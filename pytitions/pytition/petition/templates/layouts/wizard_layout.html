@@ -48,9 +48,9 @@
   <div class="fp-wizard-main">
     {% block wizard_content %}{% endblock wizard_content %}
   </div>
-  <aside class="fp-wizard-help" aria-labelledby="wizard-help-title">
+  <aside class="fp-wizard-help fp-anim-pop" aria-labelledby="wizard-help-title">
     {% include "components/picture.html" with name="contributors" widths="480 960" fallback="960" width="960" height="904" sizes="20rem" class="fp-wizard-art" only %}
-    <h2 class="fp-wizard-help-title" id="wizard-help-title">{% include "components/icon.html" with name="lightbulb" %}{% trans "Tips" %}</h2>
+    <h2 class="fp-wizard-help-title" id="wizard-help-title"><span class="fp-icon-badge fp-icon-badge-sm fp-icon-badge-orange">{% include "components/icon.html" with name="lightbulb" %}</span>{% trans "Tips" %}</h2>
     {% block wizard_help %}{% endblock wizard_help %}
   </aside>
 </div>

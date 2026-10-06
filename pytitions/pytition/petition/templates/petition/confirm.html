@@ -48,7 +48,7 @@ Context contract (the view belongs to the GDPR stream):
     {% endblocktrans %}</p>
     <form method="post" action="{% if form_action %}{{ form_action }}{% else %}{% url 'confirm' petition.id confirmation_hash %}{% endif %}">
       {% csrf_token %}
-      <button type="submit" class="fp-btn fp-btn-primary fp-btn-lg fp-btn-block fp-sign-btn">{% trans "I confirm my signature" %}</button>
+      <button type="submit" class="fp-btn fp-btn-primary fp-btn-lg fp-btn-block fp-sign-btn fp-anim-pop">{% include "components/icon.html" with name="check" %}{% trans "I confirm my signature" %}</button>
     </form>
     <p class="fp-help">{% trans "You did not sign this petition? Do nothing: the signature will be deleted automatically." %}</p>
     {% include "components/expiry_notice.html" %}
@@ -68,7 +68,7 @@ Context contract (the view belongs to the GDPR stream):
     {% endif %}
     {% include "components/expiry_notice.html" %}
   </div>
-  <p class="fp-signer-back"><a href="{{ petition.url }}" class="fp-btn fp-btn-secondary">{% include "components/icon.html" with name="arrow-left" %}{% trans "Back to the petition" %}</a></p>
+  <p class="fp-signer-back"><a href="{{ petition.url }}" class="fp-btn fp-btn-secondary fp-anim-back">{% include "components/icon.html" with name="arrow-left" %}{% trans "Back to the petition" %}</a></p>
 
   {% elif cstate == "expired" %}
   <div class="fp-page-header">

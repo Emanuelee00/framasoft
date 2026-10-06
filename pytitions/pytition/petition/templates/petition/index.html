@@ -31,7 +31,7 @@
     {% endblocktrans %}</p>
     <div class="fp-actions fp-hero-actions">
       {% if user.is_authenticated or settings.ALLOW_REGISTER %}
-      <a class="fp-btn fp-btn-primary fp-btn-lg" href="{% url 'user_petition_wizard' %}">{% include "components/icon.html" with name="plus" %}{% trans "Create a petition" %}</a>
+      <a class="fp-btn fp-btn-primary fp-btn-lg fp-anim-turn" href="{% url 'user_petition_wizard' %}">{% include "components/icon.html" with name="plus" %}{% trans "Create a petition" %}</a>
       {% endif %}
       <a class="fp-btn fp-btn-secondary fp-btn-lg" href="#petitions">{% trans "Browse petitions" %}</a>
     </div>
@@ -40,22 +40,37 @@
 
 <section class="fp-section fp-values fp-bubbles" aria-labelledby="values-title">
   <div class="fp-container">
-    <h2 id="values-title">{% trans "Our commitments" %}</h2>
+    <h2 id="values-title" class="fp-kicker fp-values-title">{% trans "Why Framapétitions?" %}</h2>
     <ul class="fp-grid fp-grid-3 fp-values-list">
-      <li class="fp-value">
-        <span class="fp-icon-ring fp-value-icon">{% include "components/icon.html" with name="eye-slash" %}</span>
+      <li class="fp-value fp-anim-rise">
+        <span class="fp-icon-badge fp-value-icon">{% include "components/icon.html" with name="hand-holding-heart" %}</span>
+        <h3 class="fp-value-title">{% trans "Free of charge" %}</h3>
+        <p>{% trans "Creating, signing and sharing a petition costs nothing. The service is funded by donations, not by your data." %}</p>
+      </li>
+      <li class="fp-value fp-anim-blink">
+        <span class="fp-icon-badge fp-icon-badge-orange fp-value-icon">{% include "components/icon.html" with name="eye-slash" %}</span>
         <h3 class="fp-value-title">{% trans "No ads, no trackers" %}</h3>
         <p>{% trans "No advertising, no audience measurement by third parties, no resale of data. The list of signatories is never published: only their number." %}</p>
       </li>
-      <li class="fp-value">
-        <span class="fp-icon-ring fp-icon-ring-orange fp-value-icon">{% include "components/icon.html" with name="user-shield" %}</span>
+      <li class="fp-value fp-anim-pop">
+        <span class="fp-icon-badge fp-value-icon">{% include "components/icon.html" with name="user-shield" %}</span>
         <h3 class="fp-value-title">{% trans "Your signature, your data" %}</h3>
         <p>{% trans "Each signatory receives a personal link to view, download or delete their signature at any time. Unconfirmed signatures are deleted automatically." %}</p>
       </li>
-      <li class="fp-value">
-        <span class="fp-icon-ring fp-value-icon">{% include "components/icon.html" with name="code" %}</span>
+      <li class="fp-value fp-anim-turn">
+        <span class="fp-icon-badge fp-icon-badge-orange fp-value-icon">{% include "components/icon.html" with name="hourglass-half" %}</span>
+        <h3 class="fp-value-title">{% trans "Data that does not stay forever" %}</h3>
+        <p>{% trans "Each petition has a deletion date, one year after its creation by default, which its author can push back. On that day the petition and its signatures are permanently deleted; a reminder is sent beforehand." %}</p>
+      </li>
+      <li class="fp-value fp-anim-tilt">
+        <span class="fp-icon-badge fp-value-icon">{% include "components/icon.html" with name="code" %}</span>
         <h3 class="fp-value-title">{% trans "Free software, run by an association" %}</h3>
         <p>{% trans "The service is based on free software and is hosted in France by Framasoft, a not-for-profit association funded by donations." %}</p>
+      </li>
+      <li class="fp-value fp-anim-rise">
+        <span class="fp-icon-badge fp-icon-badge-orange fp-value-icon">{% include "components/icon.html" with name="universal-access" %}</span>
+        <h3 class="fp-value-title">{% trans "Accessible to everyone" %}</h3>
+        <p>{% trans "Pages designed to be used with a keyboard or a screen reader, with readable contrasts, on a phone as well as on a computer." %}</p>
       </li>
     </ul>
     <p class="fp-values-rules fp-muted">
@@ -65,6 +80,29 @@
         Read our <a href="{{ privacy_url }}">privacy notice</a>.
       {% endblocktrans %}
     </p>
+  </div>
+</section>
+
+<section class="fp-section fp-steps" aria-labelledby="steps-title">
+  <div class="fp-container">
+    <h2 id="steps-title" class="fp-kicker fp-values-title">{% trans "How does it work?" %}</h2>
+    <ol class="fp-grid fp-grid-3 fp-values-list">
+      <li class="fp-value fp-anim-tilt">
+        <span class="fp-icon-badge fp-icon-badge-orange fp-value-icon">{% include "components/icon.html" with name="pencil" %}</span>
+        <h3 class="fp-value-title">{% trans "Write your petition" %}</h3>
+        <p>{% trans "A title, a text and, if you wish, a goal and a picture. Nothing is public until you decide to publish." %}</p>
+      </li>
+      <li class="fp-value fp-anim-tilt">
+        <span class="fp-icon-badge fp-value-icon">{% include "components/icon.html" with name="bullhorn" %}</span>
+        <h3 class="fp-value-title">{% trans "Spread the word" %}</h3>
+        <p>{% trans "Each petition has its own address: send it by e-mail or share it on Mastodon and other networks." %}</p>
+      </li>
+      <li class="fp-value fp-anim-pop">
+        <span class="fp-icon-badge fp-icon-badge-orange fp-value-icon">{% include "components/icon.html" with name="graph" %}</span>
+        <h3 class="fp-value-title">{% trans "Follow the signatures" %}</h3>
+        <p>{% trans "Each signature is confirmed by e-mail. Follow the count from your dashboard and download the list before the deletion date." %}</p>
+      </li>
+    </ol>
   </div>
 </section>
 {% endif %}
