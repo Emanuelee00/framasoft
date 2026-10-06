@@ -30,6 +30,12 @@ Confirmation p50 / p95 (ms)       390 / 558      202 / 337      131 / 204
 SQL queries per signature         11             7              7
 ================================ ============== ============== ===============
 
+Measured again with the GDPR and interface changes (consent checkbox, new petition page),
+in one session next to the "After" code: 171 signatures, 172 pages and 98 confirmations
+per second with the default settings (176, 168 and 98 for the "After" code), 347, 354 and
+135 with persistent connections (364, 449 and 144). The SQL queries are the same; the new
+petition page costs about 15% more CPU to render (more translated texts and blocks).
+
 The main gains come from:
 
 * hashing the signer IP address with HMAC-SHA256 instead of bcrypt: about 250 ms of CPU
@@ -40,8 +46,8 @@ The main gains come from:
   when it changes);
 * the number of signatures displayed on pages and lists is cached for a short time.
 
-With the default database settings (one new PostgreSQL connection per request), around 300
-requests per second some connections were refused in our bench: persistent connections
+With the default database settings (one new PostgreSQL connection per request), from about
+170 requests per second some connections were refused in our bench: persistent connections
 (see below) fix it and double the throughput.
 
 Rough capacity on this machine: 30 to 75 signatures per second per worker process
@@ -64,6 +70,13 @@ Keep the database connections open between requests, with a health check:
             'CONN_HEALTH_CHECKS': True,
         }
     }
+
+The value can also come from the environment:
+:data:`~pytition.settings.base.DATABASE_CONN_MAX_AGE` reads ``DATABASE_CONN_MAX_AGE``
+(``0`` by default, which keeps the previous behaviour). The Docker image applies it to its
+database; in your ``config.py``, write ``'CONN_MAX_AGE': DATABASE_CONN_MAX_AGE`` in
+``DATABASES`` and set for instance ``DATABASE_CONN_MAX_AGE=60`` in the uwsgi environment
+(``env = DATABASE_CONN_MAX_AGE=60``).
 
 Each uwsgi process then keeps one connection: make sure that PostgreSQL ``max_connections``
 is larger than the total number of processes (of all instances) plus the maintenance

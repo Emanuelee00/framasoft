@@ -130,6 +130,10 @@ MEDIA_ROOT = ''
 #:               'read_default_file': '/home/pytition/my.cnf',
 #:               'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
 #:           },
+#:           # persistent connections, from the DATABASE_CONN_MAX_AGE environment variable
+#:           # (0 by default, see doc/scaling.rst)
+#:           'CONN_MAX_AGE': DATABASE_CONN_MAX_AGE,
+#:           'CONN_HEALTH_CHECKS': True,
 #:       }
 #:   }
 DATABASES = {}

@@ -381,6 +381,16 @@ SIGNATURE_IP_HMAC_KEY = os.environ.get("SIGNATURE_IP_HMAC_KEY", "")
 #:| Number of seconds during which the number of signatures displayed on petition pages
 #:| and lists is cached. ``0`` disables the cache (exact number, one COUNT per display).
 SIGNATURE_COUNT_CACHE_TTL = 30
+# framapetitions: BE-09
+#:| Lifetime in seconds of the database connections (Django ``CONN_MAX_AGE``), read from the
+#:| ``DATABASE_CONN_MAX_AGE`` environment variable. ``0`` (default, unchanged behaviour) opens
+#:| a new connection for each request; ``60`` is recommended with uwsgi (see :doc:`scaling`).
+#:| Keep ``0`` behind PgBouncer in transaction mode.
+#:| It is applied to the Docker image database; with your own ``DATABASES`` in ``config.py``,
+#:| add ``'CONN_MAX_AGE': DATABASE_CONN_MAX_AGE`` and ``'CONN_HEALTH_CHECKS': True`` to it.
+DATABASE_CONN_MAX_AGE = int(os.environ.get("DATABASE_CONN_MAX_AGE", "0"))
+if os.environ.get('USE_POSTGRESQL'):
+    DATABASES['default'].update(CONN_MAX_AGE=DATABASE_CONN_MAX_AGE, CONN_HEALTH_CHECKS=True)
 
 
 

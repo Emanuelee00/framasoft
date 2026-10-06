@@ -449,7 +449,10 @@ def forgot_signature_link(request, petition_id):
     petition = petition_from_id(petition_id)
     form = SignatureLinkRequestForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
-        sig = petition.signature_set.filter(email=form.cleaned_data["email"]).order_by("-confirmed", "-date").first()
+        # confirmed signature first, then the latest unconfirmed one: one lookup per value of
+        # "confirmed" so that each uses the (petition, confirmed, email) index
+        signatures = petition.signature_set.filter(email=form.cleaned_data["email"]).order_by("-date")
+        sig = signatures.filter(confirmed=True).first() or signatures.filter(confirmed=False).first()
         if sig and cache.add("manage-link:{}".format(sig.pk), 1, settings.SIGNATURE_THROTTLE_TIMING):
             send_manage_link_email(request, sig)
         messages.info(request, _("If a signature is associated with this address, an email has just been sent to you."))

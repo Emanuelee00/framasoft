@@ -74,6 +74,21 @@ class ManageSignatureViewTest(TestCase):
         self.client.post(url, {'email': 'alan@john.org'})
         self.assertEqual(len(mail.outbox), 1)
 
+    def test_forgot_signature_link_prefers_confirmed_then_latest(self):
+        url = reverse('forgot_signature_link', args=[self.petition.id])
+        Signature.objects.create(first_name='Alan', last_name='John', email='alan@john.org',
+                                 petition=self.petition, confirmed=False)
+        mail.outbox = []
+        self.client.post(url, {'email': 'alan@john.org'})
+        self.assertIn(reverse('manage_signature', args=[make_manage_token(self.signature)]), mail.outbox[0].body)
+        # only unconfirmed signatures: the latest one
+        Signature.objects.create(first_name='Eve', last_name='Doe', email='eve@doe.org',
+                                 petition=self.petition, confirmed=False)
+        latest = Signature.objects.create(first_name='Eve', last_name='Doe', email='eve@doe.org',
+                                          petition=self.petition, confirmed=False)
+        self.client.post(url, {'email': 'eve@doe.org'})
+        self.assertIn(reverse('manage_signature', args=[make_manage_token(latest)]), mail.outbox[1].body)
+
     def test_confirmation_email_context_has_manage_url(self):
         from django.template.loader import render_to_string
         data = {'first_name': 'Bob', 'last_name': 'Doe', 'email': 'bob@doe.org', 'subscribed_to_mailinglist': False,
