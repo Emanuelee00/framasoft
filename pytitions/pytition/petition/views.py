@@ -10,12 +10,15 @@ https://docs.djangoproject.com/en/5.1/topics/http/views/
 import csv
 import itertools
 import logging
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone as dt_timezone
 from django.utils import timezone
 import os
 import urllib.parse
 import random
 from time import time
+import matplotlib
+# framapetitions: BE-11 - server-side rendering only, never a GUI backend
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import io
@@ -30,7 +33,8 @@ from django.utils.translation import gettext as _
 from django.contrib import messages
 from django.contrib.messages import get_messages
 from django.utils.html import format_html
-from django.db.models import Q
+from django.db.models import Q, Count
+from django.db.models.functions import TruncDate
 from django.contrib.auth.decorators import login_required
 from django.db import transaction, IntegrityError
 from django.contrib.auth.models import User
@@ -272,6 +276,9 @@ def confirm(request, petition_id, confirmation_hash):
 
 
 audit_logger = logging.getLogger("petition.audit")
+
+# framapetitions: BE-11 - signatures listed per page in the signatures area
+SIGNATURES_PER_PAGE = 100
 
 
 class _Echo:
@@ -1338,7 +1345,7 @@ class PetitionCreationWizard(SessionWizardView):
                 check_user_signature_number(pytitionuser, org, self.request)
 
                 #FIXME I think new here is better than create
-                petition = Petition.objects.create(title=title, text=message, org=org, expires_at=expires_at, ipaddr=get_client_ip(self.request), user_agent=self.request.META['HTTP_USER_AGENT'])
+                petition = Petition.objects.create(title=title, text=message, org=org, expires_at=expires_at, ipaddr=get_client_ip(self.request), user_agent=self.request.META.get('HTTP_USER_AGENT', '')[:512])
                 
                 # is_spam function from detector launches all the other detectors to detect if a petition is spam
                 # it does moderation actions
@@ -1370,7 +1377,7 @@ class PetitionCreationWizard(SessionWizardView):
             check_mon_petition_number(pytitionuser, None, self.request)
             check_user_signature_number(pytitionuser, None, self.request)
             
-            petition = Petition.objects.create(title=title, text=message, user=pytitionuser, expires_at=expires_at, ipaddr=get_client_ip(self.request), user_agent=self.request.META['HTTP_USER_AGENT'])
+            petition = Petition.objects.create(title=title, text=message, user=pytitionuser, expires_at=expires_at, ipaddr=get_client_ip(self.request), user_agent=self.request.META.get('HTTP_USER_AGENT', '')[:512])
 
             # is_spam function from detector launches all the other detectors to detect if a petition is spam
             # it does moderation actions
@@ -1809,11 +1816,14 @@ def show_signatures(request, petition_id):
             return redirect("show_signatures_graph", petition_id)
         return redirect("show_signatures", petition_id)
 
-    signatures = petition.signature_set.all()
+    # framapetitions: BE-11 - one page of signatures at a time
+    signatures = petition.signature_set.order_by('date', 'pk')
+    page_obj = Paginator(signatures, SIGNATURES_PER_PAGE).get_page(request.GET.get('page'))
 
     ctx.update({'petition': petition, 'user': pytitionuser,
                 'base_template': base_template,
-                'signatures': signatures})
+                'signatures': page_obj.object_list,
+                'page_obj': page_obj})
 
     return render(request, "petition/signature_data.html", ctx)
 
@@ -1851,60 +1861,37 @@ def show_signatures_graph(request, petition_id):
 
     signatures = petition.signature_set.all()
 
-    # order the signatures by date of creation
-    signatures = signatures.filter(
-    petition=petition).order_by('date')
+    # framapetitions: BE-11 - number of signatures per day (UTC), computed by the database
+    per_day = signatures.annotate(day=TruncDate('date', tzinfo=dt_timezone.utc))\
+        .values('day').annotate(count=Count('pk')).order_by('day')
 
-    # initialize a 2D array with an index, the interval (number of days since the creation) and the signature
-    columns = 3
-    rows = signatures.count()
-    data_graph = [[0 for _ in range(columns)] for _ in range(rows)]
-    
-    if signatures:
-        for i in range(0, rows):
-            data_graph[i][0] = i
-            data_graph[i][1] = signatures[i].date.date()
-            data_graph[i][2] = signatures[i]
-
-        # save clean data in a dict: date, number of signatures
-        data_graph_clean = {}
-
-        if rows != 0:
-            for i in range(0, rows):
-                if data_graph[i][1] in data_graph_clean:
-                    data_graph_clean[data_graph[i][1]] += 1
-                else:
-                    data_graph_clean[data_graph[i][1]] = 1
-        
-        # turn the dict into arrays to plot the graph
-        xpoints = list(data_graph_clean.keys())
-        ypoints = list(data_graph_clean.values())
-
-        # get the total number of signatures for each day
-        for i in range(1, len(ypoints)):
-            ypoints[i] = ypoints[i-1] + ypoints[i]
+    if per_day:
+        xpoints = [row['day'] for row in per_day]
+        # cumulated number of signatures at the end of each day
+        ypoints = list(itertools.accumulate(row['count'] for row in per_day))
 
         # matplotlib graph of number of signatures in each day
         graph, ax = plt.subplots()
-        if len(xpoints) == 1:
-            ax.plot(xpoints, ypoints, "o", color="purple")
-        elif len(xpoints) > 1:
-            ax.plot(xpoints, ypoints, color="purple")
-        else:
-            messages.error(request, _("This petition doesn't have any signatures"))
-            return redirect("show_signatures", petition_id)
+        try:
+            if len(xpoints) == 1:
+                ax.plot(xpoints, ypoints, "o", color="purple")
+            else:
+                ax.plot(xpoints, ypoints, color="purple")
 
-        # format the graph
-        ax.set_xticks(xpoints)
-        format = mdates.DateFormatter('%d\n%m')
-        ax.xaxis.set_major_formatter(format)
-        ax.set_xlabel('Day')
-        ax.set_ylabel('Number of signatures')
-        ax.set_title("Number of signatures per day")
+            # format the graph
+            ax.set_xticks(xpoints)
+            format = mdates.DateFormatter('%d\n%m')
+            ax.xaxis.set_major_formatter(format)
+            ax.set_xlabel('Day')
+            ax.set_ylabel('Number of signatures')
+            ax.set_title("Number of signatures per day")
 
-        # save the graph in a buffer
-        buf = io.BytesIO()
-        graph.savefig(buf, format='png', bbox_inches='tight')
+            # save the graph in a buffer
+            buf = io.BytesIO()
+            graph.savefig(buf, format='png', bbox_inches='tight')
+        finally:
+            # pyplot keeps every figure alive until it is closed
+            plt.close(graph)
         buf.seek(0)
 
         # encode the image in base64 to display in the html page

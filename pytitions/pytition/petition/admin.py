@@ -30,6 +30,7 @@ from django.db.models import Q
 from django.contrib import messages
 
 from tinymce.widgets import TinyMCE
+from colorfield.fields import ColorField
 
 from akismet import Akismet
 from .spam_management.detectors.akismet_detector import akismet_kwargs
@@ -37,6 +38,7 @@ from bs4 import BeautifulSoup
 
 from .models import Signature, Petition, Organization, PytitionUser, PetitionTemplate, Permission, SlugModel, ModeratedElement, ModerationReason, Moderation
 from .views import send_confirmation_email
+from .widgets import ColorWidget
 from .helpers import send_moderation_mail, send_mail_to_moderation, send_mail_to_moderation_info
 
 ### Akismet ###
@@ -426,6 +428,16 @@ class SignatureAdmin(admin.ModelAdmin):
     #Petition.slugs.through
 
 
+# framapetitions: S13 - ColorField always builds the colorfield widget, whose options jscolor
+# evaluates (blocked by the Content-Security-Policy): use the JSON variant instead.
+class JSONColorWidgetMixin:
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
+        if isinstance(db_field, ColorField):
+            formfield.widget = ColorWidget(attrs=formfield.widget.attrs)
+        return formfield
+
+
 # Petition Form used in the `Petitions` section of the admin page
 class PetitionAdminForm(ModelForm):
     def __init__(self, *args, **kwargs):
@@ -511,7 +523,7 @@ class PetitionAdminForm(ModelForm):
 
 
 @admin.register(Petition)
-class PetitionAdmin(admin.ModelAdmin):
+class PetitionAdmin(JSONColorWidgetMixin, admin.ModelAdmin):
 
     """
     Overload queryset
@@ -746,7 +758,7 @@ class PetitionTemplateForm(ModelForm):
 
 
 @admin.register(PetitionTemplate)
-class PetitionTemplateAdmin(admin.ModelAdmin):
+class PetitionTemplateAdmin(JSONColorWidgetMixin, admin.ModelAdmin):
     #change_form_template = 'petition/petition_change_form.html'
     form = PetitionTemplateForm
     fieldsets = (

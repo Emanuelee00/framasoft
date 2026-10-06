@@ -10,7 +10,7 @@
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
 
     <title>{% block title %}{% trans "Homepage" %}{% endblock title %} – {{ settings.SITE_NAME }}</title>
-    <script>document.documentElement.className = document.documentElement.className.replace("no-js", "js");</script>
+    <script nonce="{{ request.csp_nonce }}">document.documentElement.className = document.documentElement.className.replace("no-js", "js");</script>
 
     <link rel="preload" href="{% static "vendor/tovari-sans/TovariSans.woff2" %}" as="font" type="font/woff2" crossorigin>
     <!-- Bootstrap -->
@@ -61,9 +61,6 @@
       {% block site_footer %}{% include 'layouts/footer.html' %}{% endblock site_footer %}
     </div>
 
-    <script>
-      {% include 'petition/image_upload_url.js' %}
-    </script>
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="{% static "vendor/jquery-3.7.1.min.js" %}"></script>
     <script src="{% static "vendor/popper-1.16.1.min.js" %}"></script>

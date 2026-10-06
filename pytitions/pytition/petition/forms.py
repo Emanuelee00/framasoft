@@ -19,12 +19,11 @@ from django.utils.formats import date_format
 
 from .models import Signature, PetitionTemplate, Petition, Organization, PytitionUser, SlugModel
 from .models import ModerationReason
-from .widgets import SwitchField
+from .widgets import SwitchField, ColorWidget
 from .helpers import send_welcome_mail
 
 import html
 from tinymce.widgets import TinyMCE
-from colorfield.fields import ColorWidget
 
 
 class SignatureForm(ModelForm):

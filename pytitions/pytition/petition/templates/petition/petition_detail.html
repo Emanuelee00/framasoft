@@ -166,23 +166,7 @@ content="{{ petition.raw_twitter_description|truncatechars:300 }}"/>
 <script src="{% static "js/sign.js" %}" defer></script>
 {% if petition.has_any_share_button %}
 <script type="text/javascript" src="{% static "vendor/rrssb/js/rrssb.min.js" %}"></script>
-<script>
-    const msbConfig = {
-      openModal: function () {
-        $('#MastodonModal').modal('show');
-      },
-      closeModal: function () {
-        $('#MastodonModal').modal('hide');
-      },
-      addressFieldSelector: '#msb-address',
-      buttonModalSelector: '#msb-share',
-      memorizeFieldId: 'msb-memorize-instance',
-    };
-
-    $('.modal').on('shown.bs.modal', function() {
-      $('#msb-address').focus();
-    });
-</script>
+<script src="{% static "js/fp-share-mastodon.js" %}"></script>
 <script type="text/javascript" src="{% static "vendor/msb/js/mastodon.js" %}"></script>
 {% endif %}
 {% endblock %}

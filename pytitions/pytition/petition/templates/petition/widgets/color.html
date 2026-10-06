@@ -1,0 +1,9 @@
+<input type="text"
+ id="{{ id }}"
+ class="colorfield_field jscolor {% if class %}{{ class }}{% else %}form-control{% endif %}"
+ name="{{ name }}"
+ value="{% firstof value default '' %}"
+ placeholder="{% firstof value default '' %}"
+ data-jscolor="{{ jscolor_options }}"
+ {% if disabled %}disabled{% endif %}
+ {% if required %}required{% endif %} />

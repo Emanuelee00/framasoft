@@ -17,7 +17,7 @@ class ProfanitySpamDetector(BaseSpamDetector):
         # it returns an array with a probability
         # we get that probability and return 0 1 or 2 depending on its value
         is_spam = predict_prob([content])
-        is_spam = float(is_spam)
+        is_spam = float(is_spam[0])
 
         if is_spam < 0.5:
             return 0

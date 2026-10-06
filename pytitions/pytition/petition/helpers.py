@@ -4,6 +4,7 @@
 It defines actions to help the developper across the project.
 """
 
+import hashlib
 import html
 import ipaddress
 import logging
@@ -12,6 +13,7 @@ import lxml
 from lxml.html.clean import Cleaner
 from django.http import Http404, HttpResponseForbidden
 from django.conf import settings
+from django.core.cache import cache
 from django.urls import reverse
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
@@ -33,8 +35,28 @@ def remove_user_moderated(petitions):
     return petitions.exclude(org__moderated=True).exclude(user__moderated=True)\
         .select_related('org', 'user__user').prefetch_related('slugmodel_set')
 
-# Remove all javascripts from HTML code
+# Remove all javascripts from HTML code.
+# framapetitions: BE-15 - the result only depends on the input, so it is kept in the cache under
+# a hash of the input: an edited text gets a new key, nothing has to be invalidated.
+# Increase the version whenever _sanitize_html changes, so that a shared cache (memcached, redis)
+# does not keep results of the previous rules.
+SANITIZE_HTML_CACHE_VERSION = 1
+
+
 def sanitize_html(unsecure_html_content):
+    ttl = getattr(settings, 'SANITIZE_HTML_CACHE_TTL', 0)
+    if not ttl or not isinstance(unsecure_html_content, str):
+        return _sanitize_html(unsecure_html_content)
+    digest = hashlib.sha256(unsecure_html_content.encode('utf-8', 'surrogatepass')).hexdigest()
+    key = 'sanitize_html:%d:%s' % (SANITIZE_HTML_CACHE_VERSION, digest)
+    secure_html_content = cache.get(key)
+    if secure_html_content is None:
+        secure_html_content = _sanitize_html(unsecure_html_content)
+        cache.set(key, secure_html_content, ttl)
+    return secure_html_content
+
+
+def _sanitize_html(unsecure_html_content):
     cleaner = Cleaner(inline_style=False, scripts=True, javascript=True,
                       safe_attrs=lxml.html.defs.safe_attrs | set(['style', 'controls']),
                       frames=False, embedded=False,

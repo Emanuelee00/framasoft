@@ -93,3 +93,43 @@ class PetitionCreateWizardViewTest(TestCase):
         response = self.client.get(reverse("org_petition_wizard", args=[org.slugname]))
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, "Users are not allowed to create their own petitions.")
+
+    # framapetitions: S14
+    def _run_wizard(self, url, **extra):
+        prefix = "petition_creation_wizard"
+        steps = [
+            ("step1", {"step1-title": "No user agent petition"}),
+            ("step2", {"step2-message": "<p>Text</p>"}),
+            ("step3", {"step3-publish": "", "step3-use_template": "", "step3-template_id": "0"}),
+        ]
+        response = None
+        for step, data in steps:
+            data = dict(data, **{prefix + "-current_step": step})
+            response = self.client.post(url, data, **extra)
+        return response
+
+    def test_user_petition_without_user_agent(self):
+        self.login("julia")
+        response = self._run_wizard(reverse("user_petition_wizard"))
+        self.assertRedirects(response, reverse("user_dashboard"), fetch_redirect_response=False)
+        petition = Petition.objects.get(title="No user agent petition")
+        self.assertEqual(petition.user_agent, "")
+
+    def test_org_petition_without_user_agent(self):
+        self.login("julia")
+        org = Organization.objects.get(name='Les Amis de la Terre')
+        perm = Permission.objects.get(organization=org, user=self.pu)
+        perm.can_create_petitions = True
+        perm.save()
+        response = self._run_wizard(reverse("org_petition_wizard", args=[org.slugname]))
+        self.assertRedirects(response, reverse("org_dashboard", args=[org.slugname]),
+                             fetch_redirect_response=False)
+        petition = Petition.objects.get(title="No user agent petition")
+        self.assertEqual(petition.org, org)
+        self.assertEqual(petition.user_agent, "")
+
+    def test_long_user_agent_is_truncated(self):
+        self.login("julia")
+        self._run_wizard(reverse("user_petition_wizard"), HTTP_USER_AGENT="A" * 600)
+        petition = Petition.objects.get(title="No user agent petition")
+        self.assertEqual(petition.user_agent, "A" * 512)

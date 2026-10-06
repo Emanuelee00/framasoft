@@ -156,6 +156,7 @@
                 {% endfor %}
             </tbody>
             </table>
+            {% include "components/pagination.html" with page=page_obj %}
         </div>
     </form>
     </div>
@@ -163,7 +164,7 @@
 
 {% block extrajs %}
     {{ block.super }}
-    <script>
+    <script nonce="{{ request.csp_nonce }}">
     $(function() {
         $("#re-send-all").on("click", function() {
             $("#action").val("re-send-all");

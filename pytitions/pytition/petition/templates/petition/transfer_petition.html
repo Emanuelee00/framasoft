@@ -74,7 +74,7 @@
 
 {% block extrajs %}
 {{ block.super }}
-<script>
+<script nonce="{{ request.csp_nonce }}">
 $(function() {
     $('[data-toggle="tooltip"]').tooltip();
     $("#searchbox").on("keyup", function() {
