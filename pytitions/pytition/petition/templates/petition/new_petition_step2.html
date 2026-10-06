@@ -1,0 +1,72 @@
+{% extends 'layouts/wizard_layout.html' %}
+{% load i18n %}
+{% load widget_tweaks %}
+{% load petition_extras %}
+{% load static %}
+{% block media %}
+    {{ form.media }}
+{% endblock %}
+
+{% block wizard_content %}
+  <div id="step-2" class="px-3 pt-3">
+      <form method="POST">{% csrf_token %}
+          {{ wizard.management_form }}
+          <div class="form-group">
+          {% with form.message as field %}
+              {{ field.label_tag }}
+              {% if form.is_bound %}
+                {% if field.errors %}
+                  {% render_field field|bootstrap class="is-invalid" %}
+                  {% for error in field.errors %}
+                    <div class="invalid-feedback">
+                      {{ error }}
+                    </div>
+                  {% endfor %}
+                {% else %}
+                  {% render_field field|bootstrap class="is-valid" %}
+                {% endif %}
+              {% else %}
+                {% render_field field|bootstrap %}
+              {% endif %}
+
+              {% if field.help_text %}
+                <small class="form-text text-muted">{{ field.help_text }}</small>
+              {% endif %}
+          {% endwith %}
+          </div>
+      <div class="d-flex justify-content-between">
+      {% if wizard.steps.prev %}
+          <button name="wizard_goto_step" id="go_prev" class="btn btn-primary" type="submit" value="{{ wizard.steps.prev }}">{% trans "Previous step" %}</button>
+      {% endif %}
+          <button type="submit" class="btn btn-primary">{% trans "Next" %}</button>
+      </div>
+      </form>
+  </div>
+{% endblock %}
+
+{% block extrajs %}
+    {{ block.super }}
+    <script type="text/javascript" src="{%  static 'vendor/smartwizard/dist/js/jquery.smartWizard.min.js' %}"></script>
+    <script type="text/javascript">
+    $(document).ready(function(){
+      $('#smartwizard').smartWizard({
+                                    theme: 'arrows',
+                                    toolbarSettings: {
+                                        showNextButton: false,
+                                        showPreviousButton: false,
+                                    },
+                                    });
+    });
+    $("#step1_link").on("click", function () {
+        $("#go_prev").click();
+    });
+
+    document.location.hash = "step-2";
+    $('html, body').scrollTop('0px');
+    var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
+    function get_csrf_token() {
+        return csrftoken;
+    }
+    function set_mce_changed(ed) {}
+    </script>
+{% endblock %}

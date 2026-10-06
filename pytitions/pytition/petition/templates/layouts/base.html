@@ -1,0 +1,71 @@
+{% load i18n %}
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+
+    <title>{% block title %}{% trans "Homepage" %}{% endblock title %} – {{ settings.SITE_NAME }}</title>
+
+    <!-- Bootstrap -->
+    <link href="{% static "vendor/bootstrap-4.3.1/css/bootstrap.min.css" %}" rel="stylesheet">
+    <link href="{% static "vendor/open-iconic-1.1.1/font/css/open-iconic-bootstrap.min.css" %}" rel="stylesheet">
+    <link href="{% static "css/common.css" %}" rel="stylesheet">
+    <link href="{% static "css/custom.css" %}" rel="stylesheet">
+    {% load static %}
+
+    <!-- Extra media -->
+    {% block media %}
+    {% endblock %}
+
+    <!-- Extra meta -->
+    {% block extrameta %}
+    {% endblock %}
+
+    <!-- Extra styles -->
+    {% block extracss %}
+    {% endblock %}
+    <!-- Extra js in head -->
+    {% block extrajshead %}
+    {% endblock %}
+</head>
+<body>
+    <div id="modalContainer">
+{% block modal %}
+{% endblock modal %}
+    </div>
+    <div class="app d-flex flex-column
+{% block justify-app %}
+{% if footer_content %}
+    justify-content-between
+{% else %}
+    justify-content-start
+{% endif %}
+{% endblock justify-app %}
+    ">
+    {% block nav %}{% include 'layouts/nav.html' %}{% endblock nav %}
+
+      {% block main_content %}
+      {% endblock %}
+
+      <!-- Footer -->
+      {% block footer %}
+      {% endblock %}
+    </div>
+
+    <script>
+      {% include 'petition/image_upload_url.js' %}
+    </script>
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="{% static "vendor/jquery-3.3.1/jquery-3.3.1.min.js" %}"></script>
+    <script src="{% static "vendor/popper-1.14.6/popper.min.js" %}"></script>
+    <script src="{% static "vendor/bootstrap-4.3.1/js/bootstrap.min.js" %}"></script>
+    <script src="https://framasoft.org/nav/nav.js" defer></script>
+    {% block extrajs %}
+    {% endblock %}
+</body>
+</html>

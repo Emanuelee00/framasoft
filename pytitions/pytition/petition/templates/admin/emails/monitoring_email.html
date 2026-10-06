@@ -1,0 +1,22 @@
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+
+<h2>{% trans "Hello" %} {{ username }}!</h2>
+
+{% if element_type == "user" %}
+    {% trans "You have been monitored with a strong priority for this reason: " %}
+{% elif element_type == "organization" %}
+    {% trans "Your organization has been monitored with a strong priority: " %} {{ element }}.
+{% elif element_type == "petition" %}
+    {% trans "Your petition has been monitored with a strong priority: " %} {{ element }}.
+{% endif %}
+
+{{ reason }}
+</body>
+</html>

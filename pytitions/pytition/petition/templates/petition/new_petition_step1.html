@@ -1,0 +1,57 @@
+{% extends 'layouts/wizard_layout.html'%}
+{% load i18n %}
+{% load widget_tweaks %}
+{% load petition_extras %}
+{% load static %}
+
+{% block wizard_content %}
+  <div id="step-1" class="d-flex align-items-center justify-content-auto px-3 pt-3">
+    <form method="POST" class="flex-fill">{% csrf_token %}
+      {{ wizard.management_form }}
+      <div class="form-group">
+      {% with form.title as field %}
+        {% trans "Title" %}
+
+        {% if form.is_bound %}
+          {% if field.errors %}
+            {% render_field field|bootstrap class="is-invalid" %}
+            {% for error in field.errors %}
+              <div class="invalid-feedback">
+                {{ error }}
+              </div>
+            {% endfor %}
+          {% else %}
+            {% render_field field|bootstrap class="is-valid" %}
+          {% endif %}
+        {% else %}
+          {% render_field field|bootstrap %}
+        {% endif %}
+
+        {% if field.help_text %}
+          <small class="form-text text-muted">{{ field.help_text }}</small>
+        {% endif %}
+      {% endwith %}
+      </div>
+      <button type="submit" class="btn btn-primary">{% trans "Next" %}</button>
+    </form>
+  </div>
+{% endblock %}
+
+{% block extrajs %}
+    {{ block.super }}
+    <script type="text/javascript" src="{%  static 'vendor/smartwizard/dist/js/jquery.smartWizard.min.js' %}"></script>
+    <script type="text/javascript">
+    $(document).ready(function(){
+      $('#smartwizard').smartWizard({
+                                    theme: 'arrows',
+                                    toolbarSettings: {
+                                        showNextButton: false,
+                                        showPreviousButton: false,
+                                    },
+                                    });
+    });
+
+    document.location.hash = "step-1";
+    $('html, body').scrollTop('0px');
+    </script>
+{% endblock %}

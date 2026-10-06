@@ -1,0 +1,15 @@
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+
+<h2>{% trans "Hello" %}</h2>
+
+{{ info }}
+
+</body>
+</html>

@@ -1,0 +1,48 @@
+{% load i18n %}
+<div class="dashboard-nav-item py-3">
+  <h4><span class="oi oi-people"></span>&nbsp;{% trans "Members" %}&nbsp;({{ org.members.all.count }})</h4>
+  <ul class="dashboard-org-list">
+  {% for member in org.members.all %}
+    <li class="d-flex align-items-center justify-content-between">
+      <a class="text-dark" href="{% url "user_profile" member.username %}">{% firstof member.get_full_name member.username %}</a>
+      <div data-member="{{ member.username }}">
+        <a href="{% url "org_edit_user_perms" org.slugname member.username %}"
+          {% if not user_permissions.can_modify_permissions %}
+              title="{% trans "You cannot edit this member's permissions, you don\'t have the correct permission" %}"
+              aria-disabled="true"
+              class="btn btn-link disabled btn-sm text-dark"
+          {% else %}
+              title="{% trans "Edit this member's permissions" %}"
+              class="btn btn-link btn-sm text-dark"
+          {% endif %}
+          data-action="edit-member-permissions" data-toggle="tooltip">
+            <span class="oi oi-wrench"></span></a>
+        <button class="btn btn-link btn-sm text-dark"
+            {% if not user_permissions.can_remove_members %}
+            disabled
+            title="{% trans "You cannot remove this member from the organization, you don\'t have the correct permission" %}"
+            aria-disabled="true"
+            {% else %}
+            title="{% trans "Remove this member from the organization." %}"
+            {% endif %}
+            data-action="delete-member" data-toggle="tooltip"><span class="oi oi-circle-x"></span></button>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+
+<div class="modal fade" id="member_delete_error_modal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        {% trans "Unable to remove this member from the organization." %}
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-info" data-dismiss="modal">OK</button>
+      </div>
+
+    </div>
+  </div>
+</div>

@@ -1,0 +1,184 @@
+{% extends base_template %}
+{% load i18n %}
+
+{% block content %}
+    <div class="row">
+        <div class="col d-flex justify-content-center">
+            <h2>{% trans "Signatures" %}</h2>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col d-flex justify-content-center">
+            <h4><i>{{ petition.title }}</i></h4>
+        </div>
+    </div>
+    <div class="row">
+        <form method="POST" id="signatureForm">
+        {% csrf_token %}
+        <div class="col">
+            <p>
+                <a href="{% url "get_csv_signature" petition.id %}" class="btn btn-primary">
+                    <span class="oi oi-spreadsheet"></span>
+                    {% trans "Export <strong>ALL</strong> signatures as CSV" %}
+                </a>
+                <a href="{% url "get_csv_confirmed_signature" petition.id %}" class="btn btn-primary">
+                    <span class="oi oi-spreadsheet"></span>
+                    {% trans "Export <strong>confirmed</strong> signatures as CSV" %}
+                </a>
+                <a>
+                    <button class="btn btn-primary" id="show-signature-graph">
+                    <span class="oi oi-spreadsheet"></span>
+                    {% trans "Show graph of signatures" %}</button>
+                </a>
+            </p>
+            <p>
+                <button class="btn btn-success" id="re-send-all">
+                    <span class="oi oi-envelope-closed"></span>
+                    {% trans "Re-send confirmation e-mail to all unconfirmed" %}</button>
+            </p>
+            <p>
+                <a href="#" class="btn btn-warning" id="show-sympa-mass-subscribe"
+                        data-toggle="modal" data-target="#sympa-modal" aria-disabled="true">
+                    {% trans "Subscribe signatories to the newsletter" %}
+                </a>
+                <div class="modal fade" id="sympa-modal">
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h4 class="modal-title">
+                          {% trans "copy/paste the following text block into Sympa's mass-subscribe formular" %}</h4>
+                      <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+
+                    <div class="modal-body" id="sympa_content">
+
+                    </div>
+
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-info" data-dismiss="modal">{% trans "Ok" %}</button>
+                    </div>
+
+                  </div>
+                </div>
+                </div>
+            </p>
+            <p>
+                <div class="form-row">
+                <div class="col-3">
+                <select class="custom-select" id="action" name="action">
+                    <option value="re-send">{% trans "Re-send selected confirmation e-mail" %}</option>
+                    <option value="delete">{% trans "Delete selected signatures" %}</option>
+                    <option value="re-send-all" hidden>
+                        {% trans "Re-send confirmation e-mail to all unconfirmed" %}
+                    </option>
+                    <option value="show-signature-graph" hidden>
+                        {% trans "Show signature graph" %}
+                    </option>
+                </select>
+                </div>
+                <div class="col-*">
+                <button type="submit" class="btn btn-info">{% trans "Ok" %}</button>
+                </div>
+                </div>
+            </p>
+            <table class="table table-striped">
+            <thead class="thead-light">
+                <tr>
+                    <th>
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input position-static" id="select-all" name="select-all">
+                            <label class="custom-control-label" for="select-all"></label>
+                        </div>
+                    </th>
+                    <th>{% trans "First name" %}</th>
+                    <th>{% trans "Last name" %}</th>
+                    <th>{% trans "E-Mail" %}</th>
+                    <th>{% trans "Phone" %}</th>
+                    <th>{% trans "Confirmed?" %}</th>
+                    <th>{% trans "Subscribed to newsletter?" %}</th>
+                    <th>{% trans "Date" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for signature in signatures %}
+                <tr>
+                    <td>
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input position-static" id="{{ signature.id }}"
+                                   value="{{ signature.id }}" name="signature_id">
+                            <label class="custom-control-label" for="{{ signature.id }}"></label>
+                        </div>
+                    </td>
+                    <td>
+                        {{ signature.first_name }}
+                    </td>
+                    <td>
+                        {{ signature.last_name }}
+                    </td>
+                    <td>
+                        {{ signature.email }}
+                    </td>
+                    <td>
+                        {{ signature.phone }}
+                    </td>
+                    <td>
+                        {% if signature.confirmed %}
+                            <span class="oi oi-circle-check text-success"></span>
+                        {% else %}
+                            <span class="oi oi-circle-x text-danger"></span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if signature.subscribed_to_mailinglist %}
+                            <span class="oi oi-circle-check text-success"></span>
+                        {% else %}
+                            <span class="oi oi-circle-x text-danger"></span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {{ signature.date }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            </table>
+        </div>
+    </form>
+    </div>
+{% endblock content %}
+
+{% block extrajs %}
+    {{ block.super }}
+    <script>
+    $(function() {
+        $("#re-send-all").on("click", function() {
+            $("#action").val("re-send-all");
+            $("#signatureForm").submit();
+        });
+
+        $("#show-signature-graph").on("click", function() {
+            $("#action").val("show-signature-graph");
+            $("#signatureForm").submit();
+        });
+
+        $("#select-all").on("change", function() {
+           $(":checkbox").prop('checked', $(this).prop('checked'));
+        });
+
+        $("#show-sympa-mass-subscribe").on("click", function(){
+            $.ajax("{% url "show_sympa_subscribe_bloc" petition.id %}").done(function(data){
+              $("#sympa_content").html(data);
+            });
+        });
+    });
+    </script>
+{% endblock extrajs %}
+
+{% block extracss %}
+    {{ block.super }}
+    <style>
+    #sympa_content {
+        background-color: lightgrey;
+    }
+    </style>
+{% endblock extracss %}

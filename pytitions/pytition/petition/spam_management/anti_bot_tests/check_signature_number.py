@@ -1,0 +1,291 @@
+from petition.models import Petition, Moderation, ModerationReason, Monitoring, MonitoringReason, Permission, Signature
+from petition.helpers import send_mail_to_moderation, send_mail_to_moderation_monitor, send_monitoring_mail, send_moderation_mail
+from django.conf import settings
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.utils import timezone
+from datetime import timedelta
+
+"""
+Check the number of signatures and the variation of this number in an interval of a day or a week to moderate or monitor petitions.
+Four types of monitoring are defined:
+    - critical: the petition is moderated, emails are sent to admin and owner
+    - strong: the petition is monitored with a strong priority, emails are sent to admin and user, display in admin and owner dashboard
+    - average: the petition is monitored with an average priority, display in admin and owner dashboard
+    - low: the petition is monitored with a low priority, display in admin
+"""
+
+# check the total number of signatures
+def check_signature_number(petition):
+    moderation_reason, created = ModerationReason.objects.get_or_create(msg="signature_number")
+    monitoring_reason, created = MonitoringReason.objects.get_or_create(msg="signature_number")
+
+    # check if the number of signatures requires critical monitoring
+    if petition.get_signature_number() > settings.SIGNATURE_NUMBER_CRITICAL and settings.SIGNATURE_NUMBER_CRITICAL > 0:
+        if petition.moderated:
+            pass
+        else:
+            petition.moderate()
+            petition.monitor(False)
+            moderation = Moderation.objects.create(petition=petition, reason=moderation_reason)
+            send_mail_to_moderation(settings.MODERATION_EMAIL, petition, moderation.reason.text, "petition") 
+            
+            if petition.user:
+                send_moderation_mail(petition.user.user.email, petition.user.user.username, moderation.reason.text, "petition", petition)
+            elif petition.org:
+                for member in petition.org.members.all():
+                    permissions = Permission.objects.get(organization=petition.org, user=member)
+                    if permissions:
+                        if permissions.can_modify_permissions:
+                            send_moderation_mail(member.user.email, member.user.username, moderation.reason.text, "petition", petition)
+        return True
+
+    # check if the number of signatures requires strong monitoring
+    elif petition.get_signature_number() > settings.SIGNATURE_NUMBER_STRONG and settings.SIGNATURE_NUMBER_STRONG > 0:
+        if petition.moderated or (petition.monitored and petition.monitoring.last().priority == "strong"):
+            pass
+        else:
+            petition.monitor()
+            monitoring = Monitoring.objects.create(petition=petition, reason=monitoring_reason, priority="strong")
+            send_mail_to_moderation_monitor(settings.MODERATION_EMAIL, petition, monitoring.reason.text, "petition", "strong") 
+            
+            if petition.user:
+                send_monitoring_mail(petition.user.user.email, petition.user.user.username, "petition", petition, monitoring.reason.text)
+            elif petition.org:
+                for member in petition.org.members.all():
+                    permissions = Permission.objects.get(organization=petition.org, user=member)
+                    if permissions:
+                        if permissions.can_modify_permissions:
+                            send_monitoring_mail(member.user.email, member.user.username, "petition", petition, monitoring.reason.text)
+        return False
+
+    # check if the number of signatures requires average monitoring
+    elif petition.get_signature_number() > settings.SIGNATURE_NUMBER_AVERAGE and settings.SIGNATURE_NUMBER_AVERAGE > 0:
+        if (petition.monitored and (petition.monitoring.last().priority == "strong" or petition.monitoring.last().priority == "average")) or petition.moderated:
+                return False
+        else:
+            petition.monitor()
+            monitoring = Monitoring.objects.create(petition=petition, reason=monitoring_reason, priority="average")
+            return False
+
+    # check if the number of signatures requires low monitoring
+    elif petition.get_signature_number() > settings.SIGNATURE_NUMBER_LOW and settings.SIGNATURE_NUMBER_LOW > 0:
+        if petition.monitored or petition.moderated:
+                return False
+        else:
+            petition.monitor()
+            monitoring = Monitoring.objects.create(petition=petition, reason=monitoring_reason, priority="low")
+            return False
+
+    else:
+        return False
+
+# check the variation in the number of signatures in an interval
+def check_signature_variation(petition, interval):
+    moderation_reason, created = ModerationReason.objects.get_or_create(msg="signature_variation")
+    monitoring_reason, created = MonitoringReason.objects.get_or_create(msg="signature_variation")
+
+    # We define to which number of signatures we're going to compare today's number of signatures
+    if interval == "yesterday":
+        number_to_compare = petition.get_day_before_signature_number()
+    elif interval == "last week":
+        number_to_compare =  petition.get_week_signature_number()
+    else: 
+        return
+
+    # check if the variation requires critical monitoring
+    if petition.get_day_signature_number() > settings.SIGNATURE_VARIATION_CRITICAL*number_to_compare and number_to_compare != 0 and settings.SIGNATURE_VARIATION_CRITICAL > 0:
+        if petition.moderated:
+            pass
+        else:
+            petition.moderate()
+            petition.monitor(False)
+            moderation = Moderation.objects.create(petition=petition, reason=moderation_reason)
+            send_mail_to_moderation(settings.MODERATION_EMAIL, petition, moderation.reason.text, "petition")
+            if petition.user:
+                send_moderation_mail(petition.user.user.email, petition.user.user.username, moderation.reason.text, "petition", petition)
+            elif petition.org:
+                for member in petition.org.members.all():
+                    permissions = Permission.objects.get(organization=petition.org, user=member)
+                    if permissions:
+                        if permissions.can_modify_permissions:
+                            send_moderation_mail(member.user.email, member.user.username, moderation.reason.text, "petition", petition)
+        return True
+
+    # check if the variation requires strong monitoring
+    elif petition.get_day_signature_number() > settings.SIGNATURE_VARIATION_STRONG*number_to_compare and number_to_compare != 0 and settings.SIGNATURE_VARIATION_STRONG > 0:
+        if petition.moderated or (petition.monitored and petition.monitoring.last().priority == "strong"):
+            pass
+        else:
+            petition.monitor()
+            monitoring = Monitoring.objects.create(petition=petition, reason=monitoring_reason, priority="strong")
+            send_mail_to_moderation_monitor(settings.MODERATION_EMAIL, petition, monitoring.reason.text, "petition", "strong") 
+
+            if petition.user:
+                send_monitoring_mail(petition.user.user.email, petition.user.user.username, "petition", petition, monitoring.reason.text)
+            elif petition.org:
+                for member in petition.org.members.all():
+                    permissions = Permission.objects.get(organization=petition.org, user=member)
+                    if permissions:
+                        if permissions.can_modify_permissions:
+                            send_monitoring_mail(member.user.email, member.user.username, "petition", petition, monitoring.reason.text)
+        return False
+
+    # check if the variation requires average monitoring
+    elif petition.get_day_signature_number() > settings.SIGNATURE_VARIATION_AVERAGE*number_to_compare and number_to_compare != 0 and settings.SIGNATURE_VARIATION_AVERAGE > 0:
+        if (petition.monitored and (petition.monitoring.last().priority == "strong" or petition.monitoring.last().priority == "average")) or petition.moderated:
+                return False
+        else:
+            petition.monitor()
+            monitoring = Monitoring.objects.create(petition=petition, reason=monitoring_reason, priority="average")
+            return False
+    
+    # check if the variation requires low monitoring
+    elif petition.get_day_signature_number() > settings.SIGNATURE_VARIATION_LOW*number_to_compare and number_to_compare != 0 and settings.SIGNATURE_VARIATION_LOW > 0:
+        if petition.monitored or petition.moderated:
+                return False
+        else:
+            petition.monitor()
+            monitoring = Monitoring.objects.create(petition=petition, reason=monitoring_reason, priority="low")
+            return False
+
+    else:
+        return False
+
+# check the number of unconfirmed signatures in the last 6h
+def check_unconfirmed_signatures(petition):
+    moderation_reason, created = ModerationReason.objects.get_or_create(msg="signature_unconfirmed")
+    monitoring_reason, created = MonitoringReason.objects.get_or_create(msg="signature_unconfirmed")
+
+    # get the number of unconfirmed signatures for the petition
+    unconfirmed_signatures = Signature.objects.filter(petition = petition, confirmed=False, date__gte = timezone.now() - timedelta(hours=6))
+    unconfirmed_numb = unconfirmed_signatures.count()
+
+    # check if the number of unconfirmed signatures requires critical monitoring (=automatic moderation)
+    if unconfirmed_numb > settings.UNCONFIRMED_NUMBER_CRITICAL and settings.UNCONFIRMED_NUMBER_CRITICAL > 0:
+        if petition.moderated:
+            pass
+        else:
+            petition.moderate()
+            petition.monitor(False)
+            moderation = Moderation.objects.create(petition=petition, reason=moderation_reason)
+            send_mail_to_moderation(settings.MODERATION_EMAIL, petition, moderation.reason.text, "petition") 
+            
+            if petition.user:
+                send_moderation_mail(petition.user.user.email, petition.user.user.username, moderation.reason.text, "petition", petition)
+            elif petition.org:
+                for member in petition.org.members.all():
+                    permissions = Permission.objects.get(organization=petition.org, user=member)
+                    if permissions:
+                        if permissions.can_modify_permissions:
+                            send_moderation_mail(member.user.email, member.user.username, moderation.reason.text, "petition", petition)
+        return True
+
+    # check if the number of unconfirmed signatures requires strong monitoring
+    elif unconfirmed_numb > settings.UNCONFIRMED_NUMBER_STRONG and settings.UNCONFIRMED_NUMBER_STRONG > 0:
+        if petition.moderated or (petition.monitored and petition.monitoring.last().priority == "strong"):
+            pass
+        else:
+            petition.monitor()
+            monitoring = Monitoring.objects.create(petition=petition, reason=monitoring_reason, priority="strong")
+            send_mail_to_moderation_monitor(settings.MODERATION_EMAIL, petition, monitoring.reason.text, "petition", "strong") 
+            
+            if petition.user:
+                send_monitoring_mail(petition.user.user.email, petition.user.user.username,  "petition", petition, monitoring.reason.text)
+            elif petition.org:
+                for member in petition.org.members.all():
+                    permissions = Permission.objects.get(organization=petition.org, user=member)
+                    if permissions:
+                        if permissions.can_modify_permissions:
+                            send_monitoring_mail(member.user.email, member.user.username, "petition", petition, monitoring.reason.text)
+        return False
+
+    # check if the number of unconfirmed signatures requires average monitoring
+    elif unconfirmed_numb > settings.UNCONFIRMED_NUMBER_AVERAGE and settings.UNCONFIRMED_NUMBER_AVERAGE > 0:
+        # average monitoring doesn't replace strong monitoring
+        if (petition.monitored and (petition.monitoring.last().priority == "strong" or petition.monitoring.last().priority == "average")) or petition.moderated:
+                return False
+        else:
+            petition.monitor()
+            monitoring = Monitoring.objects.create(petition=petition, reason=monitoring_reason, priority="average")
+            return False
+    
+    # check if the number of unconfirmed signatures requires low monitoring
+    elif unconfirmed_numb > settings.UNCONFIRMED_NUMBER_LOW and settings.UNCONFIRMED_NUMBER_LOW > 0:
+        # low monitoring doesn't replace strong or average monitoring
+        if petition.monitored or petition.moderated:
+                return False
+        else:
+            petition.monitor()
+            monitoring = Monitoring.objects.create(petition=petition, reason=monitoring_reason, priority="low")
+            return False
+
+    else:
+        return False
+
+# check the number of signatures 24h after the creation of the petition. Monitor or moderate.
+def check_creation_signatures(petition):
+    moderation_reason, created = ModerationReason.objects.get_or_create(msg="signature_creation")
+    monitoring_reason, created = MonitoringReason.objects.get_or_create(msg="signature_creation")
+
+    # check if the number of signatures 24h after creation requires critical monitoring (=automatic moderation)
+    if petition.get_creation_signature_number() > settings.CREATION_NUMBER_CRITICAL and settings.CREATION_NUMBER_CRITICAL > 0:
+        if petition.moderated:
+            pass
+        else:
+            petition.moderate()
+            petition.monitor(False)
+            moderation = Moderation.objects.create(petition=petition, reason=moderation_reason)
+            send_mail_to_moderation(settings.MODERATION_EMAIL, petition, moderation.reason.text, "petition") 
+            
+            if petition.user:
+                send_moderation_mail(petition.user.user.email, petition.user.user.username, moderation.reason.text, "petition", petition)
+            elif petition.org:
+                for member in petition.org.members.all():
+                    permissions = Permission.objects.get(organization=petition.org, user=member)
+                    if permissions:
+                        if permissions.can_modify_permissions:
+                            send_moderation_mail(member.user.email, member.user.username, moderation.reason.text, "petition", petition)
+        return True
+
+    # check if the number of signatures 24h after creation requires strong monitoring
+    elif petition.get_creation_signature_number() > settings.CREATION_NUMBER_STRONG and settings.CREATION_NUMBER_STRONG > 0:
+        if petition.moderated or (petition.monitored and petition.monitoring.last().priority == "strong"):
+            pass
+        else:
+            petition.monitor()
+            monitoring = Monitoring.objects.create(petition=petition, reason=monitoring_reason, priority="strong")
+            send_mail_to_moderation_monitor(settings.MODERATION_EMAIL, petition, monitoring.reason.text, "petition", "strong") 
+            
+            if petition.user:
+                send_monitoring_mail(petition.user.user.email, petition.user.user.username, "petition", petition, monitoring.reason.text)
+            elif petition.org:
+                for member in petition.org.members.all():
+                    permissions = Permission.objects.get(organization=petition.org, user=member)
+                    if permissions:
+                        if permissions.can_modify_permissions:
+                            send_monitoring_mail(member.user.email, member.user.username, "petition", petition, monitoring.reason.text)
+        return False
+
+    # check if the number of signatures 24h after creation requires average monitoring
+    elif petition.get_creation_signature_number() > settings.CREATION_NUMBER_AVERAGE and settings.CREATION_NUMBER_AVERAGE > 0:
+        # average monitoring doesn't replace strong monitoring
+        if (petition.monitored and (petition.monitoring.last().priority == "strong" or petition.monitoring.last().priority == "average")) or petition.moderated:
+                return False
+        else:
+            petition.monitor()
+            monitoring = Monitoring.objects.create(petition=petition, reason=monitoring_reason, priority="average")
+            return False
+
+    # check if the number of signatures 24h after creation requires low monitoring
+    elif petition.get_creation_signature_number() > settings.CREATION_NUMBER_LOW and settings.CREATION_NUMBER_LOW > 0:
+        # low monitoring doesn't replace strong or average monitoring
+        if petition.monitored or petition.moderated:
+                return False
+        else:
+            petition.monitor()
+            monitoring = Monitoring.objects.create(petition=petition, reason=monitoring_reason, priority="low")
+            return False
+
+    else:
+        return False

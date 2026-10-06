@@ -1,0 +1,45 @@
+{% extends 'layouts/dashboard_layout.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block nav %}{% include 'layouts/nav_dashboard.html' with username=user.username sitename=settings.SITE_NAME %}{% endblock nav%}
+
+{% block sidebar %}
+  <div class="col-xl-3 col-lg-4 col-md-5 col-sm-6 col-12 dashboard-nav">
+    <div class="dashboard-nav-item py-3">
+      <div class="d-flex justify-content-between align-items-center flex-wrap">
+        <h4><span class="oi oi-clipboard"></span> <a href="{% url 'user_dashboard' %}">{% trans 'Petitions' %}</a>{% if petitions %}&nbsp;({{ petitions.count }}){% endif %}</h4>
+        <a class="btn btn-outline-primary btn-sm" href="{% url "user_petition_wizard" %}" data-toggle="tooltip" title="{% trans "Create a new petition" %}">{% trans "New petition" %}</a>
+      </div>
+    </div>
+    <div class="dashboard-nav-item py-3">
+      <div class="d-flex justify-content-between align-items-center flex-wrap">
+        <h4><span class="oi oi-trash"></span> <a href="{% url 'user_bin' %}">{% trans 'Petitions bin' %}</a>{% if petitions_bin %}&nbsp;({{ petitions_bin.count }}){% endif %}</h4>
+      </div>
+    </div>
+    {% include "petition/user_org_list.html" with user=user %}
+    {% include "petition/user_invitations.html" with user=user %}
+    <div class="dashboard-nav-item py-3">
+      <div class="d-flex justify-content-between align-items-center flex-wrap">
+        <h4><span class="oi oi-layers"></span> {% trans "Petition templates" %}</h4>
+        <a href="{% url "user_new_template" %}" class="btn btn-outline-primary btn-sm" data-toggle="tooltip" title="{% trans "Create a new petition template" %}">{% trans "New template" %}</a>
+      </div>
+      {% if user.petitiontemplate_set.all %}
+        {% include "petition/template_list.html" with templates=user.petitiontemplate_set.all owner=user %}
+      {% endif %}
+    </div>
+      <div class="dashboard-nav-item py-3">
+      <div class="d-flex justify-content-between align-items-center flex-wrap">
+        <h4><a href="{% url "user_profile" user.username %}"><span class="oi oi-person"></span> {% trans "Your public profile" %}</a></h4>
+      </div>
+    </div>
+  </div>
+{% endblock sidebar %}
+
+
+{% block extrajs %}
+{{ block.super }}
+<script>
+  {% include "petition/user.js" %}
+</script>
+{% endblock %}

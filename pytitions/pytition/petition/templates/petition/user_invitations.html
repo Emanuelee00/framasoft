@@ -1,0 +1,28 @@
+{% load i18n %}
+{% if user.invitations.all %}
+<div class="dashboard-nav-item py-3">
+  <h4>{% trans "Invitations" %}</h4>
+  <div id="invitations">
+    {% for org in user.invitations.all %}
+    <div class="alert alert-info alert-dismissible show fade" id="invite-alert-{{ org.slugname }}">
+        <div class="row">
+            <div class="col-1 alert-icon-col">
+                <span class="oi oi-question-mark"></span>
+            </div>
+            <div class="col">
+                <div class="row">
+                {% blocktrans with orgname=org %}
+                    You are invited to <strong>&nbsp;{{ orgname }}</strong>
+                {% endblocktrans %}
+                </div>
+                <div class="row d-flex justify-content-around">
+                    <a href="{% url 'invite_accept' org.slugname %}"><button class="btn btn-success">{% trans "Join" %}</button></a>
+                    <a href="{% url 'invite_dismiss' org.slugname %}"><button class="btn btn-danger btn-invitation-dismiss" data-org="{{ org.slugname }}">{% trans "Dismiss" %}</button></a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}

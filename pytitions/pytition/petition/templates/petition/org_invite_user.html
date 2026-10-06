@@ -1,0 +1,16 @@
+{% load i18n %}
+<div class="dashboard-nav-item py-3">
+  <form>
+    <div class="form-inline-group">
+      <h4><label for="invite_user">{% trans "Invite user" %} : </label></h4>
+      <div class="input-group">
+        <div class="input-group-prepend">
+          <span class="input-group-text"><span class="oi oi-person"></span></span>
+        </div>
+        <input class="form-control" type="text" id="invite_user" placeholder="{% trans "Username" %}">
+      </div>
+    </div>
+    <div id="user_search_result" class="list-group">
+    </div>
+  </form>
+</div>

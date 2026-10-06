@@ -1,0 +1,36 @@
+div.form-group.row {
+  margin-bottom: 2rem;
+}
+
+#id_publication_date {
+  width: 12rem;
+}
+
+#id_target {
+  width: 12rem;
+}
+
+#id_linear_gradient_direction {
+  width: 248px;
+}
+
+label.custom-file-label {
+  width: 240px;
+}
+
+#inputGroupFileAddon01 {
+  width: 64px;
+}
+
+#id_twitter_description {
+  width: 30rem;
+  height: 10rem;
+}
+
+#id_org_twitter_handle {
+  width: 30rem;
+}
+
+.form-text.text-muted {
+    padding-left: 15px;
+}

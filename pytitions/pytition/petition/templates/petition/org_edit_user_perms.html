@@ -1,0 +1,5 @@
+{% extends 'petition/org_base.html' %}
+
+{% block content %}
+    {% include "petition/user_edit_permissions.html" with user=user org=org member=member %}
+{% endblock %}
