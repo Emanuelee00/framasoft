@@ -180,8 +180,6 @@ class ContentFormGeneric(forms.Form):
     ### Content of a Petition ###
     text = forms.CharField(widget=TinyMCE(attrs={'rows': 25}), required=False)
     target = forms.IntegerField(required=False)
-    paper_signatures_enabled = SwitchField(required=False, label=_("Allow paper signatures"))
-    paper_signatures = forms.IntegerField(required=False)
     side_text = forms.CharField(widget=TinyMCE, required=False)
     footer_text = forms.CharField(widget=TinyMCE, required=False)
     footer_links = forms.CharField(widget=TinyMCE, required=False)

@@ -35,7 +35,7 @@ class GoSendConfirmationEmailViewTest(TestCase):
         response = self.client.post(reverse('create_signature', args=[petition.id]), data, follow=True)
         self.assertRedirects(response, petition.url)
         signature = Signature.objects.filter(petition=petition).first()
-        response = self.client.get(reverse('resend_confirmation_email', args=[signature.id]), follow=True)
+        response = self.client.post(reverse('resend_confirmation_email', args=[signature.id]), follow=True)
         self.assertRedirects(response, reverse("login")+"?next="+reverse("resend_confirmation_email",
                                                                          args=[signature.id]))
 
@@ -53,7 +53,7 @@ class GoSendConfirmationEmailViewTest(TestCase):
         response = self.client.post(reverse('create_signature', args=[petition.id]), data, follow=True)
         self.assertRedirects(response, petition.url)
         signature = Signature.objects.filter(petition=petition).first()
-        response = self.client.get(reverse('resend_confirmation_email', args=[signature.id]), follow=True)
+        response = self.client.post(reverse('resend_confirmation_email', args=[signature.id]), follow=True)
         self.assertRedirects(response, reverse('admin:{}_signature_change'.format(app_label), args=[signature.id]))
 
     def test_GoSendConfirmationEmailViewRequiresStaff(self):
@@ -63,6 +63,6 @@ class GoSendConfirmationEmailViewTest(TestCase):
                                              petition=petition)
         mail.outbox = []
         self.login('julia')
-        response = self.client.get(reverse('resend_confirmation_email', args=[signature.id]))
+        response = self.client.post(reverse('resend_confirmation_email', args=[signature.id]))
         self.assertEqual(response.status_code, 403)
         self.assertEqual(len(mail.outbox), 0)

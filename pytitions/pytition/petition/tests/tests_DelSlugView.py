@@ -28,6 +28,6 @@ class DelSlugViewTest(TestCase):
         john_perms.save()
         petition = Petition.objects.filter(org__slugname="attac").first()
         slug = petition.slugmodel_set.first()
-        response = self.client.get(reverse("del_slug", kwargs={'petition_id': petition.id})+"?slugid="+str(slug.id),
+        response = self.client.post(reverse("del_slug", kwargs={'petition_id': petition.id})+"?slugid="+str(slug.id),
                                    follow=True)
         self.assertRedirects(response, reverse("edit_petition", args=[petition.id]) + "#tab_social_network_form")

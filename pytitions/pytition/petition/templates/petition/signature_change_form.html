@@ -38,7 +38,7 @@
 {% endif %}{% endif %}
 {% endblock %}
 {% if change %}
-    <form action="{% url 'resend_confirmation_email' original.id %}">
+    <form method="post" action="{% url 'resend_confirmation_email' original.id %}">{% csrf_token %}
         <input type="submit" value="Re-send confirmation email">
     </form>
 {% endif %}

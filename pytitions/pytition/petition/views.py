@@ -48,7 +48,7 @@ from django.core.cache import cache
 from django.core import signing
 from django.utils.html import strip_tags
 from django.views.decorators.cache import never_cache
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_http_methods, require_POST
 from django.views.generic.edit import CreateView
 
 from formtools.wizard.views import SessionWizardView
@@ -330,6 +330,7 @@ def get_csv_signature(request, petition_id, only_confirmed):
 # resend/<int:signature_id>
 # resend the signature confirmation email
 @login_required
+@require_POST
 def go_send_confirmation_email(request, signature_id):
     if not request.user.is_staff:  # only used from the Django admin
         raise PermissionDenied
@@ -642,6 +643,7 @@ def user_profile(request, user_name):
 # /org/<slug:orgslugname>/leave_org
 # User is leaving the organisation
 @login_required
+@require_POST
 def leave_org(request, orgslugname):
     try:
         org = Organization.objects.get(slugname=orgslugname)
@@ -715,6 +717,7 @@ def get_user_list(request):
 # PATH : org/<slug:orgslugname>/add_user
 # Add an user to an organization
 @login_required
+@require_POST
 def org_add_user(request, orgslugname):
     adduser = request.GET.get('user', '')
 
@@ -759,6 +762,7 @@ def org_add_user(request, orgslugname):
 # Accept an invitation to an organisation
 # Called from /user/dashboard
 @login_required
+@require_POST
 def invite_accept(request, orgslugname):
     if orgslugname == "":
         return HttpResponse(status=500)
@@ -784,6 +788,7 @@ def invite_accept(request, orgslugname):
 # /org/<slug:orgslugname>/invite_dismiss
 # Dismiss the invitation to an organisation
 @login_required
+@require_POST
 def invite_dismiss(request, orgslugname):
     if orgslugname == "":
         return JsonResponse({}, status=500)
@@ -909,7 +914,6 @@ def edit_template(request, template_id):
             submitted_ctx['content_form_submitted'] = True
             if content_form.is_valid():
                 template.target = content_form.cleaned_data['target']
-                template.paper_signatures = content_form.cleaned_data['paper_signatures']
                 template.name = content_form.cleaned_data['name']
                 template.text = content_form.cleaned_data['text']
                 template.side_text = content_form.cleaned_data['side_text']
@@ -1018,6 +1022,7 @@ def edit_template(request, template_id):
 # /templates/<int:template_id>/delete
 # Delete a template
 @login_required
+@require_POST
 def template_delete(request, template_id):
     pytitionuser = get_session_user(request)
     if template_id == '':
@@ -1049,6 +1054,7 @@ def template_delete(request, template_id):
 # /templates/<int:template_id>/fav
 # Set a template as favourite
 @login_required
+@require_POST
 def template_fav_toggle(request, template_id):
     pytitionuser = get_session_user(request)
     if template_id == '':
@@ -1083,6 +1089,7 @@ def template_fav_toggle(request, template_id):
 # /org/<slug:orgslugname>/delete_member
 # Remove a member from an organization
 @login_required
+@require_POST
 def org_delete_member(request, orgslugname):
     member_name = request.GET.get('member', '')
     try:
@@ -1440,6 +1447,7 @@ class PetitionCreationWizard(SessionWizardView):
 # /<int:petition_id>/delete
 # Delete a petition if the user is the owner or has the right permissions in the organization
 @login_required
+@require_POST
 def petition_delete(request, petition_id):
     petition = petition_from_id(petition_id)
     pytitionuser = get_session_user(request)
@@ -1461,6 +1469,8 @@ def petition_delete(request, petition_id):
 # /<int:petition_id>/in_bin
 # Put a petition in the bin and unpublish it if the user is the owner or has the right permissions in the organization
 # If a petition has an in_bin_date, it is in the bin
+@login_required
+@require_POST
 def petition_in_bin(request, petition_id):
     pytitionuser = get_session_user(request)
     petition = petition_from_id(petition_id)
@@ -1480,6 +1490,8 @@ def petition_in_bin(request, petition_id):
 
 # /<int:petition_id>/restore
 # Restore a petition from the bin if the user is the owner or has the right permissions in the organization
+@login_required
+@require_POST
 def petition_restore(request, petition_id):
     pytitionuser = get_session_user(request)
     petition = petition_from_id(petition_id)
@@ -1500,6 +1512,7 @@ def petition_restore(request, petition_id):
 # /<int:petition_id>/publish
 # Publish a petition
 @login_required
+@require_POST
 def petition_publish(request, petition_id):
     pytitionuser = get_session_user(request)
     petition = petition_from_id(petition_id)
@@ -1527,6 +1540,7 @@ def petition_publish(request, petition_id):
 # /<int:petition_id>/unpublish
 # Unpublish a petition
 @login_required
+@require_POST
 def petition_unpublish(request, petition_id):
     pytitionuser = get_session_user(request)
     petition = petition_from_id(petition_id)
@@ -2099,6 +2113,7 @@ def add_new_slug(request, petition_id):
 # /<int:petition_id>/del_slug
 # Remove a slug from a petition
 @login_required
+@require_POST
 def del_slug(request, petition_id):
     pytitionuser = get_session_user(request)
     try:
