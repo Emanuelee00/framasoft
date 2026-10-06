@@ -37,6 +37,17 @@
 
 See [dev/CONTRIBUTE.md](dev/CONTRIBUTE.md)
 
+## Load testing (`gatling-tests/`)
+
+`gatling-tests/` is a git **submodule**, not a regular folder — cloning this
+repo normally leaves it empty. To get its contents:
+
+```bash
+git clone --recurse-submodules <this-repo-url>
+# or, if you already cloned without that flag:
+git submodule update --init
+```
+
 ## Documentation (Installing in production, configuration, update etc)
 
 See https://pytition.readthedocs.io
