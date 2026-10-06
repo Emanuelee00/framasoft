@@ -148,7 +148,7 @@ Le dipendenze sono state portate a 5.2 con `./upgrade.sh`, dopo aver cambiato i 
 
 ## 4. Vincoli del pyproject
 
-### Django 5.2 e pin tolti dalle dipendenze dirette
+### Django 4.2 o 5.2 e pin tolti dalle dipendenze dirette
 `pyproject.toml`
 
 <table><tr><th>Prima</th><th>Dopo</th></tr><tr><td>
@@ -176,7 +176,7 @@ requires-python = ">=3.8"
 
 ```python
 dependencies = [
-    "Django~=5.2.0",
+    "Django>=4.2,<5.3",
     "django-colorfield",
     "django-tinymce",
     "django-mailer",
@@ -198,7 +198,11 @@ requires-python = ">=3.10"
 - `setuptools<81`: da 81 in poi è stato rimosso `pkg_resources`, che usano alcune librerie.
 - Python minimo **3.10**: è il minimo di Django 5.2 (Django 4.2 arrivava a 3.8).
 - Il gruppo `[dependency-groups] test` (coverage, sphinx, sphinx-rtd-theme) è stato **mantenuto**: la branch `upgrade-django-5.2` lo aveva perso, e sphinx sarebbe uscito dal lock.
-- Perché `make upgrade` arrivi a 5.2 servono questi vincoli: con `Django~=4.2.0` lo script resta su 4.2.x, perché rispetta i vincoli.
+- Django è `>=4.2,<5.3`, così il progetto accetta entrambe le versioni:
+  - da un clone nuovo, `make run` esegue `migrate.sh`, che pinna le versioni di `pdm.lock` (Django 4.2.13);
+  - `make upgrade` toglie quei pin (`upgrade.sh` rimuove `constraint-dependencies` dal pyproject) e arriva a Django 5.2.x.
+- Con `Django~=5.2.0` il clone nuovo si bloccava: `migrate.sh` pinnava 4.2.13 e `uv lock` falliva con \"unsatisfiable\".
+- Verificato su un clone pulito: `migrate.sh` → Django 4.2.13, 191/191 test OK; `upgrade.sh` → Django 5.2.18 (69 pin rimossi), 191/191 test OK.
 
 ## 5. Test: assertEquals rimosso in Python 3.12
 

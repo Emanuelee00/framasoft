@@ -6,7 +6,7 @@ authors = [
     {name = "Yann Sionneau", email = "yann@sionneau.net"},
 ]
 dependencies = [
-    "Django~=5.2.0",
+    "Django>=4.2,<5.3",
     "django-colorfield",
     "django-tinymce",
     "django-mailer",
