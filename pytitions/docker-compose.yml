@@ -1,17 +1,44 @@
-version: '3'
+# version: '3'
 
+# services:
+#   db:
+#     image: postgres
+#     environment:
+#       - POSTGRES_USER=postgres
+#       - POSTGRES_PASSWORD=postgres
+#   smtp:
+#     image: maildev/maildev:1.1.0
+#     command: bin/maildev --web 8080 --smtp 2525 --verbose
+#     ports:
+#       - "8080:8080"
+#       - "2525:2525"
+#   web:
+#     environment:
+#       - DJANGO_SETTINGS_MODULE=config.docker_config
+#       - PYTHONPATH=/
+#     build: .
+#     command: bash -c "pdm use -f /venv/.venv && pdm run python pytition/manage.py runserver 0.0.0.0:8000"
+#     volumes:
+#       - .:/code
+#     ports:
+#       - "8000:8000"
+#     depends_on:
+#       - db
+#       - smtp
 services:
   db:
-    image: postgres
+    image: docker.io/library/postgres:latest
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+
   smtp:
-    image: maildev/maildev:1.1.0
+    image: docker.io/maildev/maildev:1.1.0
     command: bin/maildev --web 8080 --smtp 2525 --verbose
     ports:
       - "8080:8080"
       - "2525:2525"
+
   web:
     environment:
       - DJANGO_SETTINGS_MODULE=config.docker_config
