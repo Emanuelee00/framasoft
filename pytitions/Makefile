@@ -12,3 +12,6 @@ test:
 
 run:
 	docker compose up
+
+install:
+	pip install -r requirements_dev.txt
