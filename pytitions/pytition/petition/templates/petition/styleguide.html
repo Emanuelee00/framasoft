@@ -1,0 +1,411 @@
+{% extends "layouts/layout.html" %}
+{% load i18n %}
+{% load static %}
+{% load fp_ui %}
+{% comment %}
+  Design system reference (DS-05). Developer documentation, served only with DEBUG=True:
+  the prose is not translated, the component labels reuse the real msgids.
+{% endcomment %}
+
+{% block title %}Design system{% endblock title %}
+
+{% block extracss %}
+<link href="{% static "css/styleguide.css" %}" rel="stylesheet">
+{% endblock extracss %}
+
+{% block main_content %}
+<div class="fp-container-wide sg">
+  <div class="fp-page-header">
+    <p class="fp-kicker">Framapetitions</p>
+    <h1>Design system</h1>
+    <p class="fp-lead">Tokens, components and layout blocks. Every example is live markup: open "Markup" under it and copy. Sources: <code>static/css/fp-tokens.css</code>, <code>static/css/fp-components.css</code>, <code>static/js/fp-ui.js</code>, <code>templates/components/</code>.</p>
+  </div>
+
+  <div class="sg-layout">
+    <nav class="sg-toc" aria-label="Sections">
+      <ol>
+        <li><a href="#principles">Principles</a></li>
+        <li><a href="#colours">Colours</a></li>
+        <li><a href="#type">Typography</a></li>
+        <li><a href="#space">Spacing, radii, shadows</a></li>
+        <li><a href="#layout">Layout and blocks</a></li>
+        <li><a href="#icons">Icons</a></li>
+        <li><a href="#buttons">Buttons</a></li>
+        <li><a href="#forms">Forms</a></li>
+        <li><a href="#menus">Dropdown menu</a></li>
+        <li><a href="#cards">Cards</a></li>
+        <li><a href="#badges">Badges</a></li>
+        <li><a href="#alerts">Alerts</a></li>
+        <li><a href="#tables">Tables</a></li>
+        <li><a href="#pagination">Pagination</a></li>
+        <li><a href="#tabs">Tabs</a></li>
+        <li><a href="#stepper">Stepper</a></li>
+        <li><a href="#empty">Empty state</a></li>
+        <li><a href="#progress">Progress</a></li>
+        <li><a href="#dialog">Dialog</a></li>
+      </ol>
+    </nav>
+
+    <div class="sg-content">
+
+      <section id="principles" class="sg-section">
+        <h2>Principles</h2>
+        <ul class="sg-list">
+          <li><strong>Simple first.</strong> Server-rendered HTML that works without JavaScript; <code>fp-ui.js</code> only enhances (menus, dialogs, tabs).</li>
+          <li><strong>Honest.</strong> One primary action per screen, no fake urgency, no pre-ticked boxes, no shaming copy on "no".</li>
+          <li><strong>Readable.</strong> 16px body, 68ch lines, 4.5:1 contrast for text, 3:1 for controls and large text.</li>
+          <li><strong>Framasoft.</strong> Violet for actions, orange for accents, Tovari Sans for h1/h2 and big numbers only.</li>
+          <li><strong>Tokens, never raw values.</strong> Components use <code>var(--fp-*)</code>; page CSS goes in its own file, not in <code>fp-components.css</code>.</li>
+        </ul>
+      </section>
+
+      <section id="colours" class="sg-section">
+        <h2>Colours</h2>
+        <p>Ratio against white, computed from <code>fp-tokens.css</code>. Below 4.5:1: borders, large text or backgrounds only.</p>
+        <ul class="sg-swatches">
+          {% for name, value, ratio in colours %}
+          <li class="sg-swatch">
+            <span class="sg-swatch-chip" style="background: {{ value }}"></span>
+            <code>--{{ name }}</code>
+            <span class="fp-small">{{ value }} · {{ ratio }}:1</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </section>
+
+      <section id="type" class="sg-section">
+        <h2>Typography</h2>
+        <p>System fonts for text (no download); Tovari Sans (Framasoft's typeface, vendored, OFL) for <code>h1</code>, <code>h2</code>, <code>.fp-kicker</code>, the brand and counters. Never below 20px.</p>
+        {% fp_example "Markup" %}
+        <p class="fp-kicker">Kicker</p>
+        <h1>Heading 1 (--fp-text-3xl)</h1>
+        <h2>Heading 2 (--fp-text-2xl)</h2>
+        <h3>Heading 3 (--fp-text-xl)</h3>
+        <h4>Heading 4 (--fp-text-lg)</h4>
+        <p class="fp-lead">Lead paragraph (--fp-text-md, muted).</p>
+        <p>Body text (--fp-text-base, line-height 1.6). Links in text are <a href="#type">underlined</a>.</p>
+        <p class="fp-small fp-muted">Small muted text for help and meta (--fp-text-sm).</p>
+        {% endfp_example %}
+        {% fp_example "Markup" %}
+        <div class="fp-prose">
+          <h2>Long text in .fp-prose</h2>
+          <p>Petition texts, privacy notice, help pages. Headings switch back to the text font so that long documents stay calm.</p>
+          <ul><li>Lists keep their rhythm.</li><li>Lines stop at 68 characters.</li></ul>
+        </div>
+        {% endfp_example %}
+      </section>
+
+      <section id="space" class="sg-section">
+        <h2>Spacing, radii, shadows</h2>
+        <p>4px base: <code>--fp-s1</code> 4, <code>s2</code> 8, <code>s3</code> 12, <code>s4</code> 16, <code>s5</code> 20, <code>s6</code> 24, <code>s8</code> 32, <code>s10</code> 40, <code>s12</code> 48, <code>s16</code> 64, <code>s20</code> 80. Inside a component: s1–s4. Between components: s4–s8. Between sections: s10–s16.</p>
+        <div class="sg-row">
+          <span class="sg-space" style="width: var(--fp-s2)"></span><code>s2</code>
+          <span class="sg-space" style="width: var(--fp-s4)"></span><code>s4</code>
+          <span class="sg-space" style="width: var(--fp-s6)"></span><code>s6</code>
+          <span class="sg-space" style="width: var(--fp-s8)"></span><code>s8</code>
+          <span class="sg-space" style="width: var(--fp-s12)"></span><code>s12</code>
+          <span class="sg-space" style="width: var(--fp-s16)"></span><code>s16</code>
+        </div>
+        <div class="sg-row">
+          <span class="sg-box" style="border-radius: var(--fp-radius-sm)">radius-sm 6<br>inputs, badges</span>
+          <span class="sg-box" style="border-radius: var(--fp-radius-md)">radius-md 8<br>buttons, menus</span>
+          <span class="sg-box" style="border-radius: var(--fp-radius)">radius 12<br>cards, alerts</span>
+          <span class="sg-box" style="box-shadow: var(--fp-shadow-sm)">shadow-sm<br>cards</span>
+          <span class="sg-box" style="box-shadow: var(--fp-shadow-md)">shadow-md<br>hover, menus</span>
+          <span class="sg-box" style="box-shadow: var(--fp-shadow-lg)">shadow-lg<br>dialogs</span>
+        </div>
+        <p>Breakpoints (Bootstrap 4): 576 / 768 / 992 / 1200px. Write mobile-first <code>@media (min-width: 768px)</code>. Pages are checked at 375, 768, 1024 and 1440px with no horizontal scroll.</p>
+      </section>
+
+      <section id="layout" class="sg-section">
+        <h2>Layout and blocks</h2>
+        <p><code>layouts/base.html</code> renders: skip link → <code>{% templatetag openblock %} nav {% templatetag closeblock %}</code> (header) → <code>&lt;main id="main"&gt;</code> with <code>{% templatetag openblock %} main_content {% templatetag closeblock %}</code> → <code>{% templatetag openblock %} footer {% templatetag closeblock %}</code> (page footer, e.g. the petition's own links) → <code>{% templatetag openblock %} site_footer {% templatetag closeblock %}</code> (global footer).</p>
+        {% fp_example "Markup" %}
+        <div class="fp-container sg-outline">.fp-container: 960px of content, 16/24px gutters</div>
+        <div class="fp-container-wide sg-outline">.fp-container-wide: 1200px, dashboards and tables</div>
+        <div class="fp-grid fp-grid-3">
+          <div class="sg-outline">.fp-grid-3</div><div class="sg-outline">1 → 2 → 3 columns</div><div class="sg-outline">gap s6</div>
+        </div>
+        <div class="fp-grid fp-grid-sidebar">
+          <div class="sg-outline">.fp-grid-sidebar: 2/3</div><div class="sg-outline">1/3 from 992px</div>
+        </div>
+        <div class="fp-cluster"><span class="sg-outline">.fp-cluster</span><span class="sg-outline">wraps</span><span class="sg-outline">gap s3</span></div>
+        <div class="fp-stack fp-stack-sm"><span class="sg-outline">.fp-stack(-sm|-lg)</span><span class="sg-outline">vertical rhythm</span></div>
+        {% endfp_example %}
+        {% fp_example "Markup" %}
+        <div class="fp-page-header">
+          <h1>Page title</h1>
+          <p class="fp-lead">One sentence that says what this page is for.</p>
+        </div>
+        {% endfp_example %}
+      </section>
+
+      <section id="icons" class="sg-section">
+        <h2>Icons</h2>
+        <p>Open Iconic SVG sprite through <code>components/icon.html</code>. Decorative by default (<code>aria-hidden</code>); pass <code>label</code> only when the icon is the only content. No emoji as icons. Names: <a href="{% static 'vendor/open-iconic-1.1.1/sprite/sprite.html' %}">full list</a>.</p>
+        {% fp_example "Markup" %}
+        <p class="fp-cluster">
+          {% include "components/icon.html" with name="person" %}
+          {% include "components/icon.html" with name="people" %}
+          {% include "components/icon.html" with name="plus" %}
+          {% include "components/icon.html" with name="pencil" %}
+          {% include "components/icon.html" with name="trash" %}
+          {% include "components/icon.html" with name="data-transfer-download" %}
+          {% include "components/icon.html" with name="check" %}
+          {% include "components/icon.html" with name="warning" %}
+          {% include "components/icon.html" with name="globe" class="fp-icon-lg" label="Language" %}
+        </p>
+        {% endfp_example %}
+        <pre class="sg-pre"><code>{% templatetag openblock %} include "components/icon.html" with name="pencil" {% templatetag closeblock %}
+{% templatetag openblock %} include "components/icon.html" with name="globe" class="fp-icon-lg" label=language_label {% templatetag closeblock %}</code></pre>
+      </section>
+
+      <section id="buttons" class="sg-section">
+        <h2>Buttons</h2>
+        <p>One <strong>primary</strong> per view (the action we hope for). <strong>Secondary</strong> for alternatives, <strong>tertiary</strong> for cancel/back/low-stakes, <strong>danger</strong> only for irreversible actions, always behind a confirmation. Use <code>&lt;button&gt;</code> for actions, <code>&lt;a&gt;</code> for navigation. 44px tall; <code>-sm</code> only in dense tables.</p>
+        {% fp_example "Markup" %}
+        <div class="fp-actions">
+          <button type="button" class="fp-btn fp-btn-primary">{% trans "Sign the petition" %}</button>
+          <button type="button" class="fp-btn fp-btn-secondary">{% include "components/icon.html" with name="data-transfer-download" %}Export</button>
+          <button type="button" class="fp-btn fp-btn-tertiary">Cancel</button>
+          <button type="button" class="fp-btn fp-btn-danger">{% include "components/icon.html" with name="trash" %}Delete</button>
+          <button type="button" class="fp-btn fp-btn-primary" disabled>Disabled</button>
+        </div>
+        <div class="fp-actions">
+          <a class="fp-btn fp-btn-primary fp-btn-lg" href="#buttons">Large link</a>
+          <button type="button" class="fp-btn fp-btn-secondary fp-btn-sm">Small</button>
+          <button type="button" class="fp-btn fp-btn-secondary fp-btn-icon">{% include "components/icon.html" with name="pencil" %}<span class="fp-sr-only">Edit</span></button>
+        </div>
+        <button type="button" class="fp-btn fp-btn-primary fp-btn-block">Full width (.fp-btn-block)</button>
+        {% endfp_example %}
+      </section>
+
+      <section id="forms" class="sg-section">
+        <h2>Forms</h2>
+        <p>Always a visible <code>&lt;label&gt;</code> (placeholders are examples, not labels). Mark optional fields, not required ones. Errors: summary at the top linking to the fields, then the message above each field. <code>components/field.html</code> does all of this for a Django field; this form is bound with invalid data on purpose.</p>
+        {% fp_example "Markup" %}
+        <form class="fp-narrow" novalidate>
+          <div class="fp-error-summary" role="alert" tabindex="-1">
+            <h3 class="fp-error-summary-title">There is a problem</h3>
+            <ul>{% for field in form %}{% if field.errors %}<li><a href="#{{ field.auto_id }}">{{ field.label }}: {{ field.errors|join:" " }}</a></li>{% endif %}{% endfor %}</ul>
+          </div>
+          {% include "components/field.html" with field=form.name %}
+          {% include "components/field.html" with field=form.email %}
+          {% include "components/field.html" with field=form.phone %}
+          {% include "components/field.html" with field=form.reason %}
+          {% include "components/field.html" with field=form.message %}
+          {% include "components/field.html" with field=form.consent %}
+          <div class="fp-actions">
+            <button type="submit" class="fp-btn fp-btn-primary">Send</button>
+            <a class="fp-btn fp-btn-tertiary" href="#forms">Cancel</a>
+          </div>
+        </form>
+        {% endfp_example %}
+        <pre class="sg-pre"><code>{% templatetag openblock %} include "components/field.html" with field=form.email {% templatetag closeblock %}</code></pre>
+        {% fp_example "Markup" %}
+        <form class="fp-narrow" role="search" action="#forms">
+          <label class="fp-label" for="sg-search">Search</label>
+          <div class="fp-input-group">
+            <input class="fp-input" id="sg-search" type="search" name="q">
+            <button class="fp-btn fp-btn-primary" type="submit">Search</button>
+          </div>
+          <fieldset class="fp-fieldset">
+            <legend class="fp-legend">Sort by</legend>
+            <div class="fp-check"><input class="fp-check-input" type="radio" name="sg-sort" id="sg-sort-1" checked><label for="sg-sort-1">Most recent</label></div>
+            <div class="fp-check"><input class="fp-check-input" type="radio" name="sg-sort" id="sg-sort-2"><label for="sg-sort-2">Most signed</label></div>
+          </fieldset>
+        </form>
+        {% endfp_example %}
+      </section>
+
+      <section id="menus" class="sg-section">
+        <h2>Dropdown menu</h2>
+        <p>A <code>&lt;details&gt;</code> disclosure with a list of links: works without JavaScript; <code>fp-ui.js</code> closes it on Escape and outside click. Not for form selects (use <code>.fp-select</code>). Add <code>.fp-menu-panel-start</code> to align left.</p>
+        {% fp_example "Markup" %}
+        <details class="fp-menu">
+          <summary class="fp-btn fp-btn-secondary">Actions</summary>
+          <div class="fp-menu-panel fp-menu-panel-start">
+            <ul class="fp-menu-list">
+              <li><a class="fp-menu-item" href="#menus">{% include "components/icon.html" with name="pencil" %}Edit</a></li>
+              <li><a class="fp-menu-item" href="#menus">{% include "components/icon.html" with name="data-transfer-download" %}Export signatures</a></li>
+              <li class="fp-menu-sep" role="presentation"></li>
+              <li><p class="fp-menu-heading">Danger zone</p></li>
+              <li><a class="fp-menu-item" href="#menus">{% include "components/icon.html" with name="trash" %}Move to the bin</a></li>
+            </ul>
+          </div>
+        </details>
+        {% endfp_example %}
+      </section>
+
+      <section id="cards" class="sg-section">
+        <h2>Cards</h2>
+        <p>Petition card: <code>components/petition_card.html</code> inside <code>&lt;ul class="fp-card-grid"&gt;</code>. The title link stretches over the whole card, so the card has exactly one link. No "trending", no fake urgency, the count is a count.</p>
+        {% fp_example "Markup" %}
+        <ul class="fp-card-grid">
+          <li>{% include "components/petition_card.html" with petition=sample_petition %}</li>
+          <li>{% include "components/petition_card.html" with petition=sample_petition %}</li>
+        </ul>
+        {% endfp_example %}
+        {% fp_example "Markup" %}
+        <div class="fp-grid fp-grid-2">
+          <section class="fp-card">
+            <div class="fp-card-body">
+              <h3 class="fp-card-title">Generic card</h3>
+              <p class="fp-muted">Group related content: settings blocks, dashboard summaries.</p>
+            </div>
+            <div class="fp-card-footer"><a class="fp-btn fp-btn-tertiary fp-btn-sm" href="#cards">Manage</a></div>
+          </section>
+          <section class="fp-card">
+            <div class="fp-card-body">
+              <h3 class="fp-card-title">Signatures</h3>
+              <p><span class="sg-big">1 284</span> confirmed</p>
+            </div>
+          </section>
+        </div>
+        {% endfp_example %}
+      </section>
+
+      <section id="badges" class="sg-section">
+        <h2>Badges</h2>
+        <p>Status of an object, always with a word. Draft = neutral, published = success, needs attention = warning, moderated or error = danger.</p>
+        {% fp_example "Markup" %}
+        <p class="fp-cluster">
+          <span class="fp-badge">Draft</span>
+          <span class="fp-badge fp-badge-success">Published</span>
+          <span class="fp-badge fp-badge-warning">Unconfirmed</span>
+          <span class="fp-badge fp-badge-danger">Moderated</span>
+          <span class="fp-badge fp-badge-primary">Organization</span>
+          <span class="fp-badge fp-badge-plain">No dot</span>
+        </p>
+        {% endfp_example %}
+      </section>
+
+      <section id="alerts" class="sg-section">
+        <h2>Alerts</h2>
+        <p>Icon (<code>components/alert_icon.html</code>) + text. <code>role="alert"</code> for errors and warnings that follow an action, <code>role="status"</code> for success and information. Django messages already go through <code>components/alerts.html</code>.</p>
+        {% fp_example "Markup" %}
+        <div class="fp-alert fp-alert-success" role="status">
+          {% include "components/alert_icon.html" with kind="success" %}
+          <div><p class="fp-alert-title">Signature confirmed</p><p>Thank you. You can <a href="#alerts">manage your signature</a> at any time.</p></div>
+        </div>
+        <div class="fp-alert fp-alert-info" role="status">
+          {% include "components/alert_icon.html" with kind="info" %}
+          <p>Only the number of signatures is public.</p>
+        </div>
+        <div class="fp-alert fp-alert-warning" role="alert">
+          {% include "components/alert_icon.html" with kind="warning" %}
+          <div><p class="fp-alert-title">Your signature has not been recorded</p><p>Please try again later.</p></div>
+        </div>
+        <div class="fp-alert fp-alert-danger" role="alert">
+          {% include "components/alert_icon.html" with kind="danger" %}
+          <p>This petition is moderated.</p>
+        </div>
+        {% endfp_example %}
+      </section>
+
+      <section id="tables" class="sg-section">
+        <h2>Tables</h2>
+        <p>Real data only (not layout). The wrapper scrolls on small screens, the page never does: keep <code>tabindex="0"</code>, <code>role="region"</code> and a label on it. Numbers right-aligned with <code>.fp-num</code>.</p>
+        {% fp_example "Markup" %}
+        <div class="fp-table-wrap" tabindex="0" role="region" aria-labelledby="sg-table-caption">
+          <table class="fp-table">
+            <caption id="sg-table-caption">Your petitions</caption>
+            <thead><tr><th scope="col">Title</th><th scope="col">Status</th><th scope="col" class="fp-num">Signatures</th><th scope="col"><span class="fp-sr-only">Actions</span></th></tr></thead>
+            <tbody>
+              <tr><td>Keep the village library open</td><td><span class="fp-badge fp-badge-success">Published</span></td><td class="fp-num">1 284</td><td><a class="fp-btn fp-btn-tertiary fp-btn-sm" href="#tables">Edit</a></td></tr>
+              <tr><td>Safe cycling lanes on Main Street</td><td><span class="fp-badge">Draft</span></td><td class="fp-num">0</td><td><a class="fp-btn fp-btn-tertiary fp-btn-sm" href="#tables">Edit</a></td></tr>
+            </tbody>
+          </table>
+        </div>
+        {% endfp_example %}
+      </section>
+
+      <section id="pagination" class="sg-section">
+        <h2>Pagination</h2>
+        <p><code>components/pagination.html</code> with a Django <code>Page</code>; pass the other GET parameters in <code>query</code>. Under 576px only previous, current and next remain.</p>
+        {% fp_example "Markup" %}
+        {% include "components/pagination.html" with page=page query="sort=desc" %}
+        {% endfp_example %}
+      </section>
+
+      <section id="tabs" class="sg-section">
+        <h2>Tabs</h2>
+        <p>Default: tabs are links to separate URLs, with <code>aria-current="page"</code> (no JavaScript). For panels on the same page, wrap in <code>data-fp-tabs</code>: without JavaScript all panels stay visible and the tabs are anchors.</p>
+        {% fp_example "Markup" %}
+        <nav aria-label="Petition settings">
+          <ul class="fp-tabs">
+            <li><a class="fp-tab" href="#tabs" aria-current="page">Content</a></li>
+            <li><a class="fp-tab" href="#tabs">Emails</a></li>
+            <li><a class="fp-tab" href="#tabs">Sharing</a></li>
+          </ul>
+        </nav>
+        {% endfp_example %}
+        {% fp_example "Markup" %}
+        <div data-fp-tabs>
+          <ul class="fp-tabs">
+            <li><a class="fp-tab" href="#sg-panel-1">Text</a></li>
+            <li><a class="fp-tab" href="#sg-panel-2">Image</a></li>
+            <li><a class="fp-tab" href="#sg-panel-3">Preview</a></li>
+          </ul>
+          <section id="sg-panel-1" class="fp-tab-panel"><p>First panel.</p></section>
+          <section id="sg-panel-2" class="fp-tab-panel"><p>Second panel.</p></section>
+          <section id="sg-panel-3" class="fp-tab-panel"><p>Third panel.</p></section>
+        </div>
+        {% endfp_example %}
+      </section>
+
+      <section id="stepper" class="sg-section">
+        <h2>Stepper</h2>
+        <p>An ordered list. The current step has <code>aria-current="step"</code>; done steps get <code>.is-done</code> and a hidden "completed" word. Empty markers are numbered by CSS.</p>
+        {% fp_example "Markup" %}
+        <ol class="fp-stepper">
+          <li class="fp-step is-done"><span class="fp-step-marker">{% include "components/icon.html" with name="check" %}</span><span class="fp-step-label">Title <span class="fp-sr-only">(completed)</span><span class="fp-step-hint">Give a title</span></span></li>
+          <li class="fp-step" aria-current="step"><span class="fp-step-marker"></span><span class="fp-step-label">Content<span class="fp-step-hint">Write your text</span></span></li>
+          <li class="fp-step"><span class="fp-step-marker"></span><span class="fp-step-label">Publish<span class="fp-step-hint">Check and publish</span></span></li>
+        </ol>
+        {% endfp_example %}
+      </section>
+
+      <section id="empty" class="sg-section">
+        <h2>Empty state</h2>
+        <p>Say what is missing and offer the one useful next action. <code>components/empty_state.html</code>, strings translated by the caller.</p>
+        {% fp_example "Markup" %}
+        {% include "components/empty_state.html" with icon="clipboard" title="No petition yet" text="Your petitions will appear here. You can save a draft and publish it later." action_url="#empty" action_label="Create a petition" %}
+        {% endfp_example %}
+      </section>
+
+      <section id="progress" class="sg-section">
+        <h2>Progress</h2>
+        <p>Native <code>&lt;progress&gt;</code> with a label: readable without JavaScript, no animation. The count is written in full next to it (<code>components/progress.html</code> on the petition page).</p>
+        {% fp_example "Markup" %}
+        <div class="fp-progress">
+          <p class="fp-progress-count"><strong>1 284</strong> signatures <span class="fp-progress-goal">out of 2 000</span></p>
+          <progress class="fp-progress-bar" max="100" value="64" aria-label="Progress towards the goal">64%</progress>
+        </div>
+        <progress class="fp-progress-bar fp-progress-bar-sm" max="100" value="30" aria-label="Upload">30%</progress>
+        {% endfp_example %}
+      </section>
+
+      <section id="dialog" class="sg-section">
+        <h2>Dialog</h2>
+        <p>Native <code>&lt;dialog&gt;</code>: focus trap, Escape and backdrop come from the browser. The opener is a real link or form fallback (here <code>href="#sg-dialog"</code>); <code>data-fp-dialog-open</code> upgrades it. Only for short confirmations or forms; never to interrupt someone who is signing.</p>
+        {% fp_example "Markup" %}
+        <a class="fp-btn fp-btn-danger" href="#sg-dialog" data-fp-dialog-open="sg-dialog">Delete the petition</a>
+        <dialog id="sg-dialog" class="fp-dialog" aria-labelledby="sg-dialog-title">
+          <div class="fp-dialog-header">
+            <h2 id="sg-dialog-title" class="fp-dialog-title">Delete this petition?</h2>
+            <button type="button" class="fp-btn fp-btn-tertiary fp-btn-icon fp-dialog-close" data-fp-dialog-close>{% include "components/icon.html" with name="x" %}<span class="fp-sr-only">{% trans "Close" %}</span></button>
+          </div>
+          <p>The petition and its 1 284 signatures will be deleted. This cannot be undone.</p>
+          <form method="dialog" class="fp-dialog-actions">
+            <button class="fp-btn fp-btn-tertiary" value="cancel">Cancel</button>
+            <button class="fp-btn fp-btn-danger" value="confirm">Delete</button>
+          </form>
+        </dialog>
+        {% endfp_example %}
+      </section>
+
+    </div>
+  </div>
+</div>
+{% endblock main_content %}

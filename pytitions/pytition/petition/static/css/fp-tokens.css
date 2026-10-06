@@ -1,38 +1,164 @@
 /*
- * Framapétitions design tokens and accessibility baseline.
- * Loaded after custom.css; no build step. Colours come from the
- * framasoft.org palette (--f-*). Contrast ratios are against white.
+ * Framapétitions design tokens (DS-01) and accessibility baseline.
+ *
+ * Single source of truth for colours, type, spacing, radii, shadows,
+ * motion and breakpoints. Loaded after Bootstrap and custom.css, no build
+ * step: plain custom properties with hexadecimal values.
+ *
+ * Colours come from the framasoft.org palette (--f-* in its stylesheet:
+ * f = violet, o = orange, g = grey-blue, v = green, r = red). Ratios in the
+ * comments are WCAG contrast ratios against white unless stated otherwise;
+ * they are checked by petition/tests/tests_Contrast.py.
+ *
+ * Rule of thumb: components use the semantic tokens (--fp-text,
+ * --fp-primary, --fp-danger...), never the palette steps directly.
  */
+
+@font-face {
+  font-family: "Tovari Sans";
+  src: url("../vendor/tovari-sans/TovariSans.woff2") format("woff2");
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  --fp-primary: #725794;          /* 5.99:1 */
-  --fp-primary-strong: #50386e;   /* 9.85:1, focus ring */
-  --fp-primary-soft: #fbf5ff;
+  /* Palette: Framasoft violet */
+  --fp-violet-1: #fbf5ff;
+  --fp-violet-2: #edd8fd;
+  --fp-violet-3: #dcbcfa;
+  --fp-violet-7: #725794;         /* 5.99:1 */
+  --fp-violet-8: #50386e;         /* 9.85:1 */
+  --fp-violet-9: #3d2957;         /* 12.7:1 */
+
+  /* Palette: Framasoft orange */
+  --fp-orange-1: #fff9f0;
+  --fp-orange-2: #fee7c8;
+  --fp-orange-7: #cc4e13;         /* 4.50:1, large text and borders */
+  --fp-orange-8: #9c3c1c;         /* 6.83:1 */
+
+  /* Palette: Framasoft grey-blue */
+  --fp-grey-1: #f7fafc;
+  --fp-grey-2: #edf1f7;
+  --fp-grey-3: #e2e7f0;
+  --fp-grey-4: #cbd7e0;
+  --fp-grey-6: #677490;           /* 4.69:1 */
+  --fp-grey-7: #4a5268;           /* 7.78:1 */
+  --fp-grey-8: #2d3448;
+  --fp-grey-9: #1a1e2c;           /* 16.59:1 */
+
+  /* Brand */
+  --fp-primary: #725794;          /* 5.99:1, links, primary buttons */
+  --fp-primary-hover: #5f497c;    /* 7.69:1 */
+  --fp-primary-strong: #50386e;   /* 9.85:1, focus ring, active */
+  --fp-primary-soft: #fbf5ff;     /* tinted surfaces */
+  --fp-primary-subtle: #edd8fd;   /* selected rows, current tab underline bg */
   --fp-accent: #cc4e13;           /* borders and large text only */
-  --fp-accent-text: #9c3c1c;      /* 6.83:1 */
+  --fp-accent-text: #9c3c1c;      /* 6.83:1, small orange text */
+  --fp-accent-soft: #fff9f0;
+
+  /* Text */
   --fp-text: #1a1e2c;             /* 16.59:1 */
   --fp-text-muted: #4a5268;       /* 7.78:1 */
-  --fp-border: #e2e7f0;
-  --fp-border-strong: #677490;    /* 4.69:1, input borders */
-  --fp-success: #29573b;
+  --fp-text-subtle: #677490;      /* 4.69:1 on white only (4.47:1 on --fp-surface-alt) */
+  --fp-text-on-primary: #ffffff;  /* 5.99:1 on --fp-primary */
+
+  /* Surfaces and borders */
+  --fp-bg: #ffffff;
+  --fp-surface: #ffffff;
+  --fp-surface-alt: #f7fafc;      /* zebra rows, footer */
+  --fp-surface-muted: #edf1f7;    /* code, disabled fields */
+  --fp-border: #e2e7f0;           /* decorative separators */
+  --fp-border-strong: #677490;    /* 4.69:1, input and control borders */
+
+  /* States: text colour, background, border */
+  --fp-success: #29573b;          /* 8.33:1 */
   --fp-success-bg: #f2fff5;
-  --fp-danger: #c42719;
+  --fp-success-border: #338650;   /* 4.50:1, borders and icons */
+  --fp-danger: #c42719;           /* 5.75:1 */
+  --fp-danger-hover: #9c221c;     /* 7.90:1 */
   --fp-danger-bg: #fff6f5;
-  --fp-warning: #9c3c1c;
+  --fp-warning: #9c3c1c;          /* 6.83:1 */
   --fp-warning-bg: #fff9f0;
+  --fp-info: #50386e;
+  --fp-info-bg: #fbf5ff;
+  --fp-disabled-text: #4a5268;    /* 6.87:1 on --fp-disabled-bg */
+  --fp-disabled-bg: #edf1f7;
+
+  /* Legacy aliases kept for custom.scss and older templates */
   --color-main: var(--fp-primary);
   --color-accent: var(--fp-accent);
 
-  --fp-font: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  /* Typography */
+  --fp-font: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Liberation Sans", sans-serif;
+  --fp-font-display: "Tovari Sans", var(--fp-font);
+  --fp-font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --fp-text-xs: .8125rem;         /* 13px, badges only */
+  --fp-text-sm: .875rem;          /* 14px, help and meta */
+  --fp-text-base: 1rem;           /* 16px, body */
+  --fp-text-md: 1.125rem;         /* 18px, lead, large buttons */
+  --fp-text-lg: 1.25rem;          /* 20px, h4 */
+  --fp-text-xl: 1.5rem;           /* 24px, h3 */
+  --fp-text-2xl: clamp(1.625rem, 1.3rem + 1.2vw, 2rem);      /* h2 */
+  --fp-text-3xl: clamp(1.875rem, 1.4rem + 2vw, 2.75rem);     /* h1 */
+  --fp-leading-tight: 1.2;
+  --fp-leading-snug: 1.35;
+  --fp-leading: 1.6;
+  --fp-weight-regular: 400;
+  --fp-weight-semibold: 600;
+  --fp-weight-bold: 700;
+  --fp-measure: 68ch;             /* max line length of running text */
+
+  /* Spacing: 4px base */
   --fp-s1: .25rem;
   --fp-s2: .5rem;
   --fp-s3: .75rem;
   --fp-s4: 1rem;
+  --fp-s5: 1.25rem;
   --fp-s6: 1.5rem;
   --fp-s8: 2rem;
+  --fp-s10: 2.5rem;
   --fp-s12: 3rem;
   --fp-s16: 4rem;
-  --fp-radius: 12px;
-  --fp-tap: 44px;
+  --fp-s20: 5rem;
+
+  /* Radii */
+  --fp-radius-sm: 6px;            /* inputs, badges */
+  --fp-radius-md: 8px;            /* buttons, menus */
+  --fp-radius: 12px;              /* cards, alerts, dialogs */
+  --fp-radius-pill: 999px;
+
+  /* Shadows: light, tinted with --fp-text */
+  --fp-shadow-sm: 0 1px 2px rgba(26, 30, 44, .06);
+  --fp-shadow-md: 0 2px 4px rgba(26, 30, 44, .06), 0 4px 12px rgba(26, 30, 44, .06);
+  --fp-shadow-lg: 0 12px 32px rgba(26, 30, 44, .16);
+
+  /* Layout */
+  --fp-container: 60rem;          /* 960px, reading pages */
+  --fp-container-wide: 75rem;     /* 1200px, dashboards and tables */
+  --fp-gutter: 1rem;              /* side padding < 768px */
+  --fp-gutter-lg: 1.5rem;         /* side padding >= 768px */
+  --fp-tap: 44px;                 /* minimum touch target */
+  --fp-header-height: 4rem;
+
+  /*
+   * Breakpoints (same as Bootstrap 4). Custom properties cannot be used
+   * inside @media, so these are documentation: write the px value.
+   */
+  --fp-bp-sm: 576px;
+  --fp-bp-md: 768px;
+  --fp-bp-lg: 992px;
+  --fp-bp-xl: 1200px;
+
+  /* Motion */
+  --fp-duration-fast: 120ms;
+  --fp-duration: 200ms;
+  --fp-ease: cubic-bezier(.2, 0, 0, 1);
+
+  /* Layers */
+  --fp-z-header: 100;
+  --fp-z-menu: 200;
+  --fp-z-skip: 1100;
 }
 
 /* :is() (not :where()) so that the ring wins over Bootstrap's .btn:focus / .form-control:focus { outline: 0 } */

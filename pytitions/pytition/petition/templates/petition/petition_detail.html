@@ -191,14 +191,14 @@ content="{{ petition.raw_twitter_description|truncatechars:300 }}"/>
 {% if petition.footer_links|trim or petition.footer_text|trim %}
 <div class="container">
   <div class="row footer-wrapper">
-      <footer role="contentinfo" class="footer col-12">
+      <div class="footer col-12">
           <div class="footer-links ml-2">
               {{ petition.footer_links|html_sanitize|safe }}
           </div>
           <div class="footer-text ml-2">
               {{ petition.footer_text|html_sanitize|safe }}
           </div>
-      </footer>
+      </div>
   </div>
 </div>
 {% endif %}

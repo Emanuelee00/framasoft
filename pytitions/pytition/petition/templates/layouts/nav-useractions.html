@@ -1,50 +1,37 @@
 {% load i18n %}
-<ul class="navbar-nav">
-  {% if user.is_authenticated %}
-    <li class="nav-item dropdown ml-3">
-      {% block navdropdown %}
-        <a class="nav-link dropdown-toggle btn" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-          <span class="oi oi-person"></span>
-          {{ user.get_full_name }}
-        </a>
-        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdown">
-          <a class="dropdown-item" href="{% url "user_dashboard" %}">
-            <span class="oi oi-person"></span>
-            {% trans "Your dashboard" %}
-          </a>
-          {% if user.organization_set.all %}
-            <div class="dropdown-divider"></div>
-            {% for org in user.organization_set.all %}
-              <a class="dropdown-item" href="{% url "org_dashboard" org.slugname %}">
-                <span class="oi oi-people"></span>
-                {{ org.name }}
-              </a>
-            {% endfor %}
-          {% endif %}
-          <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="{% url "user_petition_wizard" %}">
-            <span class="oi oi-plus"></span>
-            {% trans "New Petition" %}
-          </a>
-          <a class="dropdown-item" href="{% url "org_create" %}">
-            <span class="oi oi-plus"></span>
-            {% trans "New Organization" %}
-          </a>
-          <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="{% url "account_settings" %}">
-            <span class="oi oi-cog"></span>
-            {% trans "Settings" %}
-          </a>
-          <a class="dropdown-item" href="{% url "logout" %}?next=/">
-            <span class="oi oi-account-logout"></span>
-            {% trans "Logout" %}
-          </a>
-        </div>
-      {% endblock navdropdown %}
-    </li>
-  {% else %}
-    <li class="nav-item">
-      <a href="{% url "login" %}?next={% block login_next %}{{ request.path }}{% endblock login_next %}" class="nav-link">{% trans "Login" %}</a>
-    </li>
+<div class="fp-header-user">
+  {% if user.is_authenticated or settings.ALLOW_REGISTER %}
+  <a class="fp-btn fp-btn-primary" href="{% url "user_petition_wizard" %}">
+    {% include "components/icon.html" with name="plus" %}
+    {% trans "Create a petition" %}
+  </a>
   {% endif %}
-</ul>
+  {% if user.is_authenticated %}
+  <details class="fp-menu">
+    <summary class="fp-nav-link">
+      {% include "components/icon.html" with name="person" %}
+      <span class="fp-account-name">{{ user.get_full_name|default:user.username }}</span>
+    </summary>
+    <div class="fp-menu-panel">
+      <ul class="fp-menu-list">
+        <li><a class="fp-menu-item" href="{% url "user_dashboard" %}">{% include "components/icon.html" with name="dashboard" %}{% trans "Your dashboard" %}</a></li>
+        {% with orgs=user.organization_set.all %}
+        {% if orgs %}
+        <li class="fp-menu-sep" role="presentation"></li>
+        <li><p class="fp-menu-heading">{% trans "Organizations" %}</p></li>
+        {% for org in orgs %}
+        <li><a class="fp-menu-item" href="{% url "org_dashboard" org.slugname %}">{% include "components/icon.html" with name="people" %}{{ org.name }}</a></li>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+        <li class="fp-menu-sep" role="presentation"></li>
+        <li><a class="fp-menu-item" href="{% url "org_create" %}">{% include "components/icon.html" with name="plus" %}{% trans "New Organization" %}</a></li>
+        <li><a class="fp-menu-item" href="{% url "account_settings" %}">{% include "components/icon.html" with name="cog" %}{% trans "Settings" %}</a></li>
+        <li><a class="fp-menu-item" href="{% url "logout" %}?next=/">{% include "components/icon.html" with name="account-logout" %}{% trans "Logout" %}</a></li>
+      </ul>
+    </div>
+  </details>
+  {% else %}
+  <a href="{% url "login" %}?next={{ request.path|urlencode }}" class="fp-nav-link">{% include "components/icon.html" with name="account-login" %}{% trans "Login" %}</a>
+  {% endif %}
+</div>

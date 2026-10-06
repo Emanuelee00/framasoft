@@ -1,0 +1,54 @@
+{% load i18n %}
+{% load static %}
+<footer class="fp-footer">
+  <div class="fp-container{% if fluid %} fp-container-fluid{% endif %}">
+    <div class="fp-footer-grid">
+      <div>
+        <a class="fp-brand" href="{% url 'index' %}">
+          <span><span class="fp-brand-frama">Frama</span><span class="fp-brand-product">petitions</span></span>
+        </a>
+        <p class="fp-muted">{% trans "A petition service that respects you" %}</p>
+      </div>
+      <nav aria-labelledby="fp-footer-service">
+        <h2 class="fp-footer-title" id="fp-footer-service">{{ settings.SITE_NAME }}</h2>
+        <ul class="fp-footer-list">
+          <li><a class="fp-footer-link" href="{% url 'privacy_notice' %}">{% trans "Privacy notice" %}</a></li>
+          <li><a class="fp-footer-link" href="https://framasoft.org/cgu/">{% trans "Terms of use" %}</a></li>
+          <li><a class="fp-footer-link" href="https://framasoft.org/moderation/">{% trans "Moderation charter" %}</a></li>
+          <li><a class="fp-footer-link" href="https://framagit.org/framasoft/framapetitions">{% trans "Source code" %}</a></li>
+        </ul>
+      </nav>
+      <nav aria-labelledby="fp-footer-framasoft">
+        <h2 class="fp-footer-title" id="fp-footer-framasoft">Framasoft</h2>
+        <ul class="fp-footer-list">
+          <li><a class="fp-footer-link" href="https://framasoft.org/">{% trans "About Framasoft" %}</a></li>
+          <li><a class="fp-footer-link" href="https://contact.framasoft.org/">{% trans "Contact" %}</a></li>
+          <li><a class="fp-footer-link" href="https://soutenir.framasoft.org/">{% trans "Support Framasoft" %}</a></li>
+        </ul>
+      </nav>
+    </div>
+    {% if footer_content %}
+    <div class="fp-footer-custom">{{ footer_content }}</div>
+    {% endif %}
+    <div class="fp-footer-bottom">
+      <p>{% trans "Framasoft is a French not-for-profit association for popular education." %}</p>
+      <form class="fp-cluster" action="{% url 'set_language' %}" method="post">
+        {% csrf_token %}
+        <input name="next" type="hidden" value="{{ request.get_full_path }}">
+        <label for="fp-language" class="sr-only">{% trans "Language" %}</label>
+        {% include "components/icon.html" with name="globe" %}
+        <select id="fp-language" class="fp-select" name="language">
+          {% get_current_language as LANGUAGE_CODE %}
+          {% get_available_languages as LANGUAGES %}
+          {% get_language_info_list for LANGUAGES as languages %}
+          {% for language in languages %}
+            <option value="{{ language.code }}" lang="{{ language.code }}" {% if language.code == LANGUAGE_CODE %}selected{% endif %}>
+              {{ language.name_local|default:language.name|capfirst }}
+            </option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="fp-btn fp-btn-secondary">{% trans "OK" %}</button>
+      </form>
+    </div>
+  </div>
+</footer>

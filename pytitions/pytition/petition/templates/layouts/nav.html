@@ -1,54 +1,34 @@
 {% load i18n %}
 {% load static %}
-{% block navbar %}
-<nav class="navbar navbar-light navbar-expand-sm flex-sm-row">
-  <div class="container">
-    {% block brand %}
-    <a class="navbar-brand" href="{% url 'index' %}" aria-label="{{ settings.SITE_NAME }}">
-      <img alt="" height="64" width="64" src="{% static "img/framapetitions.png" %}">
-      <span>
-        <b class="violet">Frama</b><b class="orange">petitions</b>
-      </span>
+{% with current=request.resolver_match.url_name %}
+<header class="fp-header">
+  <div class="fp-container{% if fluid %} fp-container-fluid{% endif %} fp-header-bar">
+    <a class="fp-brand" href="{% url 'index' %}">
+      <img alt="" height="40" width="40" src="{% static "img/framapetitions.png" %}">
+      <span><span class="fp-brand-frama">Frama</span><span class="fp-brand-product">petitions</span></span>
     </a>
-    {% endblock brand %}
-    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
-        Menu <span class="navbar-toggler-icon"></span>
+    <button type="button" class="fp-nav-link fp-header-toggle" data-fp-menu-toggle aria-expanded="false" aria-controls="fp-header-menu">
+      {% include "components/icon.html" with name="menu" %}
+      {% trans "Menu" %}
     </button>
-    <div class="collapse navbar-collapse" id="navbarResponsive">
-    <ul class="navbar-nav ml-auto">
-    <li class="nav-item">
-        <form class="form-inline ml-2 my-lg-0" action="{% url 'set_language' %}" method="post">
-        {% csrf_token %}
-        <input name="next" type="hidden" value="{{ redirect_to }}">
-        <label for="fp-language" class="sr-only">{% trans "Language" %}</label>
-        <select id="fp-language" class="custom-select custom-select-sm" name="language">
-          {% get_current_language as LANGUAGE_CODE %}
-          {% get_available_languages as LANGUAGES %}
-          {% get_language_info_list for LANGUAGES as languages %}
-          {% for language in languages %}
-            <option value="{{ language.code }}" {% if language.code == LANGUAGE_CODE %}selected{% endif %}>
-              {{ language.name_local|default:language.name|capfirst }}
-            </option>
-          {% endfor %}
-        </select>
-        <button type="submit" class="btn btn-outline-secondary btn-sm ml-1">{% trans "OK" %}</button>
-        </form>
-    </li>
-    <li class="nav-item">
-      <form class="form-inline my-2 my-lg-0 ml-0 ml-sm-3" action="{% url 'search' %}" method="GET">
-        <div class="input-group input-group-sm">
-          <label for="fp-search" class="sr-only">{% trans "Search for petition" %}</label>
-          <input type="search" id="fp-search" class="form-control" placeholder="{% trans "Search for petition" %}" name="q" value="{{ q }}">
-          <div class="input-group-append">
-            <button type="submit" class="btn btn-outline-secondary">{% trans "Search" %}</button>
-          </div>
+    <div class="fp-header-menu" id="fp-header-menu">
+      <nav aria-label="{% trans "Main navigation" %}">
+        <ul class="fp-nav-list">
+          <li><a class="fp-nav-link" href="{% url 'index' %}"{% if current == "index" %} aria-current="page"{% endif %}>{% trans "Petitions" %}</a></li>
+        </ul>
+      </nav>
+      <form class="fp-header-search" role="search" action="{% url 'search' %}" method="GET">
+        <label for="fp-search" class="sr-only">{% trans "Search for petition" %}</label>
+        <div class="fp-input-group">
+          <input type="search" id="fp-search" class="fp-input" placeholder="{% trans "Search for petition" %}" name="q" value="{{ q }}">
+          <button type="submit" class="fp-btn fp-btn-secondary fp-btn-icon">
+            {% include "components/icon.html" with name="magnifying-glass" %}
+            <span class="fp-sr-only">{% trans "Search" %}</span>
+          </button>
         </div>
       </form>
-    </li>
-    </ul>
       {% include 'layouts/nav-useractions.html' %}
     </div>
   </div>
-</nav>
-
-{% endblock %}
+</header>
+{% endwith %}

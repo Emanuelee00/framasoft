@@ -1,0 +1,21 @@
+{% load i18n %}{% load static %}{% load petition_extras %}
+{% comment %}
+  Petition card (DS-04). Put it in a list: <ul class="fp-card-grid"><li>{% include ... %}</li></ul>
+  {% include "components/petition_card.html" with petition=petition %}
+  The title link covers the whole card: keep it the only link inside.
+{% endcomment %}
+<article class="fp-card fp-card-interactive fp-petition-card">
+  <img class="fp-petition-card-img" alt="" width="640" height="360" loading="lazy" decoding="async"
+       src="{% if petition.twitter_image %}{{ petition.twitter_image }}{% else %}{% static settings.DEFAULT_INDEX_THUMBNAIL %}{% endif %}">
+  <div class="fp-card-body">
+    <h3 class="fp-petition-card-title"><a class="fp-stretched-link" href="{{ petition.url }}">{{ petition.title|striptags }}</a></h3>
+    <p class="fp-petition-card-meta">{% blocktrans with owner=petition.owner %}by {{ owner }}{% endblocktrans %}</p>
+    <p class="fp-petition-card-excerpt">{{ petition.text|striptags|truncatewords:40 }}</p>
+    {% with count=petition.signature_number %}
+    <p class="fp-petition-card-count"><strong>{{ count|grouped }}</strong> {% blocktrans trimmed count counter=count %}signature{% plural %}signatures{% endblocktrans %}</p>
+    {% if petition.target > 0 %}
+    <progress class="fp-progress-bar fp-progress-bar-sm" max="100" value="{{ count|progress_percent:petition.target }}" aria-label="{% trans 'Progress towards the goal' %}">{{ count|progress_percent:petition.target }}%</progress>
+    {% endif %}
+    {% endwith %}
+  </div>
+</article>

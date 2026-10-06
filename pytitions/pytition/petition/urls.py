@@ -10,7 +10,7 @@ https://docs.djangoproject.com/en/5.1/topics/http/urls/
 from django.urls import include
 from django.urls import path
 
-from . import views
+from . import styleguide, views
 from .forms import PytitionUserCreationForm
 from .views import PetitionCreationWizard, PytitionUserCreateView
 from django.views.generic import RedirectView
@@ -32,6 +32,7 @@ urlpatterns = [
     path('signature/manage/<str:token>/data.json', views.manage_signature_export, name='manage_signature_export'),
     path('<int:petition_id>/signature/forgot', views.forgot_signature_link, name='forgot_signature_link'),
     path('privacy', views.privacy_notice, name='privacy_notice'),
+    path('styleguide', styleguide.styleguide, name='styleguide'),
     path('<int:petition_id>/show_signatures', views.show_signatures, name='show_signatures'),
     path('<int:petition_id>/show_signatures_graph', views.show_signatures_graph, name='show_signatures_graph'),
     path('<int:petition_id>/show_sympa_subscribe_bloc', views.show_sympa_subscribe_bloc, name='show_sympa_subscribe_bloc'),

@@ -1,0 +1,23 @@
+{% load i18n %}{% load fp_ui %}
+{% comment %}
+  One form field with its label, help and errors (DS-04).
+  {% include "components/field.html" with field=form.email %}
+  Help and error ids are wired to aria-describedby by fp_widget.
+{% endcomment %}
+{% if field|fp_is_checkbox %}
+<div class="fp-field{% if field.errors %} fp-field-invalid{% endif %}">
+  <div class="fp-check">
+    {% fp_widget field %}
+    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+  </div>
+  {% if field.help_text %}<p class="fp-help fp-check-help" id="{{ field.auto_id }}-help">{{ field.help_text }}</p>{% endif %}
+  {% if field.errors %}<p class="fp-field-error" id="{{ field.auto_id }}-error">{% include "components/icon.html" with name="warning" %}<span>{{ field.errors|join:" " }}</span></p>{% endif %}
+</div>
+{% else %}
+<div class="fp-field{% if field.errors %} fp-field-invalid{% endif %}">
+  <label class="fp-label" for="{{ field.id_for_label }}">{{ field.label }}{% if not field.field.required %} <span class="fp-optional">{% trans "(optional)" %}</span>{% endif %}</label>
+  {% if field.help_text %}<p class="fp-help" id="{{ field.auto_id }}-help">{{ field.help_text }}</p>{% endif %}
+  {% if field.errors %}<p class="fp-field-error" id="{{ field.auto_id }}-error">{% include "components/icon.html" with name="warning" %}<span>{{ field.errors|join:" " }}</span></p>{% endif %}
+  {% fp_widget field %}
+</div>
+{% endif %}

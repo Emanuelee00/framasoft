@@ -37,6 +37,12 @@ class ContrastTest(SimpleTestCase):
             ("fp-primary-strong", "fp-warning-bg"), ("fp-accent-text", white),
             ("fp-success", white), ("fp-danger", white), ("fp-danger", "fp-danger-bg"),
             (white, "fp-primary"), (white, "fp-primary-strong"), (white, "fp-danger"),
+            # Design system (DS-01)
+            ("fp-text", "fp-surface-alt"), ("fp-text-muted", "fp-surface-alt"), ("fp-text-muted", "fp-surface-muted"),
+            ("fp-text-subtle", white), ("fp-primary", "fp-surface-alt"), ("fp-primary-strong", "fp-primary-subtle"),
+            (white, "fp-primary-hover"), (white, "fp-danger-hover"), ("fp-text-on-primary", "fp-primary"),
+            ("fp-disabled-text", "fp-disabled-bg"), ("fp-warning", "fp-warning-bg"), ("fp-success", "fp-success-bg"),
+            ("fp-info", "fp-info-bg"), ("fp-accent-text", "fp-accent-soft"),
         ]
         for fg, bg in pairs:
             with self.subTest(fg=fg, bg=bg):
@@ -47,6 +53,8 @@ class ContrastTest(SimpleTestCase):
             ("fp-success", "fp-success-bg"), ("fp-warning", "fp-warning-bg"),
             ("fp-border-strong", "#ffffff"), ("fp-primary-strong", "#ffffff"),
             ("fp-primary", "fp-primary-soft"), ("fp-accent", "#ffffff"),
+            # Design system (DS-01): borders of controls, orange brand half (24px), kicker (white on orange, 20px)
+            ("fp-success-border", "#ffffff"), ("fp-border-strong", "fp-surface-alt"), ("#ffffff", "fp-accent"),
         ]
         for fg, bg in pairs:
             with self.subTest(fg=fg, bg=bg):

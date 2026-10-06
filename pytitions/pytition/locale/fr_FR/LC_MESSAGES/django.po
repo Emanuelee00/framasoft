@@ -4024,3 +4024,70 @@ msgstr "Vous pouvez aussi introduire une réclamation auprès de la CNIL (<a hre
 
 #~ msgid "View all petitions"
 #~ msgstr "Voir toutes les pétitions"
+
+#: pytition/petition/templates/layouts/nav.html
+msgid "Main navigation"
+msgstr "Navigation principale"
+
+#: pytition/petition/templates/layouts/nav.html
+msgid "Menu"
+msgstr "Menu"
+
+#: pytition/petition/templates/layouts/footer.html
+msgid "A petition service that respects you"
+msgstr "Un service de pétitions qui vous respecte"
+
+#: pytition/petition/templates/layouts/footer.html
+msgid "Terms of use"
+msgstr "Conditions générales d’utilisation"
+
+#: pytition/petition/templates/layouts/footer.html
+msgid "Moderation charter"
+msgstr "Charte de modération"
+
+#: pytition/petition/templates/layouts/footer.html
+msgid "Source code"
+msgstr "Code source"
+
+#: pytition/petition/templates/layouts/footer.html
+msgid "About Framasoft"
+msgstr "À propos de Framasoft"
+
+#: pytition/petition/templates/layouts/footer.html
+msgid "Contact"
+msgstr "Contact"
+
+#: pytition/petition/templates/layouts/footer.html
+msgid "Support Framasoft"
+msgstr "Soutenir Framasoft"
+
+#: pytition/petition/templates/layouts/footer.html
+msgid "Framasoft is a French not-for-profit association for popular education."
+msgstr "Framasoft est une association d’éducation populaire à but non lucratif."
+
+#: pytition/petition/templates/layouts/nav_dashboard.html
+#, python-format
+msgid "Organization %(name)s"
+msgstr "Organisation %(name)s"
+
+#: pytition/petition/templates/components/field.html
+msgid "(optional)"
+msgstr "(facultatif)"
+
+#: pytition/petition/templates/components/pagination.html
+msgid "Pagination"
+msgstr "Pagination"
+
+#: pytition/petition/templates/components/pagination.html
+msgid "Previous"
+msgstr "Précédent"
+
+#: pytition/petition/templates/components/pagination.html
+#, python-format
+msgid "Page %(number)s"
+msgstr "Page %(number)s"
+
+#: pytition/petition/templates/components/petition_card.html
+#, python-format
+msgid "by %(owner)s"
+msgstr "par %(owner)s"

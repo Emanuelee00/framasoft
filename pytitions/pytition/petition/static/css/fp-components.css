@@ -1,4 +1,714 @@
-/* Framapétitions components (signer pages). Relies on fp-tokens.css. */
+/*
+ * Framapétitions components (DS-02). Relies on fp-tokens.css.
+ *
+ * Every class starts with "fp-". Variants are written fp-<component>-<variant>
+ * (fp-btn-primary, fp-alert-danger) and states use ARIA attributes or
+ * "is-*" classes (aria-current, aria-invalid, is-open, is-done).
+ * The live reference with copyable markup is /petition/styleguide (DEBUG only).
+ *
+ * Sections
+ *   1. Base            11. Badges
+ *   2. Layout          12. Alerts
+ *   3. Header          13. Tables
+ *   4. Footer          14. Pagination
+ *   5. Icons           15. Tabs
+ *   6. Buttons         16. Stepper
+ *   7. Forms           17. Empty state
+ *   8. Menus           18. Progress
+ *   9. Cards           19. Dialog
+ *  10. Petition card   20. Bootstrap bridge
+ *                      21. Signer pages (FE-01..FE-13, GD-08)
+ */
+
+/* 1. Base ------------------------------------------------------------- */
+
+body {
+  font-family: var(--fp-font);
+  color: var(--fp-text);
+  background: var(--fp-bg);
+  line-height: var(--fp-leading);
+}
+
+/* Heading colours match the ones nav.js injects on every Framasoft page,
+ * so that pages look the same with and without it. */
+h1, .h1, h2, .h2 {
+  font-family: var(--fp-font-display);
+  font-weight: var(--fp-weight-regular);
+  line-height: var(--fp-leading-tight);
+  color: var(--fp-primary-strong);
+  overflow-wrap: break-word;
+}
+
+h1, .h1 { font-size: var(--fp-text-3xl); }
+h2, .h2 { font-size: var(--fp-text-2xl); }
+
+h3, .h3, h4, .h4, h5, .h5, h6, .h6 {
+  font-weight: var(--fp-weight-bold);
+  line-height: var(--fp-leading-snug);
+  color: var(--fp-text-muted);
+}
+
+h3, .h3 { color: var(--fp-primary); }
+
+h3, .h3 { font-size: var(--fp-text-xl); }
+h4, .h4 { font-size: var(--fp-text-lg); }
+h5, .h5 { font-size: var(--fp-text-md); }
+h6, .h6 { font-size: var(--fp-text-base); }
+
+a {
+  color: var(--fp-primary);
+}
+
+a:hover {
+  color: var(--fp-primary-strong);
+}
+
+/* Links inside running text are underlined: colour alone is not enough */
+:where(p, li, dd, td, th, figcaption, label, .fp-help, .fp-prose) > a:not([class]) {
+  text-decoration: underline;
+  text-underline-offset: .15em;
+}
+
+:where(p, li, dd, td, th, figcaption, label, .fp-help, .fp-prose) > a:not([class]):hover {
+  text-decoration-thickness: 2px;
+}
+
+code {
+  color: var(--fp-accent-text);   /* Bootstrap's pink is 4.0:1 */
+}
+
+.fp-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.fp-lead {
+  font-size: var(--fp-text-md);
+  color: var(--fp-text-muted);
+  max-width: var(--fp-measure);
+}
+
+.fp-muted {
+  color: var(--fp-text-muted);
+}
+
+.fp-small {
+  font-size: var(--fp-text-sm);
+}
+
+/* Framasoft-style tilted label above a heading. Text >= 20px, 4.5:1 */
+.fp-kicker {
+  display: inline-block;
+  font-family: var(--fp-font-display);
+  font-size: var(--fp-text-lg);
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--fp-accent);
+  border-radius: var(--fp-radius-md);
+  padding: .3em .6em .2em;
+  transform: rotate(-2deg);
+  margin-bottom: var(--fp-s3);
+}
+
+/* Running text: headings, lists and paragraphs with a readable measure */
+.fp-prose {
+  max-width: var(--fp-measure);
+  overflow-wrap: break-word;
+}
+
+.fp-prose > * + * {
+  margin-top: var(--fp-s4);
+}
+
+.fp-prose p,
+.fp-prose ul,
+.fp-prose ol {
+  margin-bottom: 0;
+}
+
+.fp-prose h2,
+.fp-prose h3 {
+  font-family: var(--fp-font);
+  font-weight: var(--fp-weight-bold);
+  margin-top: var(--fp-s8);
+  margin-bottom: 0;
+}
+
+.fp-prose h2 { font-size: var(--fp-text-xl); }
+.fp-prose h3 { font-size: var(--fp-text-lg); }
+
+.fp-prose img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 2. Layout ----------------------------------------------------------- */
+
+.app {
+  min-height: 100vh;
+}
+
+.fp-main {
+  flex: 1 0 auto;
+}
+
+.fp-main:focus {
+  outline: none;
+}
+
+.fp-container,
+.fp-container-wide {
+  width: 100%;
+  max-width: calc(var(--fp-container) + 2 * var(--fp-gutter));
+  margin-inline: auto;
+  padding-inline: var(--fp-gutter);
+}
+
+.fp-container-wide {
+  max-width: calc(var(--fp-container-wide) + 2 * var(--fp-gutter));
+}
+
+.fp-container-fluid {
+  max-width: none;
+}
+
+@media (min-width: 768px) {
+  .fp-container,
+  .fp-container-wide {
+    max-width: calc(var(--fp-container) + 2 * var(--fp-gutter-lg));
+    padding-inline: var(--fp-gutter-lg);
+  }
+
+  .fp-container-wide {
+    max-width: calc(var(--fp-container-wide) + 2 * var(--fp-gutter-lg));
+  }
+
+  .fp-container-fluid {
+    max-width: none;
+  }
+}
+
+.fp-section {
+  padding-block: var(--fp-s10);
+}
+
+@media (min-width: 768px) {
+  .fp-section {
+    padding-block: var(--fp-s16);
+  }
+}
+
+.fp-section-tinted {
+  background: var(--fp-primary-soft);
+}
+
+.fp-page-header {
+  padding-block: var(--fp-s8) var(--fp-s6);
+}
+
+/* nav.js styles "header h1": keep page titles out of <header>, and win anyway */
+.fp-page-header h1 {
+  font-family: var(--fp-font-display);
+  font-size: var(--fp-text-3xl);
+  margin-bottom: var(--fp-s2);
+}
+
+.fp-page-header .fp-lead {
+  margin-bottom: 0;
+}
+
+.fp-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--fp-s4);
+}
+
+.fp-stack-sm { gap: var(--fp-s2); }
+.fp-stack-lg { gap: var(--fp-s8); }
+
+.fp-stack > * {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.fp-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--fp-s3);
+}
+
+.fp-grid {
+  display: grid;
+  gap: var(--fp-s6);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 768px) {
+  .fp-grid-2,
+  .fp-grid-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 992px) {
+  .fp-grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .fp-grid-sidebar {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  }
+}
+
+/* Skip link (FE-13) */
+.fp-skip-link {
+  position: absolute;
+  left: var(--fp-s2);
+  top: -10rem;
+  z-index: var(--fp-z-skip);
+  padding: var(--fp-s2) var(--fp-s4);
+  background: var(--fp-primary-strong);
+  color: #fff;
+  border-radius: var(--fp-radius);
+}
+
+.fp-skip-link:focus {
+  top: var(--fp-s2);
+  color: #fff;
+}
+
+/* 3. Header ----------------------------------------------------------- */
+
+.fp-header {
+  position: relative;
+  z-index: var(--fp-z-header);
+  background: var(--fp-surface);
+  border-bottom: 1px solid var(--fp-border);
+}
+
+.fp-header-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--fp-s2) var(--fp-s4);
+  min-height: var(--fp-header-height);
+  padding-block: var(--fp-s2);
+}
+
+.fp-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--fp-s2);
+  min-height: var(--fp-tap);
+  font-family: var(--fp-font-display);
+  font-size: 1.5rem;              /* 24px: the orange half needs large text */
+  font-weight: var(--fp-weight-bold);
+  line-height: 1;
+  text-decoration: none;
+}
+
+.fp-brand:hover {
+  text-decoration: none;
+}
+
+.fp-brand img {
+  width: 40px;
+  height: 40px;
+}
+
+.fp-brand-frama { color: var(--fp-primary); }
+.fp-brand-product { color: var(--fp-accent); }   /* 24px: large text, 4.50:1 */
+
+/* Keeps clear of the Framasoft menu button injected by nav.js (top right) */
+.fp-header-toggle {
+  margin-left: auto;
+  margin-right: var(--fp-s10);
+}
+
+.fp-header-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--fp-s3);
+  flex-basis: 100%;
+  padding-bottom: var(--fp-s3);
+}
+
+.js .fp-header-menu:not(.is-open) {
+  display: none;
+}
+
+.no-js .fp-header-toggle {
+  display: none;
+}
+
+@media (min-width: 992px) {
+  .fp-header-bar {
+    flex-wrap: nowrap;
+  }
+
+  .fp-header-toggle,
+  .js .fp-header-toggle {
+    display: none;
+  }
+
+  .fp-header-menu,
+  .js .fp-header-menu:not(.is-open) {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    flex: 1 1 auto;
+    flex-basis: auto;
+    gap: var(--fp-s4);
+    padding-bottom: 0;
+    padding-right: var(--fp-s10);
+  }
+}
+
+.fp-nav-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--fp-s1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (max-width: 991.98px) {
+  .fp-nav-list {
+    flex-direction: column;
+  }
+}
+
+.fp-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--fp-s2);
+  min-height: var(--fp-tap);
+  padding: 0 var(--fp-s3);
+  border-radius: var(--fp-radius-md);
+  color: var(--fp-text);
+  font-weight: var(--fp-weight-semibold);
+  text-decoration: none;
+}
+
+button.fp-nav-link,
+summary.fp-nav-link {
+  border: 0;
+  background: none;
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+}
+
+.fp-nav-link:hover {
+  color: var(--fp-primary-strong);
+  background: var(--fp-primary-soft);
+  text-decoration: none;
+}
+
+.fp-nav-link[aria-current="page"] {
+  color: var(--fp-primary-strong);
+  box-shadow: inset 0 -3px 0 var(--fp-primary);
+}
+
+.fp-header-search {
+  flex: 1 1 10rem;
+  min-width: 8rem;
+  max-width: 20rem;
+}
+
+@media (max-width: 991.98px) {
+  .fp-header-search {
+    max-width: none;
+    flex-basis: auto;
+  }
+}
+
+.fp-account-name {
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fp-header-user {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--fp-s2);
+}
+
+@media (max-width: 991.98px) {
+  .fp-header-user {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (min-width: 992px) {
+  .fp-header-user {
+    margin-left: auto;
+    flex-wrap: nowrap;
+  }
+}
+
+/* Context bar under the header in the user and organisation areas */
+.fp-subnav {
+  background: var(--fp-surface-alt);
+  border-bottom: 1px solid var(--fp-border);
+}
+
+.fp-subnav-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--fp-s2) var(--fp-s4);
+  min-height: 3rem;
+}
+
+.fp-subnav-title {
+  margin: 0;
+  font-family: var(--fp-font);
+  font-size: var(--fp-text-base);
+  font-weight: var(--fp-weight-bold);
+}
+
+/* 4. Footer ----------------------------------------------------------- */
+
+.fp-footer {
+  margin-top: var(--fp-s12);
+  padding-block: var(--fp-s10) var(--fp-s8);
+  background: var(--fp-surface-alt);
+  border-top: 1px solid var(--fp-border);
+  color: var(--fp-text-muted);
+  font-size: var(--fp-text-sm);
+}
+
+.fp-footer-grid {
+  display: grid;
+  gap: var(--fp-s8);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 768px) {
+  .fp-footer-grid {
+    grid-template-columns: minmax(0, 1.4fr) repeat(2, minmax(0, 1fr));
+  }
+}
+
+.fp-footer-title {
+  font-family: var(--fp-font);
+  font-size: var(--fp-text-sm);
+  font-weight: var(--fp-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--fp-text);
+  margin-bottom: var(--fp-s2);
+}
+
+.fp-footer-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fp-footer-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--fp-tap);
+  color: var(--fp-text);
+  text-decoration: underline;
+  text-decoration-color: var(--fp-border-strong);
+  text-underline-offset: .2em;
+}
+
+.fp-footer-link:hover {
+  color: var(--fp-primary-strong);
+  text-decoration-color: currentColor;
+}
+
+.fp-footer-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--fp-s4);
+  margin-top: var(--fp-s8);
+  padding-top: var(--fp-s6);
+  border-top: 1px solid var(--fp-border);
+}
+
+.fp-footer-bottom p {
+  margin: 0;
+}
+
+.fp-footer-bottom .fp-select {
+  width: auto;
+}
+
+.fp-footer-custom {
+  margin-top: var(--fp-s6);
+}
+
+/* 5. Icons ------------------------------------------------------------ */
+
+/* Open Iconic sprite (8x8 grid), see components/icon.html */
+.fp-icon {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 1em;
+  height: 1em;
+  fill: currentColor;
+  vertical-align: -.125em;
+}
+
+.fp-icon-lg {
+  width: 1.5em;
+  height: 1.5em;
+}
+
+/* 6. Buttons ---------------------------------------------------------- */
+
+.fp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--fp-s2);
+  min-height: var(--fp-tap);
+  padding: var(--fp-s2) var(--fp-s5);
+  border: 2px solid transparent;
+  border-radius: var(--fp-radius-md);
+  font-family: var(--fp-font);
+  font-size: var(--fp-text-base);
+  font-weight: var(--fp-weight-semibold);
+  line-height: 1.25;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color var(--fp-duration) var(--fp-ease), border-color var(--fp-duration) var(--fp-ease), color var(--fp-duration) var(--fp-ease);
+}
+
+.fp-btn:hover {
+  text-decoration: none;
+}
+
+.fp-btn-primary {
+  background: var(--fp-primary);
+  border-color: var(--fp-primary);
+  color: var(--fp-text-on-primary);
+}
+
+.fp-btn-primary:hover,
+.fp-btn-primary:focus {
+  background: var(--fp-primary-hover);
+  border-color: var(--fp-primary-hover);
+  color: #fff;
+}
+
+.fp-btn-primary:active {
+  background: var(--fp-primary-strong);
+  border-color: var(--fp-primary-strong);
+}
+
+.fp-btn-secondary {
+  background: var(--fp-surface);
+  border-color: var(--fp-primary);
+  color: var(--fp-primary);
+}
+
+.fp-btn-secondary:hover,
+.fp-btn-secondary:focus {
+  background: var(--fp-primary-soft);
+  color: var(--fp-primary-strong);
+  border-color: var(--fp-primary-strong);
+}
+
+.fp-btn-tertiary {
+  background: transparent;
+  color: var(--fp-primary);
+  padding-inline: var(--fp-s3);
+  text-decoration: underline;
+  text-underline-offset: .2em;
+}
+
+.fp-btn-tertiary:hover,
+.fp-btn-tertiary:focus {
+  background: var(--fp-primary-soft);
+  color: var(--fp-primary-strong);
+  text-decoration: underline;
+}
+
+.fp-btn-danger {
+  background: var(--fp-danger);
+  border-color: var(--fp-danger);
+  color: #fff;
+}
+
+.fp-btn-danger:hover,
+.fp-btn-danger:focus {
+  background: var(--fp-danger-hover);
+  border-color: var(--fp-danger-hover);
+  color: #fff;
+}
+
+.fp-btn-sm {
+  min-height: 2.25rem;            /* dense tables only, keep 8px between targets */
+  padding: var(--fp-s1) var(--fp-s3);
+  font-size: var(--fp-text-sm);
+}
+
+.fp-btn-lg {
+  min-height: 3.25rem;
+  padding: var(--fp-s3) var(--fp-s6);
+  font-size: var(--fp-text-md);
+}
+
+.fp-btn-block {
+  display: flex;
+  width: 100%;
+}
+
+.fp-btn:disabled,
+.fp-btn.is-disabled,
+.fp-btn[aria-disabled="true"] {
+  background: var(--fp-disabled-bg);
+  border-color: var(--fp-border);
+  color: var(--fp-disabled-text);
+  cursor: not-allowed;
+}
+
+.fp-btn-icon {
+  padding-inline: var(--fp-s3);
+  min-width: var(--fp-tap);
+}
+
+.fp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--fp-s2);
+}
+
+.fp-actions .btn-link {
+  color: var(--fp-primary);
+  text-decoration: underline;
+}
+
+.fp-actions .btn-danger {
+  background-color: var(--fp-danger);
+  border-color: var(--fp-danger);
+}
 
 .fp-tap {
   min-height: var(--fp-tap);
@@ -7,42 +717,120 @@
   gap: var(--fp-s2);
 }
 
-.fp-narrow {
-  max-width: 42rem;
+/* 7. Forms ------------------------------------------------------------ */
+
+.fp-field {
+  margin-bottom: var(--fp-s5);
 }
 
-/* Report link, dialog and fallback page (FE-08) */
-.fp-report {
-  text-align: end;
+.fp-field-invalid {
+  padding-left: var(--fp-s3);
+  border-left: 3px solid var(--fp-danger);
 }
 
-.fp-report-link {
-  color: var(--fp-accent-text);
-  text-decoration: underline;
-  padding: 0 var(--fp-s2);
-}
-
-.fp-report-link:hover {
+.fp-label {
+  display: block;
+  margin-bottom: var(--fp-s1);
+  font-weight: var(--fp-weight-semibold);
   color: var(--fp-text);
 }
 
-.fp-dialog {
-  width: min(32rem, calc(100vw - 2rem));
-  max-width: 100%;
+.fp-optional {
+  font-weight: var(--fp-weight-regular);
+  color: var(--fp-text-muted);
+}
+
+.fp-help,
+.fp-hint {
+  display: block;
+  margin-top: var(--fp-s1);
+  color: var(--fp-text-muted);
+  font-size: var(--fp-text-sm);
+}
+
+.fp-label + .fp-help {
+  margin-top: 0;
+  margin-bottom: var(--fp-s2);
+}
+
+.fp-input,
+.fp-select,
+.fp-textarea {
+  display: block;
+  width: 100%;
+  min-height: var(--fp-tap);
+  padding: var(--fp-s2) var(--fp-s3);
+  font-family: var(--fp-font);
+  font-size: var(--fp-text-base);
+  line-height: 1.5;
+  color: var(--fp-text);
+  background-color: var(--fp-surface);
   border: 1px solid var(--fp-border-strong);
-  border-radius: var(--fp-radius);
-  padding: var(--fp-s6);
-  color: var(--fp-text);
-  text-align: start;
+  border-radius: var(--fp-radius-sm);
+  transition: border-color var(--fp-duration-fast) var(--fp-ease);
 }
 
-.fp-dialog::backdrop {
-  background: rgba(26, 30, 44, .6);
+.fp-input:hover,
+.fp-select:hover,
+.fp-textarea:hover {
+  border-color: var(--fp-text-muted);
 }
 
-.fp-dialog-title {
-  font-size: 1.25rem;
-  margin-bottom: var(--fp-s4);
+.fp-input:focus,
+.fp-select:focus,
+.fp-textarea:focus {
+  border-color: var(--fp-primary-strong);
+}
+
+.fp-textarea {
+  min-height: 8rem;
+  resize: vertical;
+}
+
+.fp-select {
+  appearance: none;
+  padding-right: var(--fp-s10);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath fill='%234a5268' d='M0 2h8L4 6.5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right .875rem center;
+  background-size: .625rem;
+}
+
+.fp-input:disabled,
+.fp-select:disabled,
+.fp-textarea:disabled {
+  background-color: var(--fp-disabled-bg);
+  color: var(--fp-disabled-text);
+  cursor: not-allowed;
+}
+
+.fp-input[aria-invalid="true"],
+.fp-select[aria-invalid="true"],
+.fp-textarea[aria-invalid="true"] {
+  border-color: var(--fp-danger);
+  box-shadow: inset 0 0 0 1px var(--fp-danger);
+}
+
+.fp-input-group {
+  display: flex;
+}
+
+.fp-input-group > .fp-input {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  min-width: 0;
+}
+
+.fp-input-group > .fp-btn {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.fp-fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0 0 var(--fp-s5);
+  min-width: 0;
 }
 
 .fp-legend {
@@ -57,50 +845,28 @@
   gap: var(--fp-s2);
 }
 
-.fp-check .form-check-input {
+.fp-check .form-check-input,
+.fp-check-input {
   position: static;
   margin: 0;
   width: 1.25rem;
   height: 1.25rem;
   flex-shrink: 0;
+  accent-color: var(--fp-primary);
 }
 
-.fp-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--fp-s2);
+.fp-check-help {
+  margin: 0 0 var(--fp-s3) calc(1.25rem + var(--fp-s2));
 }
 
-.fp-actions .btn-link {
-  color: var(--fp-primary);
-  text-decoration: underline;
-}
-
-.fp-actions .btn-danger {
-  background-color: var(--fp-danger);
-  border-color: var(--fp-danger);
-}
-
-/* Signature form (FE-01) */
-.fp-sign-form label {
-  font-weight: 600;
-  margin-bottom: var(--fp-s1);
-}
-
-.fp-sign-form .form-check-label {
-  font-weight: normal;
-}
-
-.fp-sign-form .form-control {
-  min-height: var(--fp-tap);
-}
-
-.fp-hint {
-  color: var(--fp-text-muted);
-  font-size: .875rem;
+.fp-check-invalid .form-check-label {
+  color: var(--fp-danger);
 }
 
 .fp-field-error {
+  display: flex;
+  gap: var(--fp-s1);
+  align-items: flex-start;
   color: var(--fp-danger);
   font-weight: 600;
   margin: var(--fp-s1) 0 0;
@@ -130,13 +896,294 @@
   text-decoration: underline;
 }
 
-.fp-sign-btn {
-  min-height: var(--fp-tap);
-  font-size: 1.125rem;
+.fp-details summary {
+  cursor: pointer;
+  color: var(--fp-primary-strong);
   font-weight: 600;
+  display: list-item;
+  padding: .625rem 0;
 }
 
-/* Alerts and signature states (FE-02): icon and text, never colour alone */
+.fp-details[open] summary {
+  margin-bottom: var(--fp-s2);
+}
+
+/* 8. Menus (dropdown) ------------------------------------------------- */
+
+/* <details class="fp-menu">: opens without JavaScript; fp-ui.js closes it on Escape and outside click */
+.fp-menu {
+  position: relative;
+}
+
+.fp-menu > summary {
+  list-style: none;
+}
+
+.fp-menu > summary::-webkit-details-marker {
+  display: none;
+}
+
+.fp-menu > summary::after {
+  content: "";
+  width: .5em;
+  height: .5em;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-.15em) rotate(45deg);
+  transition: transform var(--fp-duration-fast) var(--fp-ease);
+}
+
+.fp-menu[open] > summary::after {
+  transform: translateY(.1em) rotate(-135deg);
+}
+
+.fp-menu-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + var(--fp-s1));
+  z-index: var(--fp-z-menu);
+  min-width: 15rem;
+  max-width: calc(100vw - 2 * var(--fp-gutter));
+  padding: var(--fp-s2) 0;
+  background: var(--fp-surface);
+  border: 1px solid var(--fp-border);
+  border-radius: var(--fp-radius-md);
+  box-shadow: var(--fp-shadow-md);
+}
+
+.fp-menu-panel-start {
+  right: auto;
+  left: 0;
+}
+
+.fp-menu-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fp-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--fp-s2);
+  width: 100%;
+  min-height: var(--fp-tap);
+  padding: var(--fp-s2) var(--fp-s4);
+  border: 0;
+  background: none;
+  color: var(--fp-text);
+  text-align: start;
+  text-decoration: none;
+}
+
+.fp-menu-item:hover,
+.fp-menu-item:focus {
+  background: var(--fp-primary-soft);
+  color: var(--fp-primary-strong);
+  text-decoration: none;
+}
+
+.fp-menu-item .fp-icon {
+  color: var(--fp-text-muted);
+}
+
+.fp-menu-sep {
+  margin: var(--fp-s2) 0;
+  border-top: 1px solid var(--fp-border);
+}
+
+.fp-menu-heading {
+  margin: 0;
+  padding: var(--fp-s2) var(--fp-s4) var(--fp-s1);
+  font-size: var(--fp-text-xs);
+  font-weight: var(--fp-weight-bold);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--fp-text-muted);
+}
+
+/* Inside the collapsed mobile header the menu opens in place */
+@media (max-width: 991.98px) {
+  .fp-header .fp-menu-panel {
+    position: static;
+    min-width: 0;
+    max-width: none;
+    margin-top: var(--fp-s1);
+    box-shadow: none;
+  }
+}
+
+/* 9. Cards ------------------------------------------------------------ */
+
+.fp-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--fp-surface);
+  border: 1px solid var(--fp-border);
+  border-radius: var(--fp-radius);
+  box-shadow: var(--fp-shadow-sm);
+}
+
+.fp-card-body {
+  padding: var(--fp-s5);
+}
+
+.fp-card-title {
+  font-family: var(--fp-font);
+  font-size: var(--fp-text-lg);
+  font-weight: var(--fp-weight-bold);
+  margin-bottom: var(--fp-s2);
+}
+
+.fp-card-footer {
+  margin-top: auto;
+  padding: var(--fp-s3) var(--fp-s5);
+  border-top: 1px solid var(--fp-border);
+}
+
+.fp-card-interactive {
+  transition: border-color var(--fp-duration) var(--fp-ease), box-shadow var(--fp-duration) var(--fp-ease);
+}
+
+.fp-card-interactive:hover {
+  border-color: var(--fp-primary);
+  box-shadow: var(--fp-shadow-md);
+}
+
+.fp-card-interactive:focus-within {
+  outline: 3px solid var(--fp-primary-strong);
+  outline-offset: 2px;
+}
+
+.fp-card-interactive:focus-within :focus-visible {
+  outline: none;
+}
+
+/* The whole card is clickable through its single title link */
+.fp-stretched-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* 10. Petition card --------------------------------------------------- */
+
+.fp-card-grid {
+  display: grid;
+  gap: var(--fp-s6);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fp-petition-card-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--fp-radius) var(--fp-radius) 0 0;
+  background: var(--fp-primary-soft);
+}
+
+.fp-petition-card .fp-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--fp-s2);
+  flex: 1;
+}
+
+.fp-petition-card-title {
+  margin: 0;
+  font-family: var(--fp-font);
+  font-size: var(--fp-text-lg);
+  font-weight: var(--fp-weight-bold);
+  line-height: var(--fp-leading-snug);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.fp-petition-card-title a {
+  color: var(--fp-text);
+  text-decoration: none;
+}
+
+.fp-petition-card-title a:hover {
+  color: var(--fp-primary-strong);
+  text-decoration: underline;
+}
+
+.fp-petition-card-meta {
+  margin: 0;
+  font-size: var(--fp-text-sm);
+  color: var(--fp-text-muted);
+}
+
+.fp-petition-card-excerpt {
+  margin: 0;
+  color: var(--fp-text-muted);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.fp-petition-card-count {
+  margin: auto 0 0;
+  padding-top: var(--fp-s2);
+  font-size: var(--fp-text-sm);
+  color: var(--fp-text-muted);
+}
+
+.fp-petition-card-count strong {
+  font-family: var(--fp-font-display);
+  font-weight: var(--fp-weight-regular);
+  font-size: var(--fp-text-lg);
+  color: var(--fp-primary);
+}
+
+/* 11. Badges ---------------------------------------------------------- */
+
+/* Always carry a word: the colour only repeats it */
+.fp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .375rem;
+  padding: .125rem var(--fp-s2);
+  border: 1px solid currentColor;
+  border-radius: var(--fp-radius-pill);
+  font-size: var(--fp-text-xs);
+  font-weight: var(--fp-weight-bold);
+  line-height: 1.4;
+  white-space: nowrap;
+  color: var(--fp-text-muted);
+  background: var(--fp-surface-muted);
+}
+
+.fp-badge::before {
+  content: "";
+  width: .5em;
+  height: .5em;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.fp-badge-plain::before { display: none; }
+.fp-badge-primary { color: var(--fp-primary-strong); background: var(--fp-primary-soft); }
+.fp-badge-success { color: var(--fp-success); background: var(--fp-success-bg); }
+.fp-badge-warning { color: var(--fp-warning); background: var(--fp-warning-bg); }
+.fp-badge-danger { color: var(--fp-danger); background: var(--fp-danger-bg); }
+
+/* 12. Alerts and signature states (FE-02): icon and text, never colour alone */
+
 .fp-alert,
 .fp-state {
   display: flex;
@@ -169,6 +1216,10 @@
   font-weight: 700;
 }
 
+.fp-alert-title {
+  margin-bottom: var(--fp-s1);
+}
+
 .fp-state-title {
   font-size: 1.25rem;
   display: flex;
@@ -195,76 +1246,306 @@
   outline: none;
 }
 
-/* GDPR notice and consents (FE-12) */
-.fp-gdpr {
-  font-size: .875rem;
-  color: var(--fp-text);
-  background: var(--fp-primary-soft);
+/* 13. Tables ---------------------------------------------------------- */
+
+/* The wrapper scrolls, never the page: give it tabindex="0", role="region" and a label */
+.fp-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--fp-border);
   border-radius: var(--fp-radius);
+  background: var(--fp-surface);
+}
+
+.fp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fp-text-sm);
+}
+
+.fp-table caption {
+  caption-side: top;
   padding: var(--fp-s3) var(--fp-s4);
-  margin: var(--fp-s4) 0;
+  color: var(--fp-text);
+  font-weight: var(--fp-weight-bold);
+  text-align: start;
 }
 
-.fp-gdpr p {
-  margin-bottom: var(--fp-s2);
+.fp-table th,
+.fp-table td {
+  padding: var(--fp-s3) var(--fp-s4);
+  border-bottom: 1px solid var(--fp-border);
+  text-align: start;
+  vertical-align: top;
 }
 
-.fp-gdpr a {
+.fp-table thead th {
+  background: var(--fp-surface-alt);
+  color: var(--fp-text-muted);
+  font-weight: var(--fp-weight-bold);
+  white-space: nowrap;
+}
+
+.fp-table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.fp-table tbody tr:hover {
+  background: var(--fp-surface-alt);
+}
+
+.fp-table .fp-num {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 14. Pagination ------------------------------------------------------ */
+
+.fp-pagination {
+  margin-block: var(--fp-s8);
+}
+
+.fp-pagination-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--fp-s2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fp-page-link,
+.fp-page-ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--fp-s1);
+  min-width: var(--fp-tap);
+  min-height: var(--fp-tap);
+  padding: 0 var(--fp-s3);
+  border-radius: var(--fp-radius-md);
+  font-weight: var(--fp-weight-semibold);
+}
+
+.fp-page-link {
+  border: 1px solid var(--fp-border-strong);
+  color: var(--fp-primary);
+  text-decoration: none;
+}
+
+.fp-page-link:hover {
+  background: var(--fp-primary-soft);
   color: var(--fp-primary-strong);
-  text-decoration: underline;
+  text-decoration: none;
 }
 
-.fp-details summary {
-  cursor: pointer;
-  color: var(--fp-primary-strong);
-  font-weight: 600;
-  display: list-item;
-  padding: .625rem 0;
+.fp-page-link[aria-current="page"] {
+  background: var(--fp-primary);
+  border-color: var(--fp-primary);
+  color: #fff;
 }
 
-.fp-details[open] summary {
-  margin-bottom: var(--fp-s2);
+.fp-page-ellipsis {
+  color: var(--fp-text-muted);
 }
 
-.fp-check-help {
-  margin: 0 0 var(--fp-s3) calc(1.25rem + var(--fp-s2));
-}
-
-.fp-sign-form .fp-check {
-  align-items: flex-start;
-  padding-left: 0;
-  margin-bottom: var(--fp-s3);
-}
-
-.fp-sign-form .fp-check .form-check-input {
-  margin-top: .15rem;
-}
-
-.fp-check-invalid .form-check-label {
-  color: var(--fp-danger);
-}
-
-.fp-disclaimer {
-  margin-top: var(--fp-s3);
-}
-
-/* Petition page, mobile first (FE-04) */
-.petition-details .fp-petition-head > h1 {
-  padding: var(--fp-s6) 0 var(--fp-s4);
-  font-size: 1.75rem;
-  overflow-wrap: anywhere;
-}
-
-@media (min-width: 768px) {
-  .petition-details .fp-petition-head > h1 {
-    padding: var(--fp-s8) 0;
-    font-size: 2.25rem;
+@media (max-width: 575.98px) {
+  .fp-page-number:not([aria-current]) {
+    display: none;
   }
 }
 
-.fp-summary {
-  margin-bottom: var(--fp-s6);
+/* 15. Tabs ------------------------------------------------------------ */
+
+.fp-tabs {
+  display: flex;
+  gap: var(--fp-s1);
+  margin: 0 0 var(--fp-s6);
+  padding: 0;
+  list-style: none;
+  border-bottom: 1px solid var(--fp-border);
+  overflow-x: auto;
 }
+
+.fp-tabs > li {
+  flex-shrink: 0;
+}
+
+.fp-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--fp-s2);
+  min-height: var(--fp-tap);
+  padding: 0 var(--fp-s4);
+  border: 0;
+  background: none;
+  color: var(--fp-text-muted);
+  font-weight: var(--fp-weight-semibold);
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: inset 0 -3px 0 transparent;
+}
+
+.fp-tab:hover {
+  color: var(--fp-primary-strong);
+  text-decoration: none;
+  box-shadow: inset 0 -3px 0 var(--fp-border);
+}
+
+.fp-tab[aria-current="page"],
+.fp-tab[aria-selected="true"] {
+  color: var(--fp-text);
+  box-shadow: inset 0 -3px 0 var(--fp-primary);
+}
+
+.fp-tab:focus-visible {
+  outline-offset: -3px;
+}
+
+.fp-tab-panel[hidden] {
+  display: none;
+}
+
+/* 16. Stepper --------------------------------------------------------- */
+
+.fp-stepper {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  margin: 0 0 var(--fp-s8);
+  padding: 0;
+  list-style: none;
+  counter-reset: fp-step;
+}
+
+.fp-step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--fp-s2);
+  padding: 0 var(--fp-s1);
+  text-align: center;
+  color: var(--fp-text-muted);
+  counter-increment: fp-step;
+}
+
+/* Connector to the previous step */
+.fp-step + .fp-step::before {
+  content: "";
+  position: absolute;
+  top: 1rem;
+  right: 50%;
+  width: 100%;
+  height: 2px;
+  background: var(--fp-border-strong);
+  z-index: 0;
+}
+
+.fp-step-marker {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid var(--fp-border-strong);
+  border-radius: 50%;
+  background: var(--fp-surface);
+  font-weight: var(--fp-weight-bold);
+}
+
+.fp-step-marker:empty::before {
+  content: counter(fp-step);
+}
+
+.fp-step-label {
+  font-size: var(--fp-text-sm);
+  font-weight: var(--fp-weight-semibold);
+  line-height: var(--fp-leading-snug);
+}
+
+.fp-step-hint {
+  display: block;
+  font-weight: var(--fp-weight-regular);
+}
+
+.fp-step a {
+  color: inherit;
+}
+
+.fp-step.is-done {
+  color: var(--fp-text);
+}
+
+.fp-step.is-done + .fp-step::before {
+  background: var(--fp-primary);
+}
+
+.fp-step.is-done .fp-step-marker {
+  border-color: var(--fp-primary);
+  background: var(--fp-primary);
+  color: #fff;
+}
+
+.fp-step[aria-current="step"] {
+  color: var(--fp-text);
+}
+
+.fp-step[aria-current="step"] .fp-step-marker {
+  border-color: var(--fp-primary);
+  color: var(--fp-primary-strong);
+  box-shadow: 0 0 0 4px var(--fp-primary-subtle);
+}
+
+@media (max-width: 575.98px) {
+  .fp-step-hint {
+    display: none;
+  }
+}
+
+/* 17. Empty state ----------------------------------------------------- */
+
+.fp-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--fp-s3);
+  padding: var(--fp-s10) var(--fp-s6);
+  border: 1px dashed var(--fp-grey-4);
+  border-radius: var(--fp-radius);
+  background: var(--fp-surface-alt);
+  text-align: center;
+}
+
+.fp-empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  background: var(--fp-primary-soft);
+  color: var(--fp-primary);
+  font-size: 1.5rem;
+}
+
+.fp-empty-title {
+  margin: 0;
+  font-family: var(--fp-font-display);
+  font-size: var(--fp-text-xl);
+  font-weight: var(--fp-weight-regular);
+}
+
+.fp-empty-text {
+  margin: 0;
+  max-width: 40ch;
+  color: var(--fp-text-muted);
+}
+
+/* 18. Progress -------------------------------------------------------- */
 
 .fp-progress {
   margin-bottom: var(--fp-s4);
@@ -276,6 +1557,8 @@
 }
 
 .fp-progress-count strong {
+  font-family: var(--fp-font-display);
+  font-weight: var(--fp-weight-regular);
   font-size: 1.75rem;
   color: var(--fp-primary);
 }
@@ -284,6 +1567,7 @@
   color: var(--fp-text-muted);
 }
 
+/* Native <progress>: accessible value without JavaScript */
 .fp-progress-bar {
   -webkit-appearance: none;
   appearance: none;
@@ -308,10 +1592,267 @@
   background: var(--fp-primary);
 }
 
+.fp-progress-bar-sm {
+  height: .5rem;
+}
+
 .fp-progress-done {
   margin: var(--fp-s2) 0 0;
   font-weight: 600;
   color: var(--fp-success);
+}
+
+/* 19. Dialog (native <dialog>, FE-08) --------------------------------- */
+
+.fp-dialog {
+  width: min(32rem, calc(100vw - 2rem));
+  max-width: 100%;
+  border: 1px solid var(--fp-border-strong);
+  border-radius: var(--fp-radius);
+  padding: var(--fp-s6);
+  color: var(--fp-text);
+  text-align: start;
+  box-shadow: var(--fp-shadow-lg);
+}
+
+.fp-dialog::backdrop {
+  background: rgba(26, 30, 44, .6);
+}
+
+.fp-dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--fp-s3);
+}
+
+.fp-dialog-title {
+  font-family: var(--fp-font);
+  font-weight: var(--fp-weight-bold);
+  font-size: 1.25rem;
+  margin-bottom: var(--fp-s4);
+}
+
+.fp-dialog-close {
+  margin: calc(-1 * var(--fp-s2)) calc(-1 * var(--fp-s2)) 0 0;
+}
+
+.fp-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--fp-s2);
+  margin-top: var(--fp-s6);
+}
+
+/* 20. Bootstrap bridge ------------------------------------------------ */
+/* Legacy markup (.btn-*, .form-control, .alert, .table, .pagination,
+ * .dropdown-menu, .nav-tabs) gets the same look while pages migrate. */
+
+.btn {
+  border-radius: var(--fp-radius-md);
+  font-weight: var(--fp-weight-semibold);
+}
+
+.btn-primary,
+.btn-primary:not(:disabled):not(.disabled):active {
+  background-color: var(--fp-primary);
+  border-color: var(--fp-primary);
+  color: #fff;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: var(--fp-primary-hover);
+  border-color: var(--fp-primary-hover);
+  color: #fff;
+}
+
+.btn-outline-primary {
+  color: var(--fp-primary);
+  border-color: var(--fp-primary);
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+  color: var(--fp-primary-strong);
+  background-color: var(--fp-primary-soft);
+  border-color: var(--fp-primary-strong);
+}
+
+.btn-danger {
+  background-color: var(--fp-danger);
+  border-color: var(--fp-danger);
+}
+
+.btn-danger:hover,
+.btn-danger:focus {
+  background-color: var(--fp-danger-hover);
+  border-color: var(--fp-danger-hover);
+}
+
+.btn-link {
+  color: var(--fp-primary);
+  text-decoration: underline;
+}
+
+.form-control,
+.custom-select {
+  border-radius: var(--fp-radius-sm);
+  color: var(--fp-text);
+}
+
+.form-control:focus,
+.custom-select:focus {
+  border-color: var(--fp-primary-strong);
+}
+
+.form-text.text-muted,
+.text-muted {
+  color: var(--fp-text-muted) !important;
+}
+
+.alert {
+  border-radius: var(--fp-radius);
+  border-left-width: 4px;
+  color: var(--fp-text);
+}
+
+.alert-danger { background: var(--fp-danger-bg); border-color: var(--fp-danger); }
+.alert-success { background: var(--fp-success-bg); border-color: var(--fp-success); }
+.alert-warning { background: var(--fp-warning-bg); border-color: var(--fp-warning); }
+.alert-info { background: var(--fp-primary-soft); border-color: var(--fp-primary); }
+
+.card {
+  border-color: var(--fp-border);
+  border-radius: var(--fp-radius);
+}
+
+.table thead th {
+  color: var(--fp-text-muted);
+  border-bottom-color: var(--fp-border);
+}
+
+.page-link {
+  color: var(--fp-primary);
+}
+
+.page-item.active .page-link {
+  background-color: var(--fp-primary);
+  border-color: var(--fp-primary);
+}
+
+.dropdown-menu {
+  border-color: var(--fp-border);
+  border-radius: var(--fp-radius-md);
+  box-shadow: var(--fp-shadow-md);
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+  background: var(--fp-primary-soft);
+  color: var(--fp-primary-strong);
+}
+
+.nav-tabs .nav-link.active {
+  color: var(--fp-text);
+  border-bottom: 3px solid var(--fp-primary);
+}
+
+.badge {
+  border-radius: var(--fp-radius-pill);
+}
+
+/* 21. Signer pages ---------------------------------------------------- */
+
+.fp-narrow {
+  max-width: 42rem;
+}
+
+/* Report link, dialog and fallback page (FE-08) */
+.fp-report {
+  text-align: end;
+}
+
+.fp-report-link {
+  color: var(--fp-accent-text);
+  text-decoration: underline;
+  padding: 0 var(--fp-s2);
+}
+
+.fp-report-link:hover {
+  color: var(--fp-text);
+}
+
+/* Signature form (FE-01) */
+.fp-sign-form label {
+  font-weight: 600;
+  margin-bottom: var(--fp-s1);
+}
+
+.fp-sign-form .form-check-label {
+  font-weight: normal;
+}
+
+.fp-sign-form .form-control {
+  min-height: var(--fp-tap);
+}
+
+.fp-sign-btn {
+  min-height: var(--fp-tap);
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+/* GDPR notice and consents (FE-12) */
+.fp-gdpr {
+  font-size: .875rem;
+  color: var(--fp-text);
+  background: var(--fp-primary-soft);
+  border-radius: var(--fp-radius);
+  padding: var(--fp-s3) var(--fp-s4);
+  margin: var(--fp-s4) 0;
+}
+
+.fp-gdpr p {
+  margin-bottom: var(--fp-s2);
+}
+
+.fp-gdpr a {
+  color: var(--fp-primary-strong);
+  text-decoration: underline;
+}
+
+.fp-sign-form .fp-check {
+  align-items: flex-start;
+  padding-left: 0;
+  margin-bottom: var(--fp-s3);
+}
+
+.fp-sign-form .fp-check .form-check-input {
+  margin-top: .15rem;
+}
+
+.fp-disclaimer {
+  margin-top: var(--fp-s3);
+}
+
+/* Petition page, mobile first (FE-04) */
+.petition-details .fp-petition-head > h1 {
+  padding: var(--fp-s6) 0 var(--fp-s4);
+  font-size: 1.75rem;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 768px) {
+  .petition-details .fp-petition-head > h1 {
+    padding: var(--fp-s8) 0;
+    font-size: 2.25rem;
+  }
+}
+
+.fp-summary {
+  margin-bottom: var(--fp-s6);
 }
 
 .petition-details .presentation {
@@ -323,30 +1864,15 @@
   max-width: 68ch;
 }
 
+.petition-details .presentation h2 {
+  font-family: var(--fp-font);
+  font-weight: var(--fp-weight-bold);
+  font-size: var(--fp-text-xl);
+}
+
 .petition-details a.btn-primary,
 .petition-details a.btn-primary:hover {
   color: #fff;
-}
-
-/* Global accessibility (FE-13) */
-.fp-skip-link {
-  position: absolute;
-  left: var(--fp-s2);
-  top: -10rem;
-  z-index: 1100;
-  padding: var(--fp-s2) var(--fp-s4);
-  background: var(--fp-primary-strong);
-  color: #fff;
-  border-radius: var(--fp-radius);
-}
-
-.fp-skip-link:focus {
-  top: var(--fp-s2);
-  color: #fff;
-}
-
-.fp-main:focus {
-  outline: none;
 }
 
 /* Warning before exporting signatories (GD-08) */
