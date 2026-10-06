@@ -4091,3 +4091,84 @@ msgstr "Page %(number)s"
 #, python-format
 msgid "by %(owner)s"
 msgstr "par %(owner)s"
+
+#: pytition/petition/models.py
+msgid "Deletion date"
+msgstr "Date de suppression"
+
+#: pytition/petition/forms.py
+#, python-format
+msgid "On this day, the petition and all its signatures are permanently deleted. You can choose a date up to %(date)s and change it at any time."
+msgstr "Ce jour-là, la pétition et toutes ses signatures seront définitivement supprimées. Vous pouvez choisir une date jusqu'au %(date)s et la modifier à tout moment."
+
+#: pytition/petition/forms.py
+msgid "The deletion date must be tomorrow or later."
+msgstr "La date de suppression doit être demain ou plus tard."
+
+#: pytition/petition/forms.py
+#, python-format
+msgid "The deletion date cannot be later than %(date)s."
+msgstr "La date de suppression ne peut pas être postérieure au %(date)s."
+
+#: pytition/petition/views.py
+msgid "This petition has reached its deletion date and no longer accepts signatures."
+msgstr "Cette pétition a atteint sa date de suppression et n'accepte plus de signatures."
+
+#: pytition/petition/expiry.py
+#, python-format
+msgid "Your petition “%(title)s” will be deleted on %(date)s"
+msgstr "Votre pétition « %(title)s » sera supprimée le %(date)s"
+
+#: pytition/petition/templates/petition/expiry_reminder_email.txt
+msgid "Hello,"
+msgstr "Bonjour,"
+
+#: pytition/petition/templates/petition/expiry_reminder_email.txt
+#, python-format
+msgid "The petition “%(title)s” and its %(counter)s signature will be permanently deleted on %(date)s."
+msgid_plural "The petition “%(title)s” and its %(counter)s signatures will be permanently deleted on %(date)s."
+msgstr[0] "La pétition « %(title)s » et ses données, dont %(counter)s signature, seront définitivement supprimées le %(date)s."
+msgstr[1] "La pétition « %(title)s » et ses données, dont %(counter)s signatures, seront définitivement supprimées le %(date)s."
+
+#: pytition/petition/templates/petition/expiry_reminder_email.txt
+msgid "To keep the list of signatories, download it before that day (you will be asked to log in):"
+msgstr "Pour conserver la liste des signataires, téléchargez-la avant cette date (une connexion vous sera demandée) :"
+
+#: pytition/petition/templates/petition/expiry_reminder_email.txt
+msgid "To keep the petition online longer, choose a later deletion date in its settings:"
+msgstr "Pour garder la pétition en ligne plus longtemps, choisissez une date de suppression plus lointaine dans ses paramètres :"
+
+#: pytition/petition/templates/petition/expiry_reminder_email.txt
+msgid "If you do nothing, the deletion will happen on that day and cannot be undone."
+msgstr "Sans action de votre part, la suppression aura lieu à cette date et sera irréversible."
+
+#: pytition/petition/templates/petition/expiry_reminder_email.txt
+#, python-format
+msgid "You receive this message because you can manage the petitions of %(org)s."
+msgstr "Vous recevez ce message car vous pouvez gérer les pétitions de %(org)s."
+
+#: pytition/petition/templates/petition/expiry_reminder_email.txt
+msgid "You receive this message because you created this petition."
+msgstr "Vous recevez ce message car vous avez créé cette pétition."
+
+#: pytition/petition/templates/petition/expiry_reminder_email.txt
+msgid "Why petitions are deleted:"
+msgstr "Pourquoi les pétitions sont supprimées :"
+
+#: pytition/petition/templates/petition/privacy_notice.html
+#, python-format
+msgid "Each petition has a deletion date, shown on its page: by default %(days)s day after its creation."
+msgid_plural "Each petition has a deletion date, shown on its page: by default %(days)s days after its creation."
+msgstr[0] "Chaque pétition a une date de suppression, indiquée sur sa page : par défaut %(days)s jour après sa création."
+msgstr[1] "Chaque pétition a une date de suppression, indiquée sur sa page : par défaut %(days)s jours après sa création."
+
+#: pytition/petition/templates/petition/privacy_notice.html
+#, python-format
+msgid "Its author can change it at any time, never more than %(days)s day ahead."
+msgid_plural "Its author can change it at any time, never more than %(days)s days ahead."
+msgstr[0] "Son auteur·ice peut la modifier à tout moment, sans jamais dépasser %(days)s jour à l'avance."
+msgstr[1] "Son auteur·ice peut la modifier à tout moment, sans jamais dépasser %(days)s jours à l'avance."
+
+#: pytition/petition/templates/petition/privacy_notice.html
+msgid "On that date, the petition and all its signatures are permanently deleted from the site. Its author is warned beforehand and can download the list of signatories until then."
+msgstr "À cette date, la pétition et toutes ses signatures sont définitivement supprimées du site. Son auteur·ice est prévenu·e à l'avance et peut télécharger la liste des signataires jusque-là."

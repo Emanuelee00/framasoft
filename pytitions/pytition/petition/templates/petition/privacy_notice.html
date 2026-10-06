@@ -4,34 +4,44 @@
 {% block title %}{% trans "Privacy notice" %}{% endblock %}
 
 {% block main_content %}
-<div class="container">
-  <div class="row">
-    <div class="col-lg-8 offset-lg-2">
-      <h1 class="h3 mb-2">{% trans "Privacy notice" %}</h1>
-      <p class="text-muted">{% blocktrans %}Version {{ version }}{% endblocktrans %}</p>
+<div class="fp-container">
+  <div class="fp-page-header">
+    <h1>{% trans "Privacy notice" %}</h1>
+    <p class="fp-muted">{% blocktrans %}Version {{ version }}{% endblocktrans %}</p>
+  </div>
+  <div class="fp-prose">
+    <h2>{% trans "Who processes your data" %}</h2>
+    <p>{% blocktrans with site_name=settings.SITE_NAME %}When you sign a petition, your data is sent to its author, who decides why it is collected. {{ site_name }} hosts the petitions and processes your data to count signatures, prevent abuse and let you manage your signature.{% endblocktrans %}</p>
 
-      <h2 class="h5 mt-4">{% trans "Who processes your data" %}</h2>
-      <p>{% blocktrans with site_name=settings.SITE_NAME %}When you sign a petition, your data is sent to its author, who decides why it is collected. {{ site_name }} hosts the petitions and processes your data to count signatures, prevent abuse and let you manage your signature.{% endblocktrans %}</p>
+    <h2>{% trans "What data is collected" %}</h2>
+    <p>{% trans "Your first name, last name and email address, your phone number if you provide it, whether you subscribed to the author's newsletter, the date of your signature and of its confirmation, and the version of this notice you accepted. To prevent abuse, an encrypted fingerprint of your IP address is also kept." %}</p>
 
-      <h2 class="h5 mt-4">{% trans "What data is collected" %}</h2>
-      <p>{% trans "Your first name, last name and email address, your phone number if you provide it, whether you subscribed to the author's newsletter, the date of your signature and of its confirmation, and the version of this notice you accepted. To prevent abuse, an encrypted fingerprint of your IP address is also kept." %}</p>
+    <h2>{% trans "Why this data is sensitive" %}</h2>
+    <p>{% trans "Signing a petition may reveal your political, religious or philosophical opinions or your trade union membership. This is why your explicit consent is required to sign, why the list of signatories is never published (only their number is), and why subscribing to the author's newsletter is a separate, optional choice, effective only once your signature is confirmed." %}</p>
 
-      <h2 class="h5 mt-4">{% trans "Why this data is sensitive" %}</h2>
-      <p>{% trans "Signing a petition may reveal your political, religious or philosophical opinions or your trade union membership. This is why your explicit consent is required to sign, why the list of signatories is never published (only their number is), and why subscribing to the author's newsletter is a separate, optional choice, effective only once your signature is confirmed." %}</p>
+    <h2>{% trans "How long it is kept" %}</h2>
+    <ul>
+      <li>{% blocktrans count days=unconfirmed_days %}Unconfirmed signatures are deleted after {{ days }} day.{% plural %}Unconfirmed signatures are deleted after {{ days }} days.{% endblocktrans %}</li>
+      <li>{% blocktrans count days=ip_days %}The fingerprint of your IP address is erased after {{ days }} day.{% plural %}The fingerprint of your IP address is erased after {{ days }} days.{% endblocktrans %}</li>
+      <li>{% blocktrans count days=creator_ip_days %}The IP address and browser of petition authors are erased after {{ days }} day.{% plural %}The IP address and browser of petition authors are erased after {{ days }} days.{% endblocktrans %}</li>
+      <li>{% trans "Confirmed signatures are kept as long as the petition exists, unless you delete yours." %}</li>
+      <li>{% blocktrans trimmed count days=petition_lifetime_days %}
+        Each petition has a deletion date, shown on its page: by default {{ days }} day after its creation.
+      {% plural %}
+        Each petition has a deletion date, shown on its page: by default {{ days }} days after its creation.
+      {% endblocktrans %}
+      {% blocktrans trimmed count days=petition_max_lifetime_days %}
+        Its author can change it at any time, never more than {{ days }} day ahead.
+      {% plural %}
+        Its author can change it at any time, never more than {{ days }} days ahead.
+      {% endblocktrans %}
+      {% trans "On that date, the petition and all its signatures are permanently deleted from the site. Its author is warned beforehand and can download the list of signatories until then." %}</li>
+    </ul>
 
-      <h2 class="h5 mt-4">{% trans "How long it is kept" %}</h2>
-      <ul>
-        <li>{% blocktrans count days=unconfirmed_days %}Unconfirmed signatures are deleted after {{ days }} day.{% plural %}Unconfirmed signatures are deleted after {{ days }} days.{% endblocktrans %}</li>
-        <li>{% blocktrans count days=ip_days %}The fingerprint of your IP address is erased after {{ days }} day.{% plural %}The fingerprint of your IP address is erased after {{ days }} days.{% endblocktrans %}</li>
-        <li>{% blocktrans count days=creator_ip_days %}The IP address and browser of petition authors are erased after {{ days }} day.{% plural %}The IP address and browser of petition authors are erased after {{ days }} days.{% endblocktrans %}</li>
-        <li>{% trans "Confirmed signatures are kept as long as the petition exists, unless you delete yours." %}</li>
-      </ul>
-
-      <h2 class="h5 mt-4">{% trans "Your rights" %}</h2>
-      <p>{% trans "You can view, download or delete your signature at any time with the personal link included in the confirmation email. If you lost it, you can ask for a new one from the petition page. Deleting your signature also withdraws your consent." %}</p>
-      <p>{% trans "If the author has already exported the list of signatories or added you to their newsletter, contact them directly about these copies." %}</p>
-      <p>{% blocktrans %}You can also lodge a complaint with the French data protection authority, the CNIL (<a href="https://www.cnil.fr/">www.cnil.fr</a>).{% endblocktrans %}</p>
-    </div>
+    <h2>{% trans "Your rights" %}</h2>
+    <p>{% trans "You can view, download or delete your signature at any time with the personal link included in the confirmation email. If you lost it, you can ask for a new one from the petition page. Deleting your signature also withdraws your consent." %}</p>
+    <p>{% trans "If the author has already exported the list of signatories or added you to their newsletter, contact them directly about these copies." %}</p>
+    <p>{% blocktrans %}You can also lodge a complaint with the French data protection authority, the CNIL (<a href="https://www.cnil.fr/">www.cnil.fr</a>).{% endblocktrans %}</p>
   </div>
 </div>
 {% endblock %}

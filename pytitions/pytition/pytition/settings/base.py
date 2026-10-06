@@ -418,6 +418,19 @@ LOGGING = {
     "handlers": {"console": {"class": "logging.StreamHandler"}},
     "loggers": {"petition.audit": {"handlers": ["console"], "level": "INFO", "propagate": False}},
 }
+# framapetitions: EXP — petition expiry. ``Petition.expires_at`` is the day the petition, its signatures and
+# related data are permanently deleted (by ``purge_personal_data``). It defaults to the creation day plus
+# PETITION_DEFAULT_LIFETIME_DAYS. Whenever the date is set (creation or later change), it must be between
+# tomorrow and that day plus PETITION_MAX_LIFETIME_DAYS: the creator can extend it at any time.
+PETITION_DEFAULT_LIFETIME_DAYS = 365
+PETITION_MAX_LIFETIME_DAYS = 730
+# Reminder emails to the creator, this many days before the deletion date (each one sent once)
+PETITION_EXPIRY_REMINDER_DAYS = [30, 20, 10]
+# Rows updated or deleted per statement by purge_personal_data (short transactions, no long locks)
+PURGE_BATCH_SIZE = 10000
+# Absolute base URL used in emails sent by commands, which have no request (e.g. "https://framapetitions.org").
+# When empty, no expiry reminder is sent and expired petitions are NOT deleted.
+SITE_BASE_URL = os.environ.get("SITE_BASE_URL", "")
 
 
 

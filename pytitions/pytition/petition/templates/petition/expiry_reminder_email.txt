@@ -1,0 +1,22 @@
+{% load i18n %}{% autoescape off %}{# Context: petition_title, org_name (organization petitions only), expires_at, signature_number, csv_url, extend_url, privacy_url #}{% trans "Hello," %}
+
+{% blocktrans trimmed with title=petition_title date=expires_at|date:"DATE_FORMAT" count counter=signature_number %}
+The petition “{{ title }}” and its {{ counter }} signature will be permanently deleted on {{ date }}.
+{% plural %}
+The petition “{{ title }}” and its {{ counter }} signatures will be permanently deleted on {{ date }}.
+{% endblocktrans %}
+
+{% trans "To keep the list of signatories, download it before that day (you will be asked to log in):" %}
+{{ csv_url }}
+
+{% trans "To keep the petition online longer, choose a later deletion date in its settings:" %}
+{{ extend_url }}
+
+{% trans "If you do nothing, the deletion will happen on that day and cannot be undone." %}
+
+{% if org_name %}{% blocktrans trimmed with org=org_name %}You receive this message because you can manage the petitions of {{ org }}.{% endblocktrans %}{% else %}{% trans "You receive this message because you created this petition." %}{% endif %}
+{% trans "Why petitions are deleted:" %} {{ privacy_url }}
+
+-- 
+{% trans "Framapétitions, a service of the Framasoft association" %}
+{% endautoescape %}

@@ -50,10 +50,10 @@ from django.views.generic.edit import CreateView
 from formtools.wizard.views import SessionWizardView
 
 from .models import Petition, Signature, Organization, PytitionUser, PetitionTemplate, Permission
-from .models import SlugModel, ModerationReason, Moderation, MonitoringReason, Monitoring
+from .models import SlugModel, ModerationReason, Moderation, MonitoringReason, Monitoring, default_expires_at
 from .forms import SignatureForm, ContentFormPetition, EmailForm, NewsletterForm, SocialNetworkForm, ContentFormTemplate
 from .forms import StyleForm, PetitionCreationStep1, PetitionCreationStep2, PetitionCreationStep3, UpdateInfoForm
-from .forms import DeleteAccountForm, OrgCreationForm, SignatureLinkRequestForm, ReportForm
+from .forms import DeleteAccountForm, OrgCreationForm, SignatureLinkRequestForm, ReportForm, ExpiryForm
 from .helpers import get_client_ip, get_session_user, petition_from_id, signature_ip_hash
 from .helpers import check_petition_is_accessible
 from .helpers import send_already_signed_email, send_manage_link_email, build_manage_url, MANAGE_SALT
@@ -211,6 +211,9 @@ def detail(request, petition_id):
 
     # If we've just signed successfully the petition, do not show the sign form
     hide_sign_form_if_user_just_signed(request, ctx)
+    if petition.is_expired:
+        # past its deletion date, waiting for the purge: no sign form
+        ctx['sign_state'] = "closed"
 
     if "application/json" in request.META.get('HTTP_ACCEPT', []):
         response = JsonResponse(petition.to_json)
@@ -227,15 +230,19 @@ def detail(request, petition_id):
 @never_cache
 @require_http_methods(["GET", "POST"])
 def confirm(request, petition_id, confirmation_hash):
-    petition = petition_from_id(petition_id)
+    # one query for the signature, its petition and the petition's owner (used by petition.url)
+    signature = Signature.objects.select_related('petition__org', 'petition__user__user')\
+        .filter(petition_id=petition_id, confirmation_hash=confirmation_hash).first()
+    petition = signature.petition if signature else petition_from_id(petition_id)
     check_petition_is_accessible(request, petition)
-    signature = petition.signature_set.filter(confirmation_hash=confirmation_hash).first()
     retention = settings.UNCONFIRMED_SIGNATURE_RETENTION_DAYS
     ctx = {'petition': petition, 'confirmation_hash': confirmation_hash}
     if signature is None:
         state = "invalid_link"
     elif signature.confirmed:
         state = "already_confirmed"
+    elif petition.is_expired:
+        state = "closed"
     elif retention is not None and signature.date < timezone.now() - timedelta(days=retention):
         state = "expired"
     elif request.method != "POST":
@@ -339,6 +346,11 @@ def create_signature(request, petition_id):
             'meta': petition_detail_meta(request, petition_id),
             'og_image_absolute_url': request.build_absolute_uri(petition.twitter_image)
         }
+        if petition.is_expired:
+            messages.error(request, _("This petition has reached its deletion date and no longer accepts "
+                                      "signatures."), extra_tags="closed")
+            ctx['sign_state'] = "closed"
+            return render(request, 'petition/petition_detail.html', ctx, status=410)
         if not form.is_valid():
             return render(request, 'petition/petition_detail.html', ctx)
         # version of the privacy notice and consent text accepted with this signature
@@ -498,6 +510,8 @@ def privacy_notice(request):
         'unconfirmed_days': settings.UNCONFIRMED_SIGNATURE_RETENTION_DAYS,
         'ip_days': settings.SIGNATURE_IP_HASH_RETENTION_DAYS,
         'creator_ip_days': settings.CREATOR_IP_RETENTION_DAYS,
+        'petition_lifetime_days': settings.PETITION_DEFAULT_LIFETIME_DAYS,
+        'petition_max_lifetime_days': settings.PETITION_MAX_LIFETIME_DAYS,
     })
 
 
@@ -1271,9 +1285,9 @@ class PetitionCreationWizard(SessionWizardView):
 
         if step == "step3":
             if template is not None:
-                return {'use_template': True, 'template_id': template.id}
+                return {'use_template': True, 'template_id': template.id, 'expires_at': default_expires_at()}
             else:
-                return {'use_template': False, 'template_id': 0}
+                return {'use_template': False, 'template_id': 0, 'expires_at': default_expires_at()}
 
         return self.initial_dict.get(step, {})
 
@@ -1297,6 +1311,7 @@ class PetitionCreationWizard(SessionWizardView):
         publish = self.get_cleaned_data_for_step("step3")["publish"]
         template_id = self.get_cleaned_data_for_step("step3")["template_id"]
         use_template = self.get_cleaned_data_for_step("step3")["use_template"]
+        expires_at = self.get_cleaned_data_for_step("step3")["expires_at"] or default_expires_at()
         pytitionuser = get_session_user(self.request)
         _redirect = self.request.POST.get('redirect', '')
 
@@ -1323,7 +1338,7 @@ class PetitionCreationWizard(SessionWizardView):
                 check_user_signature_number(pytitionuser, org, self.request)
 
                 #FIXME I think new here is better than create
-                petition = Petition.objects.create(title=title, text=message, org=org, ipaddr=get_client_ip(self.request), user_agent=self.request.META['HTTP_USER_AGENT'])
+                petition = Petition.objects.create(title=title, text=message, org=org, expires_at=expires_at, ipaddr=get_client_ip(self.request), user_agent=self.request.META['HTTP_USER_AGENT'])
                 
                 # is_spam function from detector launches all the other detectors to detect if a petition is spam
                 # it does moderation actions
@@ -1355,7 +1370,7 @@ class PetitionCreationWizard(SessionWizardView):
             check_mon_petition_number(pytitionuser, None, self.request)
             check_user_signature_number(pytitionuser, None, self.request)
             
-            petition = Petition.objects.create(title=title, text=message, user=pytitionuser, ipaddr=get_client_ip(self.request), user_agent=self.request.META['HTTP_USER_AGENT'])
+            petition = Petition.objects.create(title=title, text=message, user=pytitionuser, expires_at=expires_at, ipaddr=get_client_ip(self.request), user_agent=self.request.META['HTTP_USER_AGENT'])
 
             # is_spam function from detector launches all the other detectors to detect if a petition is spam
             # it does moderation actions
@@ -1541,6 +1556,7 @@ def edit_petition(request, petition_id):
         'social_network_form_submitted': False,
         'newsletter_form_submitted': False,
         'style_form_submitted': False,
+        'expiry_form_submitted': False,
     }
 
     if request.method == "POST":
@@ -1647,6 +1663,15 @@ def edit_petition(request, petition_id):
                 petition.save()
         else:
             style_form = StyleForm({f: getattr(petition, f) for f in StyleForm.base_fields})
+
+        if 'expiry_form_submitted' in request.POST:
+            submitted_ctx['expiry_form_submitted'] = True
+            expiry_form = ExpiryForm(request.POST)
+            if expiry_form.is_valid():
+                petition.set_expires_at(expiry_form.cleaned_data['expires_at'])
+                petition.save()
+        else:
+            expiry_form = ExpiryForm(initial={'expires_at': petition.expires_at})
     else:
         data = {'twitter_description': petition.twitter_description,
                 'org_twitter_handle': petition.org_twitter_handle,
@@ -1663,6 +1688,8 @@ def edit_petition(request, petition_id):
         style_form = StyleForm({f: getattr(petition, f) for f in StyleForm.base_fields})
         email_form = EmailForm({f: getattr(petition, f) for f in EmailForm.base_fields})
         newsletter_form = NewsletterForm({f: getattr(petition, f) for f in NewsletterForm.base_fields})
+        # unbound: a petition past its date (deleted at the next purge) shows the date without an error
+        expiry_form = ExpiryForm(initial={'expires_at': petition.expires_at})
 
     ctx = {'user': pytitionuser,
         'content_form': content_form,
@@ -1670,6 +1697,7 @@ def edit_petition(request, petition_id):
         'email_form': email_form,
         'social_network_form': social_network_form,
         'newsletter_form': newsletter_form,
+        'expiry_form': expiry_form,
         'petition': petition,
         'is_template': False}
     url_prefix = request.scheme + "://" + request.get_host()
@@ -2030,6 +2058,9 @@ def slug_show_petition(request, orgslugname=None, username=None, petitionname=No
 
     # If we've just signed successfully the petition, do not show the sign form
     hide_sign_form_if_user_just_signed(request, ctx)
+    if petition.is_expired:
+        # past its deletion date, waiting for the purge: no sign form
+        ctx['sign_state'] = "closed"
 
     if "application/json" in request.META.get('HTTP_ACCEPT', []):
         response = JsonResponse(petition.to_json)

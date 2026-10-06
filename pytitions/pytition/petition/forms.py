@@ -15,6 +15,7 @@ from django.contrib.auth.forms import UserCreationForm, UsernameField
 from django.contrib.auth import get_user_model
 from django.utils.text import slugify
 from django.utils.html import mark_safe, strip_tags
+from django.utils.formats import date_format
 
 from .models import Signature, PetitionTemplate, Petition, Organization, PytitionUser, SlugModel
 from .models import ModerationReason
@@ -122,13 +123,56 @@ class PetitionCreationStep2(forms.Form):
     message = forms.CharField(widget=TinyMCE)
 
 
-class PetitionCreationStep3(forms.Form):
+class ExpiryFieldMixin:
+    ### Deletion date of a petition: between tomorrow and today + PETITION_MAX_LIFETIME_DAYS ###
+    def setup_expires_at(self):
+        earliest, latest = Petition.expiry_bounds()
+        field = self.fields['expires_at']
+        field.widget.attrs.update({'min': earliest.isoformat(), 'max': latest.isoformat()})
+        field.help_text = _("On this day, the petition and all its signatures are permanently deleted. "
+                            "You can choose a date up to %(date)s and change it at any time.") % {
+            'date': date_format(latest)}
+
+    def clean_expires_at(self):
+        value = self.cleaned_data.get('expires_at')
+        if value is None:
+            return value
+        earliest, latest = Petition.expiry_bounds()
+        if value < earliest:
+            raise ValidationError(_("The deletion date must be tomorrow or later."), code="min_value")
+        if value > latest:
+            raise ValidationError(_("The deletion date cannot be later than %(date)s."), code="max_value",
+                                  params={'date': date_format(latest)})
+        return value
+
+
+def expires_at_field(required):
+    return forms.DateField(required=required, label=_("Deletion date"),
+                           widget=forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'))
+
+
+class PetitionCreationStep3(ExpiryFieldMixin, forms.Form):
     ### Ask for publication ###
     publish = forms.BooleanField(required=False, label=_("Publish the petition now?"))
+    # empty: default lifetime (PETITION_DEFAULT_LIFETIME_DAYS)
+    expires_at = expires_at_field(required=False)
     configure = forms.BooleanField(required=False, label=_("Save & Configure"))
     ### Hidden fields ###
     use_template = forms.BooleanField(widget=forms.HiddenInput, required=False, label=_("Use template"))
     template_id = forms.IntegerField(widget=forms.HiddenInput, required=False, label=_("Template id"))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setup_expires_at()
+
+
+class ExpiryForm(ExpiryFieldMixin, forms.Form):
+    ### Deletion date, in the petition settings (submitted with "expiry_form_submitted") ###
+    expires_at = expires_at_field(required=True)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setup_expires_at()
 
 
 class ContentFormGeneric(forms.Form):

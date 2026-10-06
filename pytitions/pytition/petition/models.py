@@ -33,6 +33,10 @@ import html
 import uuid
 
 
+def default_expires_at():
+    return timezone.localdate() + timedelta(days=settings.PETITION_DEFAULT_LIFETIME_DAYS)
+
+
 # ----------------------------------- PytitionUser ----------------------------
 class PytitionUser(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="pytitionuser")
@@ -313,6 +317,28 @@ class Petition(models.Model):
 
     # If a petition has been deleted (not permanently) and is in the bin, its in_bin_date is not None
     in_bin_date = models.DateTimeField(blank=True, null=True)
+
+    # Day on which the petition and its signatures are permanently deleted (see PETITION_*_LIFETIME_DAYS)
+    expires_at = models.DateField(default=default_expires_at, verbose_name=gettext_lazy("Deletion date"))
+    # Smallest PETITION_EXPIRY_REMINDER_DAYS value already notified for the current expires_at (None: none sent)
+    expiry_reminder_days = models.PositiveSmallIntegerField(null=True, blank=True)
+
+    @property
+    def is_expired(self):
+        # From its deletion date on, a petition no longer accepts signatures
+        return self.expires_at <= timezone.localdate()
+
+    @staticmethod
+    def expiry_bounds():
+        # (earliest, latest) deletion date that can be chosen today
+        today = timezone.localdate()
+        return today + timedelta(days=1), today + timedelta(days=settings.PETITION_MAX_LIFETIME_DAYS)
+
+    def set_expires_at(self, value):
+        # A new date restarts the reminders; the caller saves
+        if value != self.expires_at:
+            self.expires_at = value
+            self.expiry_reminder_days = None
 
     @property
     def is_moderated(self):
