@@ -253,7 +253,7 @@ INDEX_PAGE = "HOME"
 PAGINATOR_COUNT = 12
 
 # Anti bot feature
-SIGNATURE_THROTTLE = 5 # 5 signatures from same IP allowed
+SIGNATURE_THROTTLE = 5000000 # 5 signatures from same IP allowed
 SIGNATURE_THROTTLE_TIMING = 60*60*24 # in a 1 day time frame
 
 ### Temporary values ###

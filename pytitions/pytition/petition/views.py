@@ -58,6 +58,8 @@ from .spam_management.anti_bot_tests.check_signature_number import check_signatu
 from .spam_management.anti_bot_tests.check_petition_number import check_petition_number_day, check_mon_petition_number, check_user_signature_number
 from .spam_management.detector import is_spam
 
+import time
+
 #------------------------------------ Views -----------------------------------
 
 # Path : /
@@ -180,31 +182,84 @@ def hide_sign_form_if_user_just_signed(request, ctx):
 
 # /<int:petition_id>/
 # Show information on a petition
+
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
+
 def detail(request, petition_id):
-    petition = petition_from_id(petition_id)
-    check_petition_is_accessible(request, petition)
+    total_start = time.perf_counter()
+
+    print(f"[DETAIL] connection before: {connection.connection}")
+
+    start = time.perf_counter()
+
+    connection.ensure_connection()
+
+    print(
+        f"[DETAIL] ensure_connection: "
+        f"{time.perf_counter() - start:.4f}s"
+    )
+
+    start = time.perf_counter()
+
+    with CaptureQueriesContext(connection) as queries:
+        petition = petition_from_id(petition_id)
+
+    print(
+        f"[DETAIL] petition_from_id: "
+        f"{time.perf_counter() - start:.4f}s"
+    )
+
+    start = time.perf_counter()
     try:
         pytitionuser = get_session_user(request)
     except:
         pytitionuser = None
+    print(f"[DETAIL] get_session_user: {time.perf_counter() - start:.4f}s")
 
+    start = time.perf_counter()
     reasons = ModerationReason.objects.all()
+    print(f"[DETAIL] moderation reasons: {time.perf_counter() - start:.4f}s")
+
+    start = time.perf_counter()
     sign_form = SignatureForm(petition=petition)
-    ctx = {"user": pytitionuser, 'petition': petition, 'form': sign_form,
-           'meta': petition_detail_meta(request, petition_id),
-           'moderation_reasons': reasons,
-           'og_image_absolute_url': request.build_absolute_uri(petition.twitter_image)}
+    print(f"[DETAIL] SignatureForm: {time.perf_counter() - start:.4f}s")
 
-    # If we've just signed successfully the petition, do not show the sign form
+    start = time.perf_counter()
+    ctx = {
+        "user": pytitionuser,
+        "petition": petition,
+        "form": sign_form,
+        "meta": petition_detail_meta(request, petition_id),
+        "moderation_reasons": reasons,
+        "og_image_absolute_url": request.build_absolute_uri(
+            petition.twitter_image
+        ),
+    }
+    print(f"[DETAIL] context: {time.perf_counter() - start:.4f}s")
+
+    start = time.perf_counter()
     hide_sign_form_if_user_just_signed(request, ctx)
+    print(f"[DETAIL] hide form: {time.perf_counter() - start:.4f}s")
 
-    if "application/json" in request.META.get('HTTP_ACCEPT', []):
+    if "application/json" in request.META.get("HTTP_ACCEPT", []):
+        start = time.perf_counter()
         response = JsonResponse(petition.to_json)
         response["Access-Control-Allow-Origin"] = "*"
         response["Access-Control-Allow-Methods"] = "GET, OPTIONS"
-        return response
+        print(f"[DETAIL] JSON response: {time.perf_counter() - start:.4f}s")
     else:
-        return render(request, 'petition/petition_detail.html', ctx)
+        start = time.perf_counter()
+        response = render(
+            request,
+            "petition/petition_detail.html",
+            ctx,
+        )
+        print(f"[DETAIL] render: {time.perf_counter() - start:.4f}s")
+
+    print(f"[DETAIL] TOTAL: {time.perf_counter() - total_start:.4f}s")
+
+    return response
 
 
 # /<int:petition_id>/confirm/<confirmation_hash>
@@ -269,67 +324,453 @@ def go_send_confirmation_email(request, signature_id):
     return redirect('admin:{}_signature_change'.format(app_label), signature_id)
 
 
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
+
+
+def create_signature(request, petition_id):
+    print(f">>> CREATE_SIGNATURE START {request.method}")
+
+    request_start = time.perf_counter()
+
+    with CaptureQueriesContext(connection) as queries:
+        response = _create_signature(request, petition_id)
+
+    total_time = time.perf_counter() - request_start
+
+    total_db_time = sum(
+        float(query["time"] or 0)
+        for query in queries
+    )
+
+    print(">>> CREATE_SIGNATURE END")
+    print(f">>> TOTAL REQUEST TIME: {total_time:.4f}s")
+    print(f">>> DB QUERIES: {len(queries)}")
+    print(f">>> DB TIME: {total_db_time:.4f}s")
+
+    for i, query in enumerate(queries, 1):
+        sql = " ".join(query["sql"].split())
+
+        print(
+            f"[{i:02d}] "
+            f"{float(query['time'] or 0):.4f}s "
+            f"{sql[:300]}"
+        )
+
+    return response
+
+import hashlib
+import hmac
+
+
+def hash_ip(ip, salt):
+    return hmac.new(
+        salt.encode("utf-8"),
+        ip.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+
+
 # <int:petition_id>/sign
 # Sign a petition
-def create_signature(request, petition_id):
+def _create_signature(request, petition_id):
+
+    request_start = time.perf_counter()
+
+    print(">>> ========================================")
+    print(f">>> _create_signature START {request.method}")
+
+    # --------------------------------------------------
+    # Get petition
+    # --------------------------------------------------
+
+    start = time.perf_counter()
+
     petition = petition_from_id(petition_id)
     check_petition_is_accessible(request, petition)
 
-    if request.method == "POST":
-        form = SignatureForm(petition=petition, data=request.POST)
-        ctx = {
-            'petition': petition,
-            'form': form,
-            'meta': petition_detail_meta(request, petition_id),
-            'og_image_absolute_url': request.build_absolute_uri(petition.twitter_image)
-        }
-        if not form.is_valid():
-            return render(request, 'petition/petition_detail.html', ctx)
+    print(
+        f">>> PETITION + ACCESS CHECK: "
+        f"{time.perf_counter() - start:.4f}s"
+    )
 
-        ipaddr = make_password(
-                get_client_ip(request),
-                salt=petition.salt.encode('utf-8'))
-        since = now() - timedelta(seconds=settings.SIGNATURE_THROTTLE_TIMING)
+    if request.method == "POST":
+
+        # --------------------------------------------------
+        # Form construction
+        # --------------------------------------------------
+
+        start = time.perf_counter()
+
+        form = SignatureForm(
+            petition=petition,
+            data=request.POST,
+        )
+
+        print(
+            f">>> FORM CONSTRUCTION: "
+            f"{time.perf_counter() - start:.4f}s"
+        )
+
+        # --------------------------------------------------
+        # Context construction
+        # --------------------------------------------------
+
+        start = time.perf_counter()
+
+        ctx = {
+            "petition": petition,
+            "form": form,
+            "meta": petition_detail_meta(
+                request,
+                petition_id,
+            ),
+            "og_image_absolute_url": request.build_absolute_uri(
+                petition.twitter_image
+            ),
+        }
+
+        print(
+            f">>> CONTEXT CONSTRUCTION: "
+            f"{time.perf_counter() - start:.4f}s"
+        )
+
+        # --------------------------------------------------
+        # Form validation
+        # --------------------------------------------------
+
+        start = time.perf_counter()
+
+        is_valid = form.is_valid()
+
+        form_validation_time = time.perf_counter() - start
+
+        print(
+            f">>> FORM VALIDATION: "
+            f"{form_validation_time:.4f}s"
+        )
+
+        print(
+            ">>> FORM VALID:",
+            is_valid,
+        )
+
+        if not is_valid:
+            print(
+                ">>> FORM ERRORS:",
+                form.errors.as_json(),
+            )
+
+            print(
+                f">>> TOTAL REQUEST TIME: "
+                f"{time.perf_counter() - request_start:.4f}s"
+            )
+
+            print(">>> ========================================")
+
+            return render(
+                request,
+                "petition/petition_detail.html",
+                ctx,
+            )
+
+        # --------------------------------------------------
+        # IP hashing
+        # --------------------------------------------------
+
+        start = time.perf_counter()
+
+        ipaddr = hash_ip(
+            get_client_ip(request),
+            petition.salt,
+        )
+
+        print(
+            f">>> IP HASHING: "
+            f"{time.perf_counter() - start:.4f}s"
+        )
+
+        # --------------------------------------------------
+        # Throttle query construction + execution
+        # --------------------------------------------------
+
+        start = time.perf_counter()
+
+        since = now() - timedelta(
+            seconds=settings.SIGNATURE_THROTTLE_TIMING
+        )
+
         signatures = Signature.objects.filter(
             petition=petition,
             ipaddress=ipaddr,
-            date__gt=since)
-            
-        # If there are too many signatures from the same IP address, an error message and an email to moderation are sent
-        if signatures.count() > settings.SIGNATURE_THROTTLE:
-            signature = form.save()
-            messages.error(request, _("Too many signatures from your IP address, please try again later."))
-            ModerationReason.msg = "Too many signatures from this IP adress."
-            send_mail_to_moderation(settings.MODERATION_EMAIL, signature.first_name, ModerationReason.msg, "user")
-            return render(request, 'petition/petition_detail.html', ctx)
-        else:
-            # The owner chose to check the number of signatures at each signature. If the petition is moderated, redirect to index
-            if petition.check_signatures_at_each_signature:
-                if petition.cron_to_schedule:
-                    petition.cron_to_schedule = False
-                    petition.save()
-                if check_signature_number(petition) or check_signature_variation(petition, "yesterday") or check_signature_variation(petition, "last week") or check_unconfirmed_signatures(petition) or check_creation_signatures(petition):
-                    return redirect("index")
+            date__gt=since,
+        )
 
-            else:
-                petition.cron_to_schedule = True
+        signature_count = signatures.count()
+
+        print(
+            f">>> THROTTLE CHECK: "
+            f"{time.perf_counter() - start:.4f}s "
+            f"(count={signature_count})"
+        )
+
+        # --------------------------------------------------
+        # Too many signatures
+        # --------------------------------------------------
+
+        if signature_count > settings.SIGNATURE_THROTTLE:
+
+            print(">>> THROTTLE LIMIT REACHED")
+
+            # Signature DB save
+            start = time.perf_counter()
+
+            signature = form.save()
+
+            print(
+                f">>> THROTTLED SIGNATURE SAVE: "
+                f"{time.perf_counter() - start:.4f}s"
+            )
+
+            # Django message
+            start = time.perf_counter()
+
+            messages.error(
+                request,
+                _(
+                    "Too many signatures from your IP address, "
+                    "please try again later."
+                ),
+            )
+
+            print(
+                f">>> MESSAGE ERROR: "
+                f"{time.perf_counter() - start:.4f}s"
+            )
+
+            ModerationReason.msg = (
+                "Too many signatures from this IP adress."
+            )
+
+            # Moderation email
+            start = time.perf_counter()
+
+            send_mail_to_moderation(
+                settings.MODERATION_EMAIL,
+                signature.first_name,
+                ModerationReason.msg,
+                "user",
+            )
+
+            print(
+                f">>> MODERATION EMAIL: "
+                f"{time.perf_counter() - start:.4f}s"
+            )
+
+            # Render
+            start = time.perf_counter()
+
+            response = render(
+                request,
+                "petition/petition_detail.html",
+                ctx,
+            )
+
+            print(
+                f">>> THROTTLED RENDER: "
+                f"{time.perf_counter() - start:.4f}s"
+            )
+
+            print(
+                f">>> TOTAL REQUEST TIME: "
+                f"{time.perf_counter() - request_start:.4f}s"
+            )
+
+            print(">>> ========================================")
+
+            return response
+
+        # --------------------------------------------------
+        # Petition checks
+        # --------------------------------------------------
+
+        if petition.check_signatures_at_each_signature:
+
+            start = time.perf_counter()
+
+            if petition.cron_to_schedule:
+                petition.cron_to_schedule = False
                 petition.save()
 
-            signature = form.save()
-            signature.ipaddress = ipaddr
-            signature.save()
-            send_confirmation_email(request, signature)
-            messages.success(request,
-                format_html(_("Thank you for signing this petition, an email has just been sent to you at your address \'{}\'" \
-                " in order to confirm your signature.<br>" \
-                "You will need to click on the confirmation link in the email.<br>" \
-                "If you cannot find the email in your Inbox, please have a look in your Spam box.")\
-                , signature.email))
+            print(
+                f">>> PETITION FLAG CHECK: "
+                f"{time.perf_counter() - start:.4f}s"
+            )
 
-        if petition.has_newsletter and signature.subscribed_to_mailinglist:
-            subscribe_to_newsletter(petition, signature.email)
+            # Signature checks
+            start = time.perf_counter()
 
-    return redirect(petition.url)
+            if (
+                check_signature_number(petition)
+                or check_signature_variation(
+                    petition,
+                    "yesterday",
+                )
+                or check_signature_variation(
+                    petition,
+                    "last week",
+                )
+                or check_unconfirmed_signatures(petition)
+                or check_creation_signatures(petition)
+            ):
+                print(
+                    f">>> SIGNATURE CHECKS: "
+                    f"{time.perf_counter() - start:.4f}s"
+                )
+
+                print(
+                    f">>> TOTAL REQUEST TIME: "
+                    f"{time.perf_counter() - request_start:.4f}s"
+                )
+
+                print(">>> ========================================")
+
+                return redirect("index")
+
+            print(
+                f">>> SIGNATURE CHECKS: "
+                f"{time.perf_counter() - start:.4f}s"
+            )
+
+        # --------------------------------------------------
+        # Cron flag update
+        # --------------------------------------------------
+
+        else:
+
+            start = time.perf_counter()
+
+            updated = Petition.objects.filter(
+                pk=petition.pk,
+                cron_to_schedule=False,
+            ).update(
+                cron_to_schedule=True,
+            )
+
+            print(
+                f">>> CRON FLAG UPDATE: "
+                f"{time.perf_counter() - start:.4f}s "
+                f"(updated={updated})"
+            )
+
+        # --------------------------------------------------
+        # Signature INSERT
+        # --------------------------------------------------
+
+        start = time.perf_counter()
+
+        signature = form.save(
+            commit=False,
+        )
+
+        signature.ipaddress = ipaddr
+
+        signature.save()
+
+        print(
+            f">>> SIGNATURE DB SAVE: "
+            f"{time.perf_counter() - start:.4f}s"
+        )
+
+        # --------------------------------------------------
+        # Confirmation email
+        # --------------------------------------------------
+
+        start = time.perf_counter()
+
+        send_confirmation_email(
+            request,
+            signature,
+        )
+
+        print(
+            f">>> CONFIRMATION EMAIL: "
+            f"{time.perf_counter() - start:.4f}s"
+        )
+
+        # --------------------------------------------------
+        # Success message
+        # --------------------------------------------------
+
+        start = time.perf_counter()
+
+        messages.success(
+            request,
+            format_html(
+                _(
+                    "Thank you for signing this petition, "
+                    "an email has just been sent to you at your "
+                    "address '{}' in order to confirm your signature."
+                    "<br>"
+                    "You will need to click on the confirmation link "
+                    "in the email."
+                    "<br>"
+                    "If you cannot find the email in your Inbox, "
+                    "please have a look in your Spam box."
+                ),
+                signature.email,
+            ),
+        )
+
+        print(
+            f">>> SUCCESS MESSAGE: "
+            f"{time.perf_counter() - start:.4f}s"
+        )
+
+        # --------------------------------------------------
+        # Newsletter
+        # --------------------------------------------------
+
+        if (
+            petition.has_newsletter
+            and signature.subscribed_to_mailinglist
+        ):
+            start = time.perf_counter()
+
+            subscribe_to_newsletter(
+                petition,
+                signature.email,
+            )
+
+            print(
+                f">>> NEWSLETTER: "
+                f"{time.perf_counter() - start:.4f}s"
+            )
+
+    # --------------------------------------------------
+    # Final redirect
+    # --------------------------------------------------
+
+    start = time.perf_counter()
+
+    response = redirect(petition.url)
+
+    print(
+        f">>> REDIRECT CREATION: "
+        f"{time.perf_counter() - start:.4f}s"
+    )
+
+    print(
+        f">>> TOTAL REQUEST TIME: "
+        f"{time.perf_counter() - request_start:.4f}s"
+    )
+
+    print(">>> ========================================")
+
+    return response
+
+
+
 
 
 # /org/<slug:orgslugname>/dashboard
