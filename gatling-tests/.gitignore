@@ -1,0 +1,10 @@
+.gradle
+.idea
+.metals
+.vscode
+/build
+/target
+__pycache__/
+*.hprof
+# unrelated nested clone, left in the working dir by accident
+/gatling-gradle-plugin-demo-scala/
