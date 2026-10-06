@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load static %}
 
-{# Context: petition, state ("confirm", "confirmed", "already_confirmed" or "invalid_link"), #}
+{# Context: petition, state ("confirm", "confirmed", "already_confirmed", "expired" or "invalid_link"), #}
 {# confirmation_hash (for "confirm"), manage_url (optional) #}
 
 {% block title %}{% trans "Confirm my signature" %}{% endblock title %}
@@ -39,6 +39,16 @@
     {% endif %}
   </div>
   <p><a href="{{ petition.url }}" class="fp-tap">{% trans "Back to the petition" %}</a></p>
+
+  {% elif state == "expired" %}
+  <div class="fp-state fp-alert-warning" role="alert">
+    <h1 class="fp-state-title h3" tabindex="-1" data-autofocus>
+      {% include "components/alert_icon.html" with kind="warning" %}
+      {% trans "This confirmation link has expired" %}
+    </h1>
+    <p>{% trans "The signature was not confirmed in time and will be deleted. You can sign the petition again." %}</p>
+  </div>
+  <p><a href="{{ petition.url }}#signer" class="fp-tap">{% trans "Back to the petition" %}</a></p>
 
   {% else %}
   <div class="fp-state fp-alert-warning" role="alert">

@@ -42,7 +42,7 @@ class NewsletterSubscriptionTest(TestCase):
         signature = Signature.objects.get(petition=self.petition, email='alan@john.org')
         # the subscription happens on confirmation (GD-06)
         with mock.patch('petition.helpers.requests.post', side_effect=requests.Timeout) as post:
-            response = self.client.get(reverse('confirm', args=[self.petition.id, signature.confirmation_hash]))
+            response = self.client.post(reverse('confirm', args=[self.petition.id, signature.confirmation_hash]))
         self.assertTrue(post.called)
         self.assertEqual(response.status_code, 302)
         signature.refresh_from_db()

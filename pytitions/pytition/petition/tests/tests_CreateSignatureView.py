@@ -77,7 +77,7 @@ class CreateSignatureViewTest(TestCase):
         self.assertLessEqual(len(ctx.captured_queries), 8)
         signature = Signature.objects.get(petition=petition, email='alan@john.org')
         with CaptureQueriesContext(connection) as ctx:
-            self.client.get(reverse('confirm', args=[petition.id, signature.confirmation_hash]))
+            self.client.post(reverse('confirm', args=[petition.id, signature.confirmation_hash]))
         self.assertLessEqual(len(ctx.captured_queries), 12)
 
     def test_CreateSignatureDoesNotSavePetition(self):

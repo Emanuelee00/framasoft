@@ -56,7 +56,7 @@ from .forms import StyleForm, PetitionCreationStep1, PetitionCreationStep2, Peti
 from .forms import DeleteAccountForm, OrgCreationForm, SignatureLinkRequestForm, ReportForm
 from .helpers import get_client_ip, get_session_user, petition_from_id, signature_ip_hash
 from .helpers import check_petition_is_accessible
-from .helpers import send_already_signed_email, send_manage_link_email, MANAGE_SALT
+from .helpers import send_already_signed_email, send_manage_link_email, build_manage_url, MANAGE_SALT
 from .helpers import send_confirmation_email, subscribe_to_newsletter, send_welcome_mail, send_moderation_mail, send_mail_to_moderation, send_mail_to_moderation_monitor, send_monitoring_mail, send_mail_to_moderation_info
 from .helpers import get_update_form, petition_detail_meta
 from .helpers import sanitize_html
@@ -222,28 +222,46 @@ def detail(request, petition_id):
 
 
 # /<int:petition_id>/confirm/<confirmation_hash>
-# Confirm signature to a petition
+# Two steps: GET only shows the page with a button (mail link scanners open links), POST confirms
+# and redirects to the petition; the other states are shown on the confirmation page
+@never_cache
+@require_http_methods(["GET", "POST"])
 def confirm(request, petition_id, confirmation_hash):
     petition = petition_from_id(petition_id)
     check_petition_is_accessible(request, petition)
-    signature = Signature.objects.filter(petition=petition, confirmation_hash=confirmation_hash).first()
-    was_confirmed = signature.confirmed if signature else True
-    try:
-        successmsg = petition.confirm_signature(confirmation_hash)
-        if successmsg is None:
-            messages.error(request, _("Error: This confirmation code is invalid. Maybe you\'ve already confirmed?"))
+    signature = petition.signature_set.filter(confirmation_hash=confirmation_hash).first()
+    retention = settings.UNCONFIRMED_SIGNATURE_RETENTION_DAYS
+    ctx = {'petition': petition, 'confirmation_hash': confirmation_hash}
+    if signature is None:
+        state = "invalid_link"
+    elif signature.confirmed:
+        state = "already_confirmed"
+    elif retention is not None and signature.date < timezone.now() - timedelta(days=retention):
+        state = "expired"
+    elif request.method != "POST":
+        state = "confirm"
+    else:
+        # Conditional update: two concurrent POSTs confirm (and subscribe) only once
+        if Signature.objects.filter(pk=signature.pk, confirmed=False).update(confirmed=True,
+                                                                             confirmed_at=timezone.now()):
+            # Like Signature.save() on a confirmed signature: other signatures of the same address go away
+            petition.signature_set.filter(email=signature.email).exclude(pk=signature.pk).delete()
+            state = "confirmed"
         else:
-            messages.success(request, successmsg)
-            request.session['just_confirmed'] = True
-            # Newsletter subscription only once the signature is confirmed, and only once
-            if not was_confirmed and petition.has_newsletter and signature.subscribed_to_mailinglist:
+            state = "already_confirmed"
+        if state == "confirmed":
+            # Newsletter subscription only once the signature is confirmed (GD-06)
+            if petition.has_newsletter and signature.subscribed_to_mailinglist:
                 subscribe_to_newsletter(petition, signature.email)
                 Signature.objects.filter(pk=signature.pk).update(newsletter_consent_at=timezone.now())
-    except ValidationError as e:
-        messages.error(request, _(e.message))
-    except Signature.DoesNotExist:
-        messages.error(request, _("Error: This confirmation code is invalid."))
-    return redirect(petition.url)
+            # Back to the petition, which shows the confirmed state and the share buttons
+            messages.success(request, _("Thank you for confirming your signature!"))
+            request.session['just_confirmed'] = True
+            return redirect(petition.url)
+    if state == "already_confirmed":
+        ctx['manage_url'] = build_manage_url(request, signature)
+    ctx['state'] = state
+    return _private(render(request, 'petition/confirm.html', ctx))
 
 
 audit_logger = logging.getLogger("petition.audit")
@@ -413,12 +431,23 @@ def _private(response):
 def manage_signature(request, token):
     signature = _signature_from_manage_token(token)
     petition = signature.petition
+    delete_error = False
     if request.method == "POST" and request.POST.get("action") == "delete":
-        signature.delete()
-        return _private(render(request, "petition/signature_deleted.html", {"petition": petition}))
+        # The confirmation checkbox is checked here too, not only by the browser
+        if request.POST.get("confirm"):
+            signature.delete()
+            return _private(render(request, "petition/signature_deleted.html", {"petition": petition}))
+        delete_error = True
+    if request.method == "POST" and request.POST.get("action") == "newsletter-off":
+        # Withdrawal of the newsletter consent: no subscription at confirmation, "no" in later exports
+        Signature.objects.filter(pk=signature.pk).update(subscribed_to_mailinglist=False, newsletter_consent_at=None)
+        messages.info(request, _("Your newsletter subscription has been withdrawn on this site. If you already "
+                                 "receive messages from the author, use the unsubscribe link in them."))
+        return redirect("manage_signature", token)
     return _private(render(request, "petition/manage_signature.html",
                            {"signature": signature, "petition": petition, "token": token,
-                            "creator_name": petition.owner_name}))
+                            "creator_name": petition.owner_name, "delete_error": delete_error},
+                           status=400 if delete_error else 200))
 
 
 # signature/manage/<str:token>/data.json
@@ -450,8 +479,9 @@ def forgot_signature_link(request, petition_id):
     form = SignatureLinkRequestForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         # confirmed signature first, then the latest unconfirmed one: one lookup per value of
-        # "confirmed" so that each uses the (petition, confirmed, email) index
-        signatures = petition.signature_set.filter(email=form.cleaned_data["email"]).order_by("-date")
+        # "confirmed" so that each uses the (petition, confirmed) prefix of the email index;
+        # the address is compared case-insensitively
+        signatures = petition.signature_set.filter(email__iexact=form.cleaned_data["email"]).order_by("-date")
         sig = signatures.filter(confirmed=True).first() or signatures.filter(confirmed=False).first()
         if sig and cache.add("manage-link:{}".format(sig.pk), 1, settings.SIGNATURE_THROTTLE_TIMING):
             send_manage_link_email(request, sig)

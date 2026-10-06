@@ -48,3 +48,9 @@ class ConfirmTemplateTest(TestCase):
         self.assertIn('role="alert"', html)
         self.assertIn('This confirmation link is not valid', html)
         self.assertIn('href="{}#signer"'.format(self.petition.url), html)
+
+    def test_expired_state(self):
+        html = self.render('expired')
+        self.assertIn('role="alert"', html)
+        self.assertIn('This confirmation link has expired', html)
+        self.assertNotIn('<form method="post"', html)

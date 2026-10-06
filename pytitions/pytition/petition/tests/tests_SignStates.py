@@ -49,8 +49,8 @@ class SignStatesTest(TestCase):
     def test_confirmed_state(self):
         self.sign()
         signature = Signature.objects.get(petition=self.petition)
-        response = self.client.get(reverse('confirm', args=[self.petition.id, signature.confirmation_hash]),
-                                   follow=True)
+        response = self.client.post(reverse('confirm', args=[self.petition.id, signature.confirmation_hash]),
+                                    follow=True)
         self.assertEqual(response.context['sign_state'], 'confirmed')
         self.assertContains(response, 'Thank you for confirming your signature to this petition!')
         self.assertNotContains(response, 'id="show_confirm_success"')

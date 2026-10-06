@@ -41,12 +41,56 @@ class ManageSignatureViewTest(TestCase):
     def test_manage_signature_delete(self):
         url = reverse('manage_signature', args=[self.token])
         count = self.petition.get_signature_number(confirmed=True)
-        response = self.client.post(url, {'action': 'delete'})
+        response = self.client.post(url, {'action': 'delete', 'confirm': 'on'})
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'petition/signature_deleted.html')
         self.assertFalse(Signature.objects.filter(pk=self.signature.pk).exists())
         self.assertEqual(self.petition.get_signature_number(confirmed=True), count - 1)
         self.assertEqual(self.client.get(url).status_code, 404)
+
+    def test_manage_signature_delete_requires_confirmation(self):
+        url = reverse('manage_signature', args=[self.token])
+        response = self.client.get(url)
+        self.assertContains(response, 'name="confirm" required')
+        response = self.client.post(url, {'action': 'delete'})
+        self.assertEqual(response.status_code, 400)
+        self.assertTemplateUsed(response, 'petition/manage_signature.html')
+        self.assertContains(response, 'aria-invalid="true"', status_code=400)
+        self.assertContains(response, 'Tick the box to confirm the deletion.', status_code=400)
+        self.assertTrue(Signature.objects.filter(pk=self.signature.pk).exists())
+
+    def test_manage_signature_delete_requires_csrf(self):
+        from django.test import Client
+        response = Client(enforce_csrf_checks=True).post(reverse('manage_signature', args=[self.token]),
+                                                         {'action': 'delete', 'confirm': 'on'})
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(Signature.objects.filter(pk=self.signature.pk).exists())
+
+    def test_manage_signature_newsletter_withdrawal(self):
+        from django.utils import timezone
+        Signature.objects.filter(pk=self.signature.pk).update(subscribed_to_mailinglist=True,
+                                                              newsletter_consent_at=timezone.now())
+        url = reverse('manage_signature', args=[self.token])
+        self.assertContains(self.client.get(url), 'value="newsletter-off"')
+        response = self.client.post(url, {'action': 'newsletter-off'}, follow=True)
+        self.assertRedirects(response, url)
+        self.assertContains(response, 'Your newsletter subscription has been withdrawn')
+        self.assertNotContains(response, 'value="newsletter-off"')
+        self.signature.refresh_from_db()
+        self.assertFalse(self.signature.subscribed_to_mailinglist)
+        self.assertIsNone(self.signature.newsletter_consent_at)
+
+    @mock.patch('petition.views.subscribe_to_newsletter')
+    def test_withdrawal_before_confirmation_prevents_subscription(self, subscribe):
+        self.petition.has_newsletter = True
+        self.petition.save()
+        signature = Signature.objects.create(first_name='B', last_name='C', email='b@c.org', petition=self.petition,
+                                             subscribed_to_mailinglist=True)
+        self.client.post(reverse('manage_signature', args=[make_manage_token(signature)]), {'action': 'newsletter-off'})
+        self.client.post(reverse('confirm', args=[self.petition.id, signature.confirmation_hash]))
+        subscribe.assert_not_called()
+        signature.refresh_from_db()
+        self.assertTrue(signature.confirmed)
 
     def test_manage_signature_export(self):
         response = self.client.get(reverse('manage_signature_export', args=[self.token]))
@@ -88,6 +132,11 @@ class ManageSignatureViewTest(TestCase):
                                           petition=self.petition, confirmed=False)
         self.client.post(url, {'email': 'eve@doe.org'})
         self.assertIn(reverse('manage_signature', args=[make_manage_token(latest)]), mail.outbox[1].body)
+
+    def test_forgot_signature_link_ignores_case(self):
+        self.client.post(reverse('forgot_signature_link', args=[self.petition.id]), {'email': 'Alan@John.ORG'})
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ['alan@john.org'])
 
     def test_confirmation_email_context_has_manage_url(self):
         from django.template.loader import render_to_string

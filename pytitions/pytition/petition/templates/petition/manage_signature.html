@@ -13,6 +13,9 @@
   <div class="row">
     <div class="col-lg-8 offset-lg-2">
       <h1 class="h3 mb-4">{% trans "Your signature" %}</h1>
+      {% for message in messages %}
+      <div class="alert alert-info" role="status">{{ message }}</div>
+      {% endfor %}
 
       <dl class="row">
         <dt class="col-sm-5">{% trans "Petition" %}</dt>
@@ -35,15 +38,28 @@
 
       <p><a href="{% url 'manage_signature_export' token %}" download>{% trans "Download my data (JSON)" %}</a></p>
 
+      {% if signature.subscribed_to_mailinglist %}
+      <h2 class="h4 mt-5">{% trans "Newsletter subscription" %}</h2>
+      <p>{% blocktrans %}You subscribed to the newsletter of {{ creator_name }}: to unsubscribe, use the link in their messages or contact them directly.{% endblocktrans %}</p>
+      <form method="post" action="">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="newsletter-off">
+        <button type="submit" class="btn btn-outline-secondary">{% trans "Withdraw my newsletter subscription" %}</button>
+      </form>
+      {% endif %}
+
       <h2 class="h4 mt-5">{% trans "Delete my signature" %}</h2>
       <p>{% blocktrans with site_name=settings.SITE_NAME %}Deletion is immediate and permanent: your signature will no longer be counted and your data will be erased from {{ site_name }}.{% endblocktrans %}
       {% blocktrans %}If {{ creator_name }} has already exported the list of signatories, contact them directly about these copies.{% endblocktrans %}</p>
-      {% if signature.subscribed_to_mailinglist %}
-      <p>{% blocktrans %}You subscribed to the newsletter of {{ creator_name }}: to unsubscribe, use the link in their messages or contact them directly.{% endblocktrans %}</p>
-      {% endif %}
+
       <form method="post" action="">
         {% csrf_token %}
         <input type="hidden" name="action" value="delete">
+        <div class="form-check mb-3">
+          <input class="form-check-input{% if delete_error %} is-invalid{% endif %}" type="checkbox" id="confirm-delete" name="confirm" required{% if delete_error %} aria-invalid="true" aria-describedby="confirm-delete-error"{% endif %}>
+          <label class="form-check-label" for="confirm-delete">{% trans "I understand that this deletion is permanent" %}</label>
+          {% if delete_error %}<div class="invalid-feedback" id="confirm-delete-error" role="alert">{% trans "Tick the box to confirm the deletion." %}</div>{% endif %}
+        </div>
         <button type="submit" class="btn btn-danger">{% trans "Permanently delete my signature" %}</button>
       </form>
     </div>

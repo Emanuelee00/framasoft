@@ -42,3 +42,37 @@ class ConfirmationEmailTest(TestCase):
         self.assertIn(reverse('confirm', args=[petition.id, signature.confirmation_hash]), body)
         self.assertIn(reverse('privacy_notice'), body)
         self.assertNotIn('🤍', body)
+
+    def test_text_version_is_a_real_text_template(self):
+        petition = Petition.objects.filter(published=True).first()
+        petition.title = '<b>Bees &amp; flowers</b>'
+        petition.save()
+        data = {'first_name': 'Alan', 'last_name': 'John', 'email': 'alan@john.org', 'consent': 'on'}
+        self.client.post(reverse('create_signature', args=[petition.id]), data)
+        message = mail.outbox[0]
+        signature = petition.signature_set.get()
+        body = message.body
+        self.assertEqual(message.subject, 'Confirm your signature: “Bees & flowers”')
+        self.assertIn('“Bees & flowers”', body)
+        self.assertNotIn('<', body)
+        self.assertNotIn('&amp;', body)
+        self.assertIn('http://testserver' + reverse('confirm', args=[petition.id, signature.confirmation_hash]), body)
+        self.assertIn('http://testserver/petition/signature/manage/', body)
+        self.assertIn('http://testserver' + reverse('privacy_notice'), body)
+        self.assertIn('within 7 days', body)
+        self.assertIn(petition.owner_name, body)
+        self.assertIn('Keep this message', body)
+        self.assertNotIn('\n\n\n', body)
+        html_body, mimetype = message.alternatives[0]
+        self.assertEqual(mimetype, 'text/html')
+        self.assertIn('Bees &amp; flowers', html_body)
+
+    def test_text_version_in_french(self):
+        petition = Petition.objects.filter(published=True).first()
+        data = {'first_name': 'Alan', 'last_name': 'John', 'email': 'alan@john.org', 'consent': 'on'}
+        self.client.post(reverse('create_signature', args=[petition.id]), data, HTTP_ACCEPT_LANGUAGE='fr')
+        message = mail.outbox[0]
+        self.assertTrue(message.subject.startswith('Confirmez votre signature : « '))
+        self.assertIn('Bonjour Alan,', message.body)
+        self.assertIn('Sans confirmation de votre part sous 7 jours', message.body)
+        self.assertIn('Plus d\'informations sur vos données :', message.body)

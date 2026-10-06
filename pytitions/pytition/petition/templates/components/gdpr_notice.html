@@ -19,6 +19,7 @@
         You can also lodge a complaint with the CNIL.
       {% endblocktrans %}
     </p>
-    <p><a href="{{ privacy_url|default:'https://framasoft.org/cgu' }}">{% trans "Read more about your personal data" %}</a></p>
+    <p><a href="{{ privacy_url|default:'https://framasoft.org/cgu' }}">{% trans "Read more about your personal data" %}</a>
+      · <a href="{% url 'forgot_signature_link' petition.id %}" rel="nofollow">{% trans "Lost link?" %}</a></p>
   </details>
 </div>

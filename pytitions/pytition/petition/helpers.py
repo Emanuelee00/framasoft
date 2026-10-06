@@ -4,6 +4,7 @@
 It defines actions to help the developper across the project.
 """
 
+import html
 import ipaddress
 import logging
 import requests
@@ -147,19 +148,21 @@ def build_manage_url(request, signature):
 def send_confirmation_email(request, signature):
     petition = signature.petition
     url = request.build_absolute_uri(reverse("confirm", args=[petition.id, signature.confirmation_hash]))
+    # Plain title: the text version is not escaped, the HTML version escapes it again
+    title = " ".join(html.unescape(strip_tags(petition.title)).split())
     ctx = {'firstname': signature.first_name, 'url': url,
-           'petition_title': strip_tags(petition.title),
+           'petition_title': title,
            'petition_url': request.build_absolute_uri(petition.url),
            'creator_name': petition.owner_name,
            'manage_url': build_manage_url(request, signature),
            'days': settings.UNCONFIRMED_SIGNATURE_RETENTION_DAYS,
            'privacy_url': request.build_absolute_uri(reverse("privacy_notice"))}
     html_message = render_to_string("petition/confirmation_email.html", ctx)
-    message = strip_tags(html_message)
+    message = render_to_string("petition/confirmation_email.txt", ctx)
+    subject = _("Confirm your signature: “%(title)s”") % {'title': title}
     with get_connection() as connection:
-        msg = EmailMultiAlternatives(_("Confirm your signature to our petition"),
-                           message, to=[signature.email], connection=connection,
-                           reply_to=[petition.confirmation_email_reply])
+        msg = EmailMultiAlternatives(subject, message, to=[signature.email], connection=connection,
+                                     reply_to=[petition.confirmation_email_reply])
         msg.attach_alternative(html_message, "text/html")
         msg.send(fail_silently=False)
 

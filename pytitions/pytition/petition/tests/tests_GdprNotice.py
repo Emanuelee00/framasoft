@@ -34,6 +34,8 @@ class GdprNoticeTest(TestCase):
         self.assertContains(response, '<details class="fp-details">')
         self.assertContains(response, 'An unconfirmed signature is deleted after 7 days.')
         self.assertContains(response, 'neither approved nor endorsed')
+        # GD-05: a new manage link can be requested from the petition page
+        self.assertContains(response, 'href="%s" rel="nofollow"' % reverse('forgot_signature_link', args=[self.petition.id]))
 
     def test_consent_slot_is_empty_without_consent_field(self):
         form = SignatureForm(petition=self.petition)
