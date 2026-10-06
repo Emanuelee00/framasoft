@@ -1,0 +1,251 @@
+/*
+ * Public lists (PUB-01..PUB-03): home, search, user and organisation profiles.
+ * Relies on fp-tokens.css and fp-components.css. Mobile first.
+ */
+
+/* Home: hero ------------------------------------------------------------ */
+
+.fp-hero h1 {
+  max-width: 22ch;
+  margin-bottom: var(--fp-s4);
+}
+
+.fp-hero .fp-lead {
+  margin-bottom: var(--fp-s8);
+}
+
+.fp-hero-actions .fp-btn {
+  flex: 1 1 100%;
+}
+
+@media (min-width: 576px) {
+  .fp-hero-actions .fp-btn {
+    flex: 0 0 auto;
+  }
+}
+
+/* Home: commitments ----------------------------------------------------- */
+
+.fp-values h2 {
+  margin-bottom: var(--fp-s6);
+}
+
+.fp-values-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fp-value p {
+  margin: 0;
+  color: var(--fp-text-muted);
+}
+
+.fp-value-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: var(--fp-s3);
+  border-radius: 50%;
+  background: var(--fp-primary-soft);
+  color: var(--fp-primary);
+  font-size: 1.25rem;
+}
+
+.fp-value-title {
+  font-size: var(--fp-text-lg);
+  color: var(--fp-text);
+  margin-bottom: var(--fp-s2);
+}
+
+.fp-values-rules {
+  max-width: var(--fp-measure);
+  margin: var(--fp-s8) 0 0;
+  padding-top: var(--fp-s6);
+  border-top: 1px solid var(--fp-border);
+}
+
+.fp-values-rules a {
+  text-decoration: underline;
+}
+
+/* List section and its sort links --------------------------------------- */
+
+.fp-list-section {
+  padding-top: var(--fp-s8);
+}
+
+.fp-list-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--fp-s3) var(--fp-s6);
+  margin-bottom: var(--fp-s6);
+}
+
+.fp-list-title {
+  margin: 0;
+  font-size: var(--fp-text-2xl);
+}
+
+.fp-sort {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--fp-s2);
+}
+
+.fp-sort-label {
+  color: var(--fp-text-muted);
+  font-size: var(--fp-text-sm);
+}
+
+.fp-sort-list {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--fp-border-strong);
+  border-radius: var(--fp-radius-md);
+  overflow: hidden;
+}
+
+.fp-sort-list li + li {
+  border-left: 1px solid var(--fp-border-strong);
+}
+
+.fp-sort-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--fp-tap);
+  padding: 0 var(--fp-s4);
+  color: var(--fp-primary);
+  font-weight: var(--fp-weight-semibold);
+  text-decoration: none;
+}
+
+.fp-sort-link:hover {
+  background: var(--fp-primary-soft);
+  color: var(--fp-primary-strong);
+  text-decoration: none;
+}
+
+.fp-sort-link[aria-current="true"] {
+  background: var(--fp-primary);
+  color: var(--fp-text-on-primary);
+}
+
+.fp-sort-link:focus-visible {
+  outline-offset: -3px;
+}
+
+.fp-petition-grid > li {
+  display: flex;
+}
+
+.fp-petition-grid > li > .fp-card {
+  flex: 1;
+}
+
+/* Profiles -------------------------------------------------------------- */
+
+.fp-profile-header {
+  display: flex;
+  align-items: center;
+  gap: var(--fp-s4);
+}
+
+.fp-profile-avatar {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  background: var(--fp-primary-soft);
+  color: var(--fp-primary);
+  font-size: 1.75rem;
+}
+
+.fp-profile-header h1 {
+  margin-bottom: var(--fp-s1);
+  overflow-wrap: anywhere;
+}
+
+.fp-profile-meta {
+  margin: 0;
+  color: var(--fp-text-muted);
+}
+
+/* Search ---------------------------------------------------------------- */
+
+.fp-search-form {
+  max-width: 40rem;
+}
+
+.fp-search-form .fp-input-group > .fp-btn {
+  flex-shrink: 0;
+}
+
+.fp-search-section + .fp-search-section {
+  margin-top: var(--fp-s10);
+}
+
+.fp-search-section h2 {
+  font-size: var(--fp-text-xl);
+  margin-bottom: var(--fp-s4);
+}
+
+.fp-org-list {
+  display: grid;
+  gap: var(--fp-s3);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fp-org-link {
+  display: flex;
+  align-items: center;
+  gap: var(--fp-s3);
+  min-height: var(--fp-tap);
+  padding: var(--fp-s3) var(--fp-s4);
+  border: 1px solid var(--fp-border);
+  border-radius: var(--fp-radius);
+  background: var(--fp-surface);
+  color: var(--fp-text);
+  font-weight: var(--fp-weight-semibold);
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.fp-org-link:hover {
+  border-color: var(--fp-primary);
+  color: var(--fp-primary-strong);
+  text-decoration: none;
+}
+
+.fp-org-link .fp-icon {
+  color: var(--fp-primary);
+}
+
+.fp-result-note {
+  margin: var(--fp-s6) 0 0;
+}
+
+/* Petitions without their own image: a short tinted band instead of a large
+ * repeated default illustration (the default file is settings.DEFAULT_INDEX_THUMBNAIL) */
+.fp-petition-grid .fp-petition-card-img[src$="/img/petition_icon.svg"] {
+  aspect-ratio: 5 / 1;
+  object-fit: contain;
+  padding: var(--fp-s2) 0;
+}
+
+.fp-sort-link {
+  white-space: nowrap;
+}

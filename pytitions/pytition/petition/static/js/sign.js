@@ -26,20 +26,5 @@
       });
     }
   }
-  if (typeof HTMLDialogElement !== "function") {
-    return;
-  }
-  document.querySelectorAll("[data-report-open]").forEach(function (link) {
-    var dialog = document.getElementById(link.getAttribute("data-report-open"));
-    if (!dialog || typeof dialog.showModal !== "function") {
-      return;
-    }
-    link.addEventListener("click", function (event) {
-      event.preventDefault();
-      dialog.showModal();
-    });
-    dialog.addEventListener("close", function () {
-      link.focus();
-    });
-  });
+  // The report dialog is opened by fp-ui.js (data-fp-dialog-open)
 })();

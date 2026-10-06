@@ -1,0 +1,27 @@
+{% extends "layouts/layout.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "Access denied" %}{% endblock %}
+
+{% block extrameta %}
+<meta name="robots" content="noindex">
+{% endblock %}
+
+{% block extracss %}
+<link href="{% static "css/fp-auth.css" %}" rel="stylesheet">
+{% endblock %}
+
+{% block main_content %}
+<div class="fp-container fp-error-page">
+  <p class="fp-error-code">{% trans "Error 403" %}</p>
+  <h1>{% trans "Access denied" %}</h1>
+  <p class="fp-lead">{% trans "You are not allowed to see this page. If you think this is a mistake, log in with another account or contact the author of the petition." %}</p>
+  <div class="fp-actions">
+    <a class="fp-btn fp-btn-primary" href="{% url "index" %}">{% trans "See the petitions" %}</a>
+    {% if not user.is_authenticated %}
+    <a class="fp-btn fp-btn-secondary" href="{% url "login" %}?next={{ request.path|urlencode }}">{% trans "Log in" %}</a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

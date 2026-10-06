@@ -52,141 +52,132 @@ content="{{ petition.raw_twitter_description|truncatechars:300 }}"/>
 {% endblock %}
 
 {% block extracss %}
-<link href="{% static "css/petition.css" %}" rel="stylesheet" type="text/css">
+<link href="{% static "css/fp-petition.css" %}" rel="stylesheet">
 {% if petition.has_any_share_button %}
-    <link href="{% static "css/rrssb.css" %}" rel="stylesheet" type="text/css">
+<link href="{% static "css/rrssb.css" %}" rel="stylesheet">
 {% endif %}
 {% endblock %}
 
-{% block container_type %}container petition{% endblock container_type %}
-
-{% block login_next %}{% url "user_dashboard" %}{% endblock login_next %}
-
-{% block navbar %}
-{% endblock navbar %}
-
 {% block modal %}
-    {% if petition.has_mastodon_share_button %}
-    <div class="modal fade" id="MastodonModal" tabindex="-1" role="dialog" aria-labelledby="MastodonModalLabel" aria-hidden="true">
-      <div class="modal-dialog" role="document">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="MastodonModalLabel">{% trans "Instance address" %}</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body">
-            <div class="form-group">
-              <label for="msb-address">{% trans "Enter your Mastodon instance's address" %}</label>
-              <input type="text" class="form-control" id="msb-address" placeholder="https://mastodon.online">
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Close" %}</button>
-            <button id="msb-share" type="button" class="btn btn-primary">{% trans "Share" %}</button>
-          </div>
-        </div>
-      </div>
+{% if petition.has_mastodon_share_button %}
+<dialog id="MastodonModal" class="fp-dialog" aria-labelledby="MastodonModalLabel">
+  <form method="dialog" data-mastodon-form>
+    <h2 id="MastodonModalLabel" class="fp-dialog-title">{% trans "Share on Mastodon" %}</h2>
+    <div class="fp-field">
+      <label class="fp-label" for="msb-address">{% trans "Enter your Mastodon instance's address" %}</label>
+      <p class="fp-help" id="msb-address-help">{% trans "For example: mastodon.online" %}</p>
+      <p class="fp-field-error" id="msb-address-error" hidden>{% include "components/icon.html" with name="warning" %}<span>{% trans "Enter the address of a server, such as mastodon.online." %}</span></p>
+      <input class="fp-input" type="text" id="msb-address" inputmode="url" autocomplete="url" spellcheck="false" aria-describedby="msb-address-help">
     </div>
-    {% endif %}
+    <div class="fp-dialog-actions">
+      <button type="button" class="fp-btn fp-btn-tertiary" data-fp-dialog-close>{% trans "Cancel" %}</button>
+      <button type="submit" class="fp-btn fp-btn-primary">{% trans "Share" %}</button>
+    </div>
+  </form>
+</dialog>
+{% endif %}
 {% endblock modal %}
 
 {% block main_content %}
-<div class="container petition-details">
+<div class="fp-container fp-petition">
   {% if not petition.published %}
-  <div class="alert alert-warning alert-dismissible fade show" role="alert">
-    <strong>{% trans "Careful!" %}</strong>
-      {% blocktrans trimmed %}
-          This petition is not published yet. You can only see it because you are logged-in as either its creator or a member of the organization
+  <div class="fp-alert fp-alert-warning fp-petition-alert" role="status">
+    {% include "components/alert_icon.html" with kind="warning" %}
+    <div>
+      <p class="fp-alert-title">{% trans "This petition is not published yet" %}</p>
+      <p>{% blocktrans trimmed %}
+          You can only see it because you are logged-in as either its creator or a member of the organization
           which created it. Other visitors won't be able to see it.
-      {% endblocktrans %}
-    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-      <span aria-hidden="true">&times;</span>
-    </button>
+      {% endblocktrans %}</p>
+    </div>
   </div>
   {% endif %}
-  <div class="fp-petition-head">
-    <h1>{{ petition.title|html_sanitize|striptags|safe }}</h1>
-    {% if petition.is_moderated %}
-    <div class="fp-alert fp-alert-danger" role="alert">
-      {% include "components/alert_icon.html" with kind="danger" %}
-      <p>{% trans "This petition is moderated. You only see it because you are its creator" %}</p>
-    </div>
-    {% endif %}
+  {% if petition.is_moderated %}
+  <div class="fp-alert fp-alert-danger fp-petition-alert" role="alert">
+    {% include "components/alert_icon.html" with kind="danger" %}
+    <p>{% trans "This petition is moderated. You only see it because you are its creator" %}</p>
   </div>
-  <div class="fp-summary d-lg-none">
+  {% endif %}
+
+  <div class="fp-page-header fp-petition-head">
+    <h1>{{ petition.title|html_sanitize|striptags|safe }}</h1>
+    <p class="fp-petition-meta">
+      {% with owner=petition.owner %}
+      {% if owner.kind == "org" %}
+      {% url "org_profile" owner.slugname as owner_url %}{% include "components/icon.html" with name="people" %}
+      {% else %}
+      {% url "user_profile" owner.username as owner_url %}{% include "components/icon.html" with name="person" %}
+      {% endif %}
+      <span>{% blocktrans trimmed with name=petition.owner_name %}Petition by <a href="{{ owner_url }}">{{ name }}</a>{% endblocktrans %}</span>
+      {% endwith %}
+      {% if petition.publication_date and petition.show_publication_date %}
+      <span class="fp-petition-date">{% blocktrans trimmed with date=petition.publication_date|date:"DATE_FORMAT" %}Published on {{ date }}{% endblocktrans %}</span>
+      {% endif %}
+    </p>
+  </div>
+
+  <div class="fp-summary">
     {% include "components/progress.html" %}
     {% if not sign_state %}
-    <a href="#signer" class="btn btn-primary btn-block fp-sign-btn">{% trans "Sign the petition" %}</a>
+    <a href="#signer" class="fp-btn fp-btn-primary fp-btn-lg fp-btn-block fp-sign-btn">{% trans "Sign the petition" %}</a>
     {% endif %}
   </div>
-  <div class="row petition-wrapper">
-      <div class="col-lg-4 formular form-wrapper {% if sign_state or form.errors or messages %}order-first{% else %}order-last{% endif %} order-lg-1" id="petition">
-          {% if petition.side_text %}
-            <div class="intro" id="intro">
-                {{ petition.side_text|html_sanitize|safe }}
-            </div>
-          {% endif %}
-          <h2 class="sign text-primary">{% trans "Sign the petition!" %}</h2>
-          <div class="d-none d-lg-block">
-            {% include "components/progress.html" %}
-          </div>
-          <div id="form-sticky" class="form-sticky">
-            <div class="fields" id="signer">
-              {% if sign_state %}
-              {% include "components/sign_state.html" %}
-              {% else %}
-              {% include "components/alerts.html" %}
-              {% include "components/sign_form.html" %}
-              {% endif %}
-            </div>
-            {% include "components/share.html" %}
-            <div class="reassurance" id="reassurance">
-              <p>
-                {{ petition.sign_form_footer }}
-              </p>
-            </div>
-          </div>
-        </div>
-      <div class="col-lg-8 presentation">
-        {% if petition.publication_date and petition.show_publication_date %}
-        <p class="font-weight-light font-italic">
-          {% blocktrans trimmed with date=petition.publication_date|date:"SHORT_DATE_FORMAT" %}Published on {{ date }}{% endblocktrans %}
-        </p>
-        {% endif %}
-        {{ petition.text|html_sanitize|safe }}
+
+  <div class="fp-petition-layout{% if sign_state or form.errors or messages %} fp-sign-first{% endif %}">
+    <div class="fp-petition-text">
+      {{ petition.text|html_sanitize|safe }}
+    </div>
+
+    <section class="fp-sign-panel" id="petition" aria-labelledby="sign-title">
+      {% if petition.side_text %}
+      <div class="fp-sign-intro">
+        {{ petition.side_text|html_sanitize|safe }}
       </div>
+      {% endif %}
+      <h2 class="fp-sign-title" id="sign-title">{% trans "Sign the petition!" %}</h2>
+      <div class="fp-sign-progress">
+        {% include "components/progress.html" %}
+      </div>
+      <div class="fp-sign-body" id="signer">
+        {% if sign_state %}
+        {% include "components/sign_state.html" %}
+        {% else %}
+        {% include "components/alerts.html" %}
+        {% include "components/sign_form.html" %}
+        {% endif %}
+      </div>
+      {% include "components/share.html" %}
+      {% if petition.sign_form_footer %}
+      <p class="fp-sign-footer">{{ petition.sign_form_footer }}</p>
+      {% endif %}
+    </section>
   </div>
 </div>
-
 {% endblock main_content %}
 
 {% block extrajs %}
 <script src="{% static "js/sign.js" %}" defer></script>
 {% if petition.has_any_share_button %}
-<script type="text/javascript" src="{% static "vendor/rrssb/js/rrssb.min.js" %}"></script>
-<script src="{% static "js/fp-share-mastodon.js" %}"></script>
-<script type="text/javascript" src="{% static "vendor/msb/js/mastodon.js" %}"></script>
+<script src="{% static "vendor/rrssb/js/rrssb.min.js" %}"></script>
+{% endif %}
+{% if petition.has_mastodon_share_button %}
+<script src="{% static "js/share-mastodon.js" %}" defer></script>
 {% endif %}
 {% endblock %}
 
 {% block footer %}
 {% if petition.footer_links|trim or petition.footer_text|trim %}
-<div class="container">
-  <div class="row footer-wrapper">
-      <div class="footer col-12">
-          <div class="footer-links ml-2">
-              {{ petition.footer_links|html_sanitize|safe }}
-          </div>
-          <div class="footer-text ml-2">
-              {{ petition.footer_text|html_sanitize|safe }}
-          </div>
-      </div>
+<div class="fp-container">
+  <div class="fp-petition-footer">
+    <div class="fp-petition-footer-links">
+      {{ petition.footer_links|html_sanitize|safe }}
+    </div>
+    <div class="fp-petition-footer-text">
+      {{ petition.footer_text|html_sanitize|safe }}
+    </div>
   </div>
 </div>
 {% endif %}
-
 
 {% include "components/report_dialog.html" %}
 

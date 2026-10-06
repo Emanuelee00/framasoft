@@ -631,7 +631,8 @@ def user_profile(request, user_name):
     return render(
         request,
         'petition/user_profile.html',
-        {'user': user, 'petitions': petitions, 'sort': sort }
+        # not "user": that name belongs to the visitor (header account menu)
+        {'profile_user': user, 'petitions': petitions, 'sort': sort }
     )
 
 

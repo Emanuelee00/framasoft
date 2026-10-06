@@ -1,0 +1,25 @@
+{% extends "layouts/layout.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "Page not found" %}{% endblock %}
+
+{% block extrameta %}
+<meta name="robots" content="noindex">
+{% endblock %}
+
+{% block extracss %}
+<link href="{% static "css/fp-auth.css" %}" rel="stylesheet">
+{% endblock %}
+
+{% block main_content %}
+<div class="fp-container fp-error-page">
+  <p class="fp-error-code">{% trans "Error 404" %}</p>
+  <h1>{% trans "Page not found" %}</h1>
+  <p class="fp-lead">{% trans "This page does not exist, or no longer exists. The petition may have been deleted by its author, or the address may be incomplete." %}</p>
+  <div class="fp-actions">
+    <a class="fp-btn fp-btn-primary" href="{% url "index" %}">{% trans "See the petitions" %}</a>
+    <a class="fp-btn fp-btn-secondary" href="{% url "search" %}">{% include "components/icon.html" with name="magnifying-glass" %}{% trans "Search for petition" %}</a>
+  </div>
+</div>
+{% endblock %}

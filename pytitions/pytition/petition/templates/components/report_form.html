@@ -2,24 +2,25 @@
 <form method="post" action="{% url 'report_petition' petition.id %}" class="fp-report-form">
   {% csrf_token %}
   {% if report_form.reason.field.queryset.exists %}
-  <fieldset class="form-group">
+  <fieldset class="fp-fieldset">
     <legend class="fp-legend">{{ report_form.reason.label }}</legend>
     {% for radio in report_form.reason %}
-    <div class="form-check fp-check">
+    <div class="fp-check">
       {{ radio.tag }}
-      <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+      <label for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
     </div>
     {% endfor %}
   </fieldset>
   {% else %}
   <p>{% trans "You are about to report this petition to moderation." %}</p>
   {% endif %}
-  <div class="fp-actions">
-    <button type="submit" class="btn btn-danger fp-tap">{% trans "Report" %}</button>
+  <p class="fp-help">{% trans "The moderation team checks each report against the moderation charter." %}</p>
+  <div class="fp-dialog-actions fp-report-actions">
     {% if in_dialog %}
-    <button type="submit" formmethod="dialog" formnovalidate class="btn btn-link fp-tap">{% trans "Cancel" %}</button>
+    <button type="button" class="fp-btn fp-btn-tertiary" data-fp-dialog-close>{% trans "Cancel" %}</button>
     {% else %}
-    <a href="{{ petition.url }}" class="btn btn-link fp-tap">{% trans "Cancel" %}</a>
+    <a href="{{ petition.url }}" class="fp-btn fp-btn-tertiary">{% trans "Cancel" %}</a>
     {% endif %}
+    <button type="submit" class="fp-btn fp-btn-primary">{% trans "Report" %}</button>
   </div>
 </form>

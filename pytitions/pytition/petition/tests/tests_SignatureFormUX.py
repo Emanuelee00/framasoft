@@ -21,7 +21,7 @@ class SignatureFormRenderingTest(TestCase):
         response = self.client.get(reverse('detail', args=[self.petition.id]))
         for field, autocomplete in (('first_name', 'given-name'), ('last_name', 'family-name'),
                                     ('email', 'email'), ('phone', 'tel')):
-            self.assertContains(response, '<label for="id_{}">'.format(field))
+            self.assertContains(response, '<label class="fp-label" for="id_{}">'.format(field))
             self.assertContains(response, 'autocomplete="{}"'.format(autocomplete))
         self.assertNotContains(response, 'group_class')
         self.assertNotContains(response, 'eaFullWidthContent')

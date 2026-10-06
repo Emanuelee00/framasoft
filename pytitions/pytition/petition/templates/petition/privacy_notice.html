@@ -1,15 +1,20 @@
 {% extends "layouts/layout.html" %}
 {% load i18n %}
+{% load static %}
 
 {% block title %}{% trans "Privacy notice" %}{% endblock %}
 
+{% block extracss %}
+<link href="{% static "css/fp-petition.css" %}" rel="stylesheet">
+{% endblock %}
+
 {% block main_content %}
-<div class="fp-container">
+<div class="fp-container fp-signer">
   <div class="fp-page-header">
     <h1>{% trans "Privacy notice" %}</h1>
     <p class="fp-muted">{% blocktrans %}Version {{ version }}{% endblocktrans %}</p>
   </div>
-  <div class="fp-prose">
+  <div class="fp-prose fp-privacy">
     <h2>{% trans "Who processes your data" %}</h2>
     <p>{% blocktrans with site_name=settings.SITE_NAME %}When you sign a petition, your data is sent to its author, who decides why it is collected. {{ site_name }} hosts the petitions and processes your data to count signatures, prevent abuse and let you manage your signature.{% endblocktrans %}</p>
 

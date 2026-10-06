@@ -17,6 +17,10 @@ Context contract (the view belongs to the GDPR stream):
 
 {% block title %}{% trans "Confirm my signature" %}{% endblock title %}
 
+{% block extracss %}
+<link href="{% static "css/fp-petition.css" %}" rel="stylesheet">
+{% endblock %}
+
 {% block extrameta %}
 <meta name="robots" content="noindex">
 <meta name="referrer" content="no-referrer">
@@ -24,52 +28,70 @@ Context contract (the view belongs to the GDPR stream):
 
 {% block main_content %}
 {% firstof confirm_state state as cstate %}
-<div class="container fp-narrow fp-confirm mb-4">
+<div class="fp-container fp-signer fp-confirm">
   {% if cstate == "pending" or cstate == "confirm" %}
-  <h1 class="h2">{% trans "Confirm my signature" %}</h1>
-  <p>{% blocktrans trimmed with title=petition.title|striptags %}
-    One last step: confirm your signature to the petition “{{ title }}” so that it is counted.
-  {% endblocktrans %}</p>
-  <form method="post" action="{% if form_action %}{{ form_action }}{% else %}{% url 'confirm' petition.id confirmation_hash %}{% endif %}">
-    {% csrf_token %}
-    <button type="submit" class="btn btn-primary btn-block fp-sign-btn">{% trans "I confirm my signature" %}</button>
-  </form>
-  <p class="fp-hint mt-3">{% trans "You did not sign this petition? Do nothing: the signature will be deleted automatically." %}</p>
+  <div class="fp-page-header">
+    <p class="fp-signer-petition">{% blocktrans trimmed with title=petition.title|striptags %}Petition: “{{ title }}”{% endblocktrans %}</p>
+    <h1>{% trans "Confirm my signature" %}</h1>
+  </div>
+  <ol class="fp-stepper" aria-label="{% trans "Steps of the signature" %}">
+    <li class="fp-step is-done"><span class="fp-step-marker">{% include "components/icon.html" with name="check" %}</span><span class="fp-step-label">{% trans "Form sent" %} <span class="fp-sr-only">{% trans "(completed)" %}</span></span></li>
+    <li class="fp-step" aria-current="step"><span class="fp-step-marker"></span><span class="fp-step-label">{% trans "Confirmation" %}</span></li>
+    <li class="fp-step"><span class="fp-step-marker"></span><span class="fp-step-label">{% trans "Signature counted" %}</span></li>
+  </ol>
+  <div class="fp-signer-card">
+    <p>{% blocktrans trimmed with title=petition.title|striptags %}
+      One last step: confirm your signature to the petition “{{ title }}” so that it is counted.
+    {% endblocktrans %}</p>
+    <form method="post" action="{% if form_action %}{{ form_action }}{% else %}{% url 'confirm' petition.id confirmation_hash %}{% endif %}">
+      {% csrf_token %}
+      <button type="submit" class="fp-btn fp-btn-primary fp-btn-lg fp-btn-block fp-sign-btn">{% trans "I confirm my signature" %}</button>
+    </form>
+    <p class="fp-help">{% trans "You did not sign this petition? Do nothing: the signature will be deleted automatically." %}</p>
+    {% include "components/expiry_notice.html" %}
+  </div>
 
   {% elif cstate == "confirmed" or cstate == "already_confirmed" %}
+  <div class="fp-page-header">
+    <p class="fp-signer-petition">{% blocktrans trimmed with title=petition.title|striptags %}Petition: “{{ title }}”{% endblocktrans %}</p>
+  </div>
   <div class="fp-state fp-alert-success" role="status">
-    <h1 class="fp-state-title h3" tabindex="-1" data-autofocus>
+    <h1 class="fp-state-title" tabindex="-1" data-autofocus>
       {% include "components/alert_icon.html" with kind="success" %}
       {% if cstate == "confirmed" %}{% trans "Thank you! Your signature is counted" %}{% else %}{% trans "Your signature was already confirmed" %}{% endif %}
     </h1>
-    <p>{% blocktrans trimmed with title=petition.title|striptags %}
-      Petition: “{{ title }}”
-    {% endblocktrans %}</p>
     {% if manage_url %}
     <p>{% trans "You can view, download or delete your signature at any time:" %} <a href="{{ manage_url }}">{% trans "Manage my signature" %}</a></p>
     {% endif %}
+    {% include "components/expiry_notice.html" %}
   </div>
-  <p><a href="{{ petition.url }}" class="fp-tap">{% trans "Back to the petition" %}</a></p>
+  <p class="fp-signer-back"><a href="{{ petition.url }}" class="fp-btn fp-btn-secondary">{% include "components/icon.html" with name="arrow-left" %}{% trans "Back to the petition" %}</a></p>
 
   {% elif cstate == "expired" %}
+  <div class="fp-page-header">
+    <p class="fp-signer-petition">{% blocktrans trimmed with title=petition.title|striptags %}Petition: “{{ title }}”{% endblocktrans %}</p>
+  </div>
   <div class="fp-state fp-alert-warning" role="alert">
-    <h1 class="fp-state-title h3" tabindex="-1" data-autofocus>
+    <h1 class="fp-state-title" tabindex="-1" data-autofocus>
       {% include "components/alert_icon.html" with kind="warning" %}
       {% trans "This confirmation link has expired" %}
     </h1>
     <p>{% trans "Unconfirmed signatures are deleted after a few days. You can sign the petition again." %}</p>
   </div>
-  <p><a href="{{ petition.url }}#signer" class="fp-tap">{% trans "Sign the petition again" %}</a></p>
+  <p class="fp-signer-back"><a href="{{ petition.url }}#signer" class="fp-btn fp-btn-primary">{% trans "Sign the petition again" %}</a></p>
 
   {% else %}
+  <div class="fp-page-header">
+    <p class="fp-signer-petition">{% blocktrans trimmed with title=petition.title|striptags %}Petition: “{{ title }}”{% endblocktrans %}</p>
+  </div>
   <div class="fp-state fp-alert-warning" role="alert">
-    <h1 class="fp-state-title h3" tabindex="-1" data-autofocus>
+    <h1 class="fp-state-title" tabindex="-1" data-autofocus>
       {% include "components/alert_icon.html" with kind="warning" %}
       {% trans "This confirmation link is not valid" %}
     </h1>
     <p>{% trans "It may be incomplete, or the unconfirmed signature may have been deleted. You can sign the petition again." %}</p>
   </div>
-  <p><a href="{{ petition.url }}#signer" class="fp-tap">{% trans "Sign the petition again" %}</a></p>
+  <p class="fp-signer-back"><a href="{{ petition.url }}#signer" class="fp-btn fp-btn-primary">{% trans "Sign the petition again" %}</a></p>
   {% endif %}
 </div>
 {% endblock main_content %}

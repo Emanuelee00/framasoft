@@ -1,14 +1,14 @@
 {% load i18n %}{% comment %}
 Share links (FE-06), outside the signature form so they stay visible once signed. Plain links, no
-third-party script; "copy" and native share buttons appear only with JavaScript.
+third-party script; "copy", native share and Mastodon (dialog) appear only with JavaScript.
 Params: petition, meta (petition_url).
 {% endcomment %}
 {% if petition.has_any_share_button %}
 {% with share_url=meta.petition_url|urlencode:"" share_title=petition.title|striptags %}
 <div class="fp-share">
   <h3 class="fp-share-title" id="share-title">{% trans "Share the petition" %}</h3>
-  <p class="fp-share-copy" hidden><button type="button" class="btn btn-outline-secondary" data-share-copy="{{ meta.petition_url }}" data-share-copied="{% trans "Link copied" %}">{% trans "Copy the link" %}</button>
-  <button type="button" class="btn btn-outline-secondary" data-share-native="{{ meta.petition_url }}" data-share-text="{{ share_title }}" hidden>{% trans "Share…" %}</button>
+  <p class="fp-share-copy" hidden><button type="button" class="fp-btn fp-btn-secondary" data-share-copy="{{ meta.petition_url }}" data-share-copied="{% trans "Link copied" %}">{% trans "Copy the link" %}</button>
+  <button type="button" class="fp-btn fp-btn-secondary" data-share-native="{{ meta.petition_url }}" data-share-text="{{ share_title }}" hidden>{% trans "Share…" %}</button>
   <span class="fp-share-status" role="status"></span></p>
   <ul class="rrssb-buttons" aria-labelledby="share-title">
     {% if petition.has_email_share_button %}
@@ -63,7 +63,7 @@ Params: petition, meta (petition_url).
     </li>
     {% endif %}
     {% if petition.has_mastodon_share_button %}
-      <li class="rrssb-mastodon">
+      <li class="rrssb-mastodon" hidden>
       <a href="#MastodonModal" role="button" class="mastodon-share-button" data-target="{{ share_title|urlencode:"" }}%0A{{ share_url }}">
         <span class="rrssb-icon" aria-hidden="true">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 216.4144 232.00976">

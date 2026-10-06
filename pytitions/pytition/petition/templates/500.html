@@ -1,0 +1,23 @@
+{% load i18n %}{% load static %}{% get_current_language as LANGUAGE_CODE %}<!DOCTYPE html>
+{% comment %}Rendered without context processors (no request, user or settings): keep it standalone.{% endcomment %}
+<html lang="{{ LANGUAGE_CODE }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>{% trans "Server error" %} – Framapétitions</title>
+  <link href="{% static "css/fp-tokens.css" %}" rel="stylesheet">
+  <link href="{% static "css/fp-components.css" %}" rel="stylesheet">
+  <link href="{% static "css/fp-auth.css" %}" rel="stylesheet">
+</head>
+<body>
+  <main class="fp-container fp-error-page">
+    <p class="fp-error-code">{% trans "Error 500" %}</p>
+    <h1>{% trans "Something went wrong on our side" %}</h1>
+    <p class="fp-lead">{% trans "The page could not be displayed. If you were signing a petition, your signature may not have been saved: please try again in a few minutes." %}</p>
+    <div class="fp-actions">
+      <a class="fp-btn fp-btn-primary" href="{% url "index" %}">{% trans "Back to the home page" %}</a>
+    </div>
+  </main>
+</body>
+</html>

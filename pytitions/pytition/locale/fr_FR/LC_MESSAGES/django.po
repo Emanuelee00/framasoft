@@ -4172,3 +4172,353 @@ msgstr[1] "Son auteur·ice peut la modifier à tout moment, sans jamais dépasse
 #: pytition/petition/templates/petition/privacy_notice.html
 msgid "On that date, the petition and all its signatures are permanently deleted from the site. Its author is warned beforehand and can download the list of signatories until then."
 msgstr "À cette date, la pétition et toutes ses signatures sont définitivement supprimées du site. Son auteur·ice est prévenu·e à l'avance et peut télécharger la liste des signataires jusque-là."
+
+msgid "Petitions that respect you"
+msgstr "Des pétitions qui vous respectent"
+
+msgid "Free and ethical"
+msgstr "Libre et éthique"
+
+msgid "Petitions that respect you and the people who sign them"
+msgstr ""
+"Des pétitions qui vous respectent, vous et les personnes qui les signent"
+
+msgid ""
+"Start a petition in a few minutes and gather support without advertising or "
+"trackers. Signatories' data is only used to count their signature, and they "
+"stay in control of it."
+msgstr ""
+"Lancez une pétition en quelques minutes et rassemblez des soutiens, sans "
+"publicité ni pisteurs. Les données des signataires servent uniquement à "
+"compter leur signature, et elles et ils en gardent la maîtrise."
+
+msgid "Browse petitions"
+msgstr "Parcourir les pétitions"
+
+msgid "Our commitments"
+msgstr "Nos engagements"
+
+msgid "No ads, no trackers"
+msgstr "Ni publicité, ni pisteurs"
+
+msgid ""
+"No advertising, no audience measurement by third parties, no resale of data."
+" The list of signatories is never published: only their number."
+msgstr ""
+"Pas de publicité, pas de mesure d’audience par des tiers, pas de revente de "
+"données. La liste des signataires n’est jamais publiée : seul leur nombre "
+"l’est."
+
+msgid "Your signature, your data"
+msgstr "Votre signature, vos données"
+
+msgid ""
+"Each signatory receives a personal link to view, download or delete their "
+"signature at any time. Unconfirmed signatures are deleted automatically."
+msgstr ""
+"Chaque signataire reçoit un lien personnel pour consulter, télécharger ou "
+"supprimer sa signature à tout moment. Les signatures non confirmées sont "
+"supprimées automatiquement."
+
+msgid "Free software, run by an association"
+msgstr "Un logiciel libre, porté par une association"
+
+msgid ""
+"The service is based on free software and is hosted in France by Framasoft, "
+"a not-for-profit association funded by donations."
+msgstr ""
+"Le service repose sur un logiciel libre et il est hébergé en France par "
+"Framasoft, une association à but non lucratif financée par les dons."
+
+#, python-format
+msgid ""
+"Use of the service is subject to the <a "
+"href=\"https://framasoft.org/cgu/\">terms of use</a>, and petitions may be "
+"moderated according to the <a "
+"href=\"https://framasoft.org/moderation/\">moderation charter</a>. Read our "
+"<a href=\"%(privacy_url)s\">privacy notice</a>."
+msgstr ""
+"L’utilisation du service est soumise aux <a "
+"href=\"https://framasoft.org/cgu/\">conditions générales d’utilisation</a>, "
+"et les pétitions peuvent être modérées selon la <a "
+"href=\"https://framasoft.org/moderation/\">charte de modération</a>. "
+"Consultez notre <a href=\"%(privacy_url)s\">politique de "
+"confidentialité</a>."
+
+#, python-format
+msgid "Published petitions, page %(number)s"
+msgstr "Pétitions publiées, page %(number)s"
+
+msgid "Latest published petitions"
+msgstr "Dernières pétitions publiées"
+
+msgid "No petition has been published yet"
+msgstr "Aucune pétition n’a encore été publiée"
+
+#, python-format
+msgid "Search results for “%(q)s”"
+msgstr "Résultats de recherche pour « %(q)s »"
+
+msgid "Words in the title or text of the petition, or name of an organization"
+msgstr "Mots du titre ou du texte de la pétition, ou nom d’une organisation"
+
+#, python-format
+msgid "%(counter)s organization"
+msgid_plural "%(counter)s organizations"
+msgstr[0] "%(counter)s organisation"
+msgstr[1] "%(counter)s organisations"
+
+#, python-format
+msgid "%(counter)s petition matches “%(q)s”"
+msgid_plural "%(counter)s petitions match “%(q)s”"
+msgstr[0] "%(counter)s pétition correspond à « %(q)s »"
+msgstr[1] "%(counter)s pétitions correspondent à « %(q)s »"
+
+msgid "Check the spelling, or try with fewer or other words."
+msgstr ""
+"Vérifiez l’orthographe, ou essayez avec moins de mots ou d’autres mots."
+
+msgid "No petition found"
+msgstr "Aucune pétition trouvée"
+
+msgid "Only the first 15 results are shown: add words to refine your search."
+msgstr ""
+"Seuls les 15 premiers résultats sont affichés : ajoutez des mots pour "
+"affiner votre recherche."
+
+msgid "All published petitions"
+msgstr "Toutes les pétitions publiées"
+
+#, python-format
+msgid "%(name)s's profile"
+msgstr "Profil de %(name)s"
+
+#, python-format
+msgid "%(counter)s published petition"
+msgid_plural "%(counter)s published petitions"
+msgstr[0] "%(counter)s pétition publiée"
+msgstr[1] "%(counter)s pétitions publiées"
+
+msgid "This user has not published any petition yet"
+msgstr "Cette personne n’a encore publié aucune pétition"
+
+msgid "This organization has not published any petition yet"
+msgstr "Cette organisation n’a encore publié aucune pétition"
+
+msgid "No petition yet"
+msgstr "Aucune pétition pour le moment"
+
+msgid "Sort petitions"
+msgstr "Trier les pétitions"
+
+msgid "Sort:"
+msgstr "Trier :"
+
+msgid "Share on Mastodon"
+msgstr "Partager sur Mastodon"
+
+msgid "For example: mastodon.online"
+msgstr "Par exemple : mastodon.online"
+
+msgid "Enter the address of a server, such as mastodon.online."
+msgstr "Saisissez l’adresse d’un serveur, par exemple mastodon.online."
+
+msgid "This petition is not published yet"
+msgstr "Cette pétition n’est pas encore publiée"
+
+msgid ""
+"You can only see it because you are logged-in as either its creator or a "
+"member of the organization which created it. Other visitors won't be able to"
+" see it."
+msgstr ""
+"Vous la voyez uniquement parce que vous êtes connecté·e en tant que créateur"
+" ou créatrice, ou membre de l’organisation qui l’a créée. Les autres "
+"visiteurs et visiteuses ne peuvent pas la voir."
+
+#, python-format
+msgid "Petition by <a href=\"%(owner_url)s\">%(name)s</a>"
+msgstr "Pétition de <a href=\"%(owner_url)s\">%(name)s</a>"
+
+#, python-format
+msgid ""
+"This petition and its signatures will be deleted on "
+"<strong>%(date)s</strong>."
+msgstr ""
+"Cette pétition et ses signatures seront supprimées le "
+"<strong>%(date)s</strong>."
+
+msgid "The moderation team checks each report against the moderation charter."
+msgstr ""
+"L’équipe de modération examine chaque signalement au regard de la charte de "
+"modération."
+
+msgid "Steps of the signature"
+msgstr "Étapes de la signature"
+
+msgid "Form sent"
+msgstr "Formulaire envoyé"
+
+msgid "(completed)"
+msgstr "(terminé)"
+
+msgid "Confirmation"
+msgstr "Confirmation"
+
+msgid "Signature counted"
+msgstr "Signature comptée"
+
+msgid ""
+"Here is the data you gave when signing. You can download it or delete your "
+"signature at any time."
+msgstr ""
+"Voici les informations que vous avez fournies en signant. Vous pouvez les "
+"télécharger ou supprimer votre signature à tout moment."
+
+msgid "Your data"
+msgstr "Vos données"
+
+msgid ""
+"For your privacy, the answer is the same whether or not this address signed "
+"the petition."
+msgstr ""
+"Pour protéger votre vie privée, la réponse est la même que cette adresse ait"
+" signé la pétition ou non."
+
+msgid "See other petitions"
+msgstr "Voir d’autres pétitions"
+
+msgid "Log in"
+msgstr "Se connecter"
+
+msgid ""
+"To create and manage your petitions. No account is needed to sign a "
+"petition."
+msgstr ""
+"Pour créer et gérer vos pétitions. Aucun compte n’est nécessaire pour signer"
+" une pétition."
+
+msgid ""
+"Your account doesn't have access to this page. To proceed, please log in "
+"with an account that has access."
+msgstr ""
+"Votre compte n’a pas accès à cette page. Pour continuer, connectez-vous avec"
+" un compte qui y a accès."
+
+msgid "Login failed"
+msgstr "Échec de la connexion"
+
+msgid "I forgot my password"
+msgstr "J’ai oublié mon mot de passe"
+
+msgid "Create an account"
+msgstr "Créer un compte"
+
+msgid "Password changed"
+msgstr "Mot de passe modifié"
+
+msgid "Your new password is saved. You can now log in with it."
+msgstr ""
+"Votre nouveau mot de passe est enregistré. Vous pouvez maintenant vous "
+"connecter avec."
+
+msgid "Choose a new password"
+msgstr "Choisissez un nouveau mot de passe"
+
+msgid "Change my password"
+msgstr "Modifier mon mot de passe"
+
+msgid "This link is no longer valid"
+msgstr "Ce lien n’est plus valide"
+
+msgid ""
+"It may have been used already or be too old. You can ask for a new one."
+msgstr ""
+"Il a peut-être déjà été utilisé ou il est trop ancien. Vous pouvez en "
+"demander un nouveau."
+
+msgid "Ask for a new link"
+msgstr "Demander un nouveau lien"
+
+msgid ""
+"If an account uses this address, we've emailed you instructions for setting "
+"your password. You should receive the email shortly."
+msgstr ""
+"Si un compte utilise cette adresse, nous vous avons envoyé par e-mail les "
+"instructions pour définir votre mot de passe. Vous devriez le recevoir sous "
+"peu."
+
+msgid ""
+"Nothing received? Check your spam folder, or make sure you entered the "
+"address of your account."
+msgstr ""
+"Rien reçu ? Vérifiez vos indésirables, ou assurez-vous d’avoir saisi "
+"l’adresse de votre compte."
+
+msgid "Back to login"
+msgstr "Retour à la connexion"
+
+msgid "Send me instructions"
+msgstr "M’envoyer les instructions"
+
+msgid ""
+"An account lets you create petitions and follow their signatures. No account"
+" is needed to sign a petition."
+msgstr ""
+"Un compte vous permet de créer des pétitions et de suivre leurs signatures. "
+"Aucun compte n’est nécessaire pour signer une pétition."
+
+msgid "Create my account"
+msgstr "Créer mon compte"
+
+msgid "Already have an account?"
+msgstr "Vous avez déjà un compte ?"
+
+msgid "Page not found"
+msgstr "Page introuvable"
+
+msgid "Error 404"
+msgstr "Erreur 404"
+
+msgid ""
+"This page does not exist, or no longer exists. The petition may have been "
+"deleted by its author, or the address may be incomplete."
+msgstr ""
+"Cette page n’existe pas ou n’existe plus. La pétition a peut-être été "
+"supprimée par son auteur ou son autrice, ou l’adresse est incomplète."
+
+msgid "See the petitions"
+msgstr "Voir les pétitions"
+
+msgid "Access denied"
+msgstr "Accès refusé"
+
+msgid "Error 403"
+msgstr "Erreur 403"
+
+msgid ""
+"You are not allowed to see this page. If you think this is a mistake, log in"
+" with another account or contact the author of the petition."
+msgstr ""
+"Vous n’êtes pas autorisé·e à voir cette page. Si vous pensez qu’il s’agit "
+"d’une erreur, connectez-vous avec un autre compte ou contactez l’auteur ou "
+"l’autrice de la pétition."
+
+msgid "Server error"
+msgstr "Erreur du serveur"
+
+msgid "Error 500"
+msgstr "Erreur 500"
+
+msgid "Something went wrong on our side"
+msgstr "Un problème est survenu de notre côté"
+
+msgid ""
+"The page could not be displayed. If you were signing a petition, your "
+"signature may not have been saved: please try again in a few minutes."
+msgstr ""
+"La page n’a pas pu être affichée. Si vous signiez une pétition, votre "
+"signature n’a peut-être pas été enregistrée : réessayez dans quelques "
+"minutes."
+
+msgid "Back to the home page"
+msgstr "Retour à l’accueil"

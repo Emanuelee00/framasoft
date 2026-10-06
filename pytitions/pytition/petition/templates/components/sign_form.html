@@ -6,7 +6,7 @@
 
   {% if form.errors %}
   <div class="fp-error-summary" role="alert" tabindex="-1" id="form-errors" data-autofocus>
-    <h2 class="fp-error-summary-title">{% trans "Please correct the following fields" %}</h2>
+    <h3 class="fp-error-summary-title">{% trans "Please correct the following fields" %}</h3>
     <ul>
       {% for field in form %}{% for error in field.errors %}
       <li><a href="#{{ field.id_for_label }}">{{ field.label|striptags }}: {{ error }}</a></li>
@@ -16,19 +16,17 @@
   </div>
   {% endif %}
 
-  <p class="fp-hint">{% trans "Fields marked with * are required." %}</p>
-
   {% for field in form.visible_fields %}
   {% if field.widget_type != "checkbox" %}
-  <div class="form-group">
-    <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span aria-hidden="true">*</span>{% endif %}</label>
+  <div class="fp-field{% if field.errors %} fp-field-invalid{% endif %}">
+    <label class="fp-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
     {% if field.errors %}
       {% with error_id=field.auto_id|add:"-error" %}
-      {% render_field field class+="is-invalid" aria-invalid="true" aria-describedby=error_id %}
-      <p id="{{ error_id }}" class="fp-field-error">{{ field.errors|join:" " }}</p>
+      <p id="{{ error_id }}" class="fp-field-error">{% include "components/icon.html" with name="warning" %}<span>{{ field.errors|join:" " }}</span></p>
+      {% render_field field class="fp-input" aria-invalid="true" aria-describedby=error_id %}
       {% endwith %}
     {% else %}
-      {{ field }}
+      {% render_field field class="fp-input" %}
     {% endif %}
   </div>
   {% endif %}
@@ -46,7 +44,7 @@
 
   {% include "components/gdpr_notice.html" %}
 
-  <button type="submit" class="btn btn-primary btn-block fp-sign-btn">{% trans "Sign the petition" %}</button>
+  <button type="submit" class="fp-btn fp-btn-primary fp-btn-lg fp-btn-block fp-sign-btn">{% trans "Sign the petition" %}</button>
 
-  <p class="fp-hint fp-disclaimer">{% trans "The content of this petition is neither approved nor endorsed by the Framasoft association." %}</p>
+  <p class="fp-help fp-disclaimer">{% trans "The content of this petition is neither approved nor endorsed by the Framasoft association." %}</p>
 </form>

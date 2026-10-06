@@ -1,77 +1,24 @@
-{% load static %}
 {% load i18n %}
-{% load petition_extras %}
-<div class="row petition-list-row">
+{% comment %}
+  Public list of petitions (PUB-01): cards, pagination and empty state.
+  {% include "petition/generic_petition_list.html" with petitions=page sort=sort empty_title=... empty_text=... %}
+  petitions    a Page (paginated) or a plain list
+  sort         "asc" or "desc", kept in the pagination links
+  empty_title  translated title shown when there is no petition (default: "No petition yet")
+  empty_text   optional translated text under it
+{% endcomment %}
+{% if petitions %}
+<ul class="fp-card-grid fp-petition-grid">
   {% for petition in petitions %}
-    <a href="{{ petition.url }}" class="petition-card">
-      <span class="sb-preview-img">
-        {% if not petition.twitter_image%}
-            <img class="card-img-top img-fluid img-thumbnail" alt="" src="{% static settings.DEFAULT_INDEX_THUMBNAIL %}">
-          {% else %}
-            <img class="card-img-top img-fluid img-thumbnail" alt="" src="{{ petition.twitter_image }}">
-          {% endif %}
-      </span>
-      <div class="card-body">
-        <h4 class="card-title">
-          {{ petition.title|striptags }}
-        </h4>
-
-        <div class="card-desc">
-          <span>
-            {{ petition.text|striptags|truncatewords:"200" }}
-          </span>
-        </div>
-        <div class="card-footer">
-          <p>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>account-circle</title><path d="M12,19.2C9.5,19.2 7.29,17.92 6,16C6.03,14 10,12.9 12,12.9C14,12.9 17.97,14 18,16C16.71,17.92 14.5,19.2 12,19.2M12,5A3,3 0 0,1 15,8A3,3 0 0,1 12,11A3,3 0 0,1 9,8A3,3 0 0,1 12,5M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12C22,6.47 17.5,2 12,2Z"></path></svg>
-            {% with owner=petition.owner %}
-              {% if owner.kind == 'org' %}
-                <span>
-                  {{ owner }}
-                </span>
-              {% elif owner.kind == 'user' %}{# It could be of another kind in the future. #}
-                <span>
-                  {{ owner }}
-                </span>
-              {% endif %}
-            {% endwith %}
-          </p>
-          <span>
-            {% blocktrans count signature_number=petition.signature_number %}
-              {{ signature_number }} signature
-            {% plural %}
-              {{ signature_number }} signatures
-            {% endblocktrans %}
-          </span>
-        </div>
-      </div>
-    </a>
-  {% empty %}
-    <i>
-      {{ no_petitions_text|safe }}
-    </i>
+  <li>{% include "components/petition_card.html" with petition=petition %}</li>
   {% endfor %}
-</div>
-{% if petitions.has_other_pages %}
-  <div>
-    <ul class="pagination justify-content-center">
-      {% if petitions.has_previous %}
-        <li class="page-item"><a class="page-link" href="?page={{ petitions.previous_page_number }}&sort={{ sort }}">&laquo;</a></li>
-      {% else %}
-        <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
-      {% endif %}
-      {% for i in petitions.paginator.page_range %}
-        {% if petitions.number == i %}
-          <li class="page-item active"><span class="page-link">{{ i }} <span class="sr-only">(current)</span></span></li>
-        {% else %}
-          <li class="page-item"><a class="page-link" href="?page={{ i }}&sort={{ sort }}">{{ i }}</a></li>
-        {% endif %}
-      {% endfor %}
-      {% if petitions.has_next %}
-        <li class="page-item"><a class="page-link" href="?page={{ petitions.next_page_number }}&sort={{ sort }}">&raquo;</a></li>
-      {% else %}
-        <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
-      {% endif %}
-    </ul>
-  </div>
+</ul>
+{% if sort %}
+{% with query="sort="|add:sort %}{% include "components/pagination.html" with page=petitions query=query %}{% endwith %}
+{% else %}
+{% include "components/pagination.html" with page=petitions %}
+{% endif %}
+{% else %}
+{% trans "No petition yet" as default_empty_title %}
+{% include "components/empty_state.html" with icon="document" title=empty_title|default:default_empty_title text=empty_text %}
 {% endif %}
