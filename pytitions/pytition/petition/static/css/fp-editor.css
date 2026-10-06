@@ -33,6 +33,26 @@
   font-size: var(--fp-text-sm);
 }
 
+/* Two contributors cooking a recipe together (David Revoy, CC BY 4.0),
+ * above the tips from 992px (BRAND-06) */
+.fp-wizard-art {
+  display: none;
+}
+
+@media (min-width: 992px) {
+  .fp-wizard-art {
+    display: block;
+    margin: calc(-1 * var(--fp-s5)) calc(-1 * var(--fp-s5)) var(--fp-s4);
+  }
+
+  .fp-wizard-art img {
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+    object-position: 50% 40%;
+    border-radius: var(--fp-radius) var(--fp-radius) 0 0;
+  }
+}
+
 .fp-wizard-help-title {
   display: flex;
   align-items: center;

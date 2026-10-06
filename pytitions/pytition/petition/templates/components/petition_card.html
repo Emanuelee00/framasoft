@@ -3,10 +3,17 @@
   Petition card (DS-04). Put it in a list: <ul class="fp-card-grid"><li>{% include ... %}</li></ul>
   {% include "components/petition_card.html" with petition=petition %}
   The title link covers the whole card: keep it the only link inside.
+  Without a picture of its own, the card shows part of the default painting (settings.DEFAULT_INDEX_THUMBNAIL):
+  the school of fish, the fin or the big fish, depending on its place in the grid.
 {% endcomment %}
 <article class="fp-card fp-card-interactive fp-petition-card">
-  <img class="fp-petition-card-img" alt="" width="640" height="360" loading="lazy" decoding="async"
-       src="{% if petition.twitter_image %}{{ petition.twitter_image }}{% else %}{% static settings.DEFAULT_INDEX_THUMBNAIL %}{% endif %}">
+  {% if petition.twitter_image %}
+  <img class="fp-petition-card-img" alt="" width="640" height="360" loading="lazy" decoding="async" src="{{ petition.twitter_image }}">
+  {% elif settings.DEFAULT_INDEX_THUMBNAIL == "img/brand/petition-banner-1200.jpg" %}
+  {% include "components/picture.html" with name="petition-banner" widths="800 1600" fallback="1200" width="1200" height="375" sizes="(min-width: 768px) 38rem, 180vw" class="fp-petition-card-art" %}
+  {% else %}
+  <img class="fp-petition-card-img" alt="" width="640" height="360" loading="lazy" decoding="async" src="{% static settings.DEFAULT_INDEX_THUMBNAIL %}">
+  {% endif %}
   <div class="fp-card-body">
     <h3 class="fp-petition-card-title"><a class="fp-stretched-link" href="{{ petition.url }}">{{ petition.title|striptags }}</a></h3>
     <p class="fp-petition-card-meta">{% blocktrans with owner=petition.owner %}by {{ owner }}{% endblocktrans %}</p>

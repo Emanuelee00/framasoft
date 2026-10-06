@@ -27,6 +27,7 @@
   --fp-violet-1: #fbf5ff;
   --fp-violet-2: #edd8fd;
   --fp-violet-3: #dcbcfa;
+  --fp-violet-6: #977ac2;         /* 3.57:1, icon circles and decorative borders */
   --fp-violet-7: #725794;         /* 5.99:1 */
   --fp-violet-8: #50386e;         /* 9.85:1 */
   --fp-violet-9: #3d2957;         /* 12.7:1 */
@@ -34,6 +35,8 @@
   /* Palette: Framasoft orange */
   --fp-orange-1: #fff9f0;
   --fp-orange-2: #fee7c8;
+  --fp-orange-5: #fc8e3a;         /* decorative borders only */
+  --fp-orange-6: #dd6418;         /* 3.55:1, icons (graphics >= 3:1) */
   --fp-orange-7: #cc4e13;         /* 4.50:1, large text and borders */
   --fp-orange-8: #9c3c1c;         /* 6.83:1 */
 
@@ -84,6 +87,13 @@
   --fp-info-bg: #fbf5ff;
   --fp-disabled-text: #4a5268;    /* 6.87:1 on --fp-disabled-bg */
   --fp-disabled-bg: #edf1f7;
+
+  /* Illustrations (BRAND-04): veil under text placed on a picture. With
+   * --fp-text and --fp-text-muted it keeps 11.3:1 and 5.3:1 even over black;
+   * links and --fp-text-subtle need their own background there */
+  --fp-veil: rgba(251, 245, 255, .86);
+  --fp-veil-clear: rgba(251, 245, 255, 0);
+  --fp-art-shadow: drop-shadow(2px 5px 4px rgba(26, 30, 44, .2));
 
   /* Legacy aliases kept for custom.scss and older templates */
   --color-main: var(--fp-primary);

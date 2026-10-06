@@ -79,6 +79,13 @@ content="{{ petition.raw_twitter_description|truncatechars:300 }}"/>
 {% endblock modal %}
 
 {% block main_content %}
+<div class="fp-slant fp-petition-banner">
+  {% if petition.twitter_image %}
+  <div class="fp-slant-media"><img src="{{ petition.twitter_image }}" alt="" width="1200" height="630" decoding="async" fetchpriority="high"></div>
+  {% else %}
+  {% include "components/picture.html" with name="petition-banner" widths="800 1600" fallback="1200" width="1200" height="375" sizes="100vw" class="fp-slant-media" eager=True %}
+  {% endif %}
+</div>
 <div class="fp-container fp-petition">
   {% if not petition.published %}
   <div class="fp-alert fp-alert-warning fp-petition-alert" role="status">

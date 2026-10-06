@@ -1,0 +1,6 @@
+{% load petition_extras %}{% comment %}
+  Brand illustration (BRAND-04), decorative: AVIF and WebP at the given widths, JPEG fallback.
+  Files: static/img/brand/<name>-<width>.<avif|webp> and <name>-<fallback>.jpg (credits in static/img/CREDITS.md).
+  {% include "components/picture.html" with name="shoal" widths="240 480" fallback="480" width="480" height="480" sizes="10rem" class="fp-art-round" %}
+  eager=True for an image above the fold (no lazy loading, high fetch priority).
+{% endcomment %}<picture class="fp-picture{% if class %} {{ class }}{% endif %}"><source type="image/avif" srcset="{% brand_image name widths "avif" %}" sizes="{{ sizes }}"><source type="image/webp" srcset="{% brand_image name widths "webp" %}" sizes="{{ sizes }}"><img src="{% brand_image name fallback "jpg" %}" alt="" width="{{ width }}" height="{{ height }}" decoding="async"{% if eager %} fetchpriority="high"{% else %} loading="lazy"{% endif %}></picture>

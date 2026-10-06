@@ -29,7 +29,9 @@ Context contract (the view belongs to the GDPR stream):
 
 {% block main_content %}
 {% firstof confirm_state state as cstate %}
+<div class="fp-bubbles">
 <div class="fp-container fp-signer fp-confirm">
+  {% include "components/picture.html" with name="shoal" widths="240 480" fallback="480" width="480" height="480" sizes="(min-width: 768px) 8rem, 5rem" class="fp-art-round fp-confirm-art" only %}
   {% if cstate == "pending" or cstate == "confirm" %}
   <div class="fp-page-header">
     <p class="fp-signer-petition">{% blocktrans trimmed with title=petition.title|striptags %}Petition: “{{ title }}”{% endblocktrans %}</p>
@@ -106,6 +108,7 @@ Context contract (the view belongs to the GDPR stream):
   </div>
   <p class="fp-signer-back"><a href="{{ petition.url }}#signer" class="fp-btn fp-btn-primary">{% trans "Sign the petition again" %}</a></p>
   {% endif %}
+</div>
 </div>
 {% endblock main_content %}
 

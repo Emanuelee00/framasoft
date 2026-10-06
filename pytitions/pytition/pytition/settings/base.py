@@ -202,7 +202,7 @@ SITE_NAME = "Pytition"
 ALLOW_REGISTER = True
 
 LOGIN_REDIRECT_URL = reverse_lazy("user_dashboard")
-DEFAULT_INDEX_THUMBNAIL = "/img/petition_icon.svg"
+DEFAULT_INDEX_THUMBNAIL = "img/brand/petition-banner-1200.jpg"
 
 #:| Leave it set to None for no footer.
 #:| This should contain the relative path to your footer template.

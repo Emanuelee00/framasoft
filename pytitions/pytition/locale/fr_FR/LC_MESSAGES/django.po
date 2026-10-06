@@ -5293,3 +5293,9 @@ msgstr "Enregistrer la date"
 
 msgid "The petition and its signatures will be deleted on %(date)s."
 msgstr "La pétition et ses signatures seront supprimées le %(date)s."
+
+msgid "Illustrations: <a href=\"https://www.davidrevoy.com\">David Revoy</a>, <a href=\"https://creativecommons.org/licenses/by/4.0/\">CC BY 4.0</a>. Icons: <a href=\"https://fontawesome.com\">Font Awesome</a>, CC BY 4.0. Logo: AyM, <a href=\"https://creativecommons.org/licenses/by-sa/4.0/\">CC BY-SA 4.0</a>."
+msgstr "Illustrations : <a href=\"https://www.davidrevoy.com\">David Revoy</a>, <a href=\"https://creativecommons.org/licenses/by/4.0/deed.fr\">CC BY 4.0</a>. Icônes : <a href=\"https://fontawesome.com\">Font Awesome</a>, CC BY 4.0. Logo : AyM, <a href=\"https://creativecommons.org/licenses/by-sa/4.0/deed.fr\">CC BY-SA 4.0</a>."
+
+msgid "Illustration: David Revoy, CC BY 4.0."
+msgstr "Illustration : David Revoy, CC BY 4.0."

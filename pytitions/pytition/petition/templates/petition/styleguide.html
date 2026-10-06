@@ -142,7 +142,7 @@
 
       <section id="icons" class="sg-section">
         <h2>Icons</h2>
-        <p>Open Iconic SVG sprite through <code>components/icon.html</code>. Decorative by default (<code>aria-hidden</code>); pass <code>label</code> only when the icon is the only content. No emoji as icons. Names: <a href="{% static 'vendor/open-iconic-1.1.1/sprite/sprite.html' %}">full list</a>.</p>
+        <p>Font Awesome Free SVG sprite (the icon family of the Framasoft services) through <code>components/icon.html</code>. Decorative by default (<code>aria-hidden</code>); pass <code>label</code> only when the icon is the only content. No emoji as icons. Names: the <code>id</code> of each <code>symbol</code> in <code>vendor/fontawesome-free-6.5.2/sprite.svg</code>; to add one, copy its path from Font Awesome Free 6.5.2 into the sprite.</p>
         {% fp_example "Markup" %}
         <p class="fp-cluster">
           {% include "components/icon.html" with name="person" %}

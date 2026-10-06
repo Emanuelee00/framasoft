@@ -10,13 +10,17 @@
   <link href="{% static "css/fp-components.css" %}" rel="stylesheet">
   <link href="{% static "css/fp-auth.css" %}" rel="stylesheet">
 </head>
-<body>
+<body class="fp-bubbles">
   <main class="fp-container fp-error-page">
-    <p class="fp-error-code">{% trans "Error 500" %}</p>
-    <h1>{% trans "Something went wrong on our side" %}</h1>
-    <p class="fp-lead">{% trans "The page could not be displayed. If you were signing a petition, your signature may not have been saved: please try again in a few minutes." %}</p>
-    <div class="fp-actions">
-      <a class="fp-btn fp-btn-primary" href="{% url "index" %}">{% trans "Back to the home page" %}</a>
+    {% include "components/picture.html" with name="big-fish" widths="400 800" fallback="800" width="800" height="800" sizes="(min-width: 768px) 15rem, 8rem" class="fp-art-round fp-error-art" only %}
+    <div class="fp-error-text">
+      <p class="fp-error-code">{% trans "Error 500" %}</p>
+      <h1>{% trans "Something went wrong on our side" %}</h1>
+      <p class="fp-lead">{% trans "The page could not be displayed. If you were signing a petition, your signature may not have been saved: please try again in a few minutes." %}</p>
+      <div class="fp-actions">
+        <a class="fp-btn fp-btn-primary" href="{% url "index" %}">{% trans "Back to the home page" %}</a>
+      </div>
+      <p class="fp-footer-credits">{% trans "Illustration: David Revoy, CC BY 4.0." %}</p>
     </div>
   </main>
 </body>

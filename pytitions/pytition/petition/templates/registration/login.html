@@ -9,40 +9,45 @@
 {% endblock %}
 
 {% block main_content %}
-<div class="fp-container fp-auth">
-  <div class="fp-page-header">
-    <h1>{% trans "Log in" %}</h1>
-    <p class="fp-lead">{% trans "To create and manage your petitions. No account is needed to sign a petition." %}</p>
-  </div>
+<div class="fp-bubbles">
+<div class="fp-container fp-auth-layout">
+  <div class="fp-auth">
+    <div class="fp-page-header">
+      <h1>{% trans "Log in" %}</h1>
+      <p class="fp-lead">{% trans "To create and manage your petitions. No account is needed to sign a petition." %}</p>
+    </div>
 
-  {% if next and user.is_authenticated %}
-  <div class="fp-alert fp-alert-warning" role="status">
-    {% include "components/alert_icon.html" with kind="warning" %}
-    <p>{% trans "Your account doesn't have access to this page. To proceed, please log in with an account that has access." %}</p>
-  </div>
-  {% endif %}
-
-  <div class="fp-auth-card">
-    {% if form.errors %}
-    <div class="fp-error-summary" role="alert" tabindex="-1" id="form-errors" data-autofocus>
-      <h2 class="fp-error-summary-title">{% trans "Login failed" %}</h2>
-      <p>{% trans "Your username and password didn't match. Please try again." %}</p>
+    {% if next and user.is_authenticated %}
+    <div class="fp-alert fp-alert-warning" role="status">
+      {% include "components/alert_icon.html" with kind="warning" %}
+      <p>{% trans "Your account doesn't have access to this page. To proceed, please log in with an account that has access." %}</p>
     </div>
     {% endif %}
-    <form method="post" action="{% url 'login' %}">
-      {% csrf_token %}
-      {% include "components/field.html" with field=form.username %}
-      {% include "components/field.html" with field=form.password %}
-      <input type="hidden" name="next" value="{{ next }}">
-      <button type="submit" class="fp-btn fp-btn-primary fp-btn-block">{% trans "Log in" %}</button>
-    </form>
-    <ul class="fp-auth-links">
-      <li><a href="{% url "password_reset" %}">{% trans "I forgot my password" %}</a></li>
-      {% if settings.ALLOW_REGISTER %}
-      <li>{% trans "No account?" %} <a href="{% url "register" %}">{% trans "Create an account" %}</a></li>
+
+    <div class="fp-auth-card">
+      {% if form.errors %}
+      <div class="fp-error-summary" role="alert" tabindex="-1" id="form-errors" data-autofocus>
+        <h2 class="fp-error-summary-title">{% trans "Login failed" %}</h2>
+        <p>{% trans "Your username and password didn't match. Please try again." %}</p>
+      </div>
       {% endif %}
-    </ul>
+      <form method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+        {% include "components/field.html" with field=form.username %}
+        {% include "components/field.html" with field=form.password %}
+        <input type="hidden" name="next" value="{{ next }}">
+        <button type="submit" class="fp-btn fp-btn-primary fp-btn-block">{% trans "Log in" %}</button>
+      </form>
+      <ul class="fp-auth-links">
+        <li><a href="{% url "password_reset" %}">{% trans "I forgot my password" %}</a></li>
+        {% if settings.ALLOW_REGISTER %}
+        <li>{% trans "No account?" %} <a href="{% url "register" %}">{% trans "Create an account" %}</a></li>
+        {% endif %}
+      </ul>
+    </div>
   </div>
+  {% include "components/picture.html" with name="contributors" widths="480 960" fallback="960" width="960" height="904" sizes="28rem" class="fp-art-frame fp-auth-art" only %}
+</div>
 </div>
 {% endblock main_content %}
 

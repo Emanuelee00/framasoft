@@ -49,6 +49,7 @@
     {% block wizard_content %}{% endblock wizard_content %}
   </div>
   <aside class="fp-wizard-help" aria-labelledby="wizard-help-title">
+    {% include "components/picture.html" with name="contributors" widths="480 960" fallback="960" width="960" height="904" sizes="20rem" class="fp-wizard-art" only %}
     <h2 class="fp-wizard-help-title" id="wizard-help-title">{% include "components/icon.html" with name="lightbulb" %}{% trans "Tips" %}</h2>
     {% block wizard_help %}{% endblock wizard_help %}
   </aside>

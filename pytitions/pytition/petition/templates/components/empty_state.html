@@ -1,10 +1,14 @@
 {% comment %}
-  Empty state (DS-04). Strings come translated from the caller:
+  Empty state (DS-04). A round detail of the default painting with the icon as a badge (BRAND-06).
+  Strings come translated from the caller:
   {% trans "No petition yet" as empty_title %}
   {% include "components/empty_state.html" with icon="clipboard" title=empty_title text=empty_text action_url=url action_label=label %}
 {% endcomment %}
 <div class="fp-empty">
-  <span class="fp-empty-icon">{% include "components/icon.html" with name=icon|default:"document" %}</span>
+  <div class="fp-art-round fp-empty-art">
+    {% include "components/picture.html" with name="shoal" widths="240 480" fallback="480" width="480" height="480" sizes="7rem" %}
+    <span class="fp-art-badge">{% include "components/icon.html" with name=icon|default:"document" %}</span>
+  </div>
   <h2 class="fp-empty-title">{{ title }}</h2>
   {% if text %}<p class="fp-empty-text">{{ text }}</p>{% endif %}
   {% if action_url %}<a class="fp-btn fp-btn-primary" href="{{ action_url }}">{{ action_label }}</a>{% endif %}

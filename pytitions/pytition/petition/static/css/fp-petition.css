@@ -6,6 +6,23 @@
 
 /* Petition: header ------------------------------------------------------ */
 
+/* Band above the title (BRAND-05): the picture of the petition, or the
+ * default painting (David Revoy, CC BY 4.0), under the Framasoft slanted
+ * edge. Decorative: no text on it. */
+.fp-petition-banner {
+  height: clamp(6rem, 22vw, 15rem);
+  filter: var(--fp-art-shadow);
+}
+
+.fp-petition-banner .fp-slant-media {
+  background: var(--fp-primary-soft);
+}
+
+.fp-petition-banner .fp-slant-media img {
+  object-position: 50% 35%;
+}
+
+
 .fp-petition-alert {
   margin-top: var(--fp-s6);
   margin-bottom: 0;
@@ -242,6 +259,23 @@
 .fp-signer {
   max-width: 42rem;
   padding-bottom: var(--fp-s12);
+}
+
+/* Confirmation: a round detail of the school of fish, the signer joins it (BRAND-06) */
+.fp-confirm-art {
+  --fp-art-size: 5rem;
+  float: right;
+  margin: var(--fp-s6) 0 var(--fp-s2) var(--fp-s4);
+}
+
+@media (min-width: 768px) {
+  .fp-confirm-art {
+    --fp-art-size: 8rem;
+  }
+}
+
+.fp-confirm .fp-page-header ~ * {
+  clear: both;
 }
 
 .fp-signer .fp-page-header {

@@ -30,6 +30,11 @@
     {% if footer_content %}
     <div class="fp-footer-custom">{{ footer_content }}</div>
     {% endif %}
+    <p class="fp-footer-credits">{% blocktrans trimmed %}
+      Illustrations: <a href="https://www.davidrevoy.com">David Revoy</a>, <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.
+      Icons: <a href="https://fontawesome.com">Font Awesome</a>, CC BY 4.0.
+      Logo: AyM, <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a>.
+    {% endblocktrans %}</p>
     <div class="fp-footer-bottom">
       <p>{% trans "Framasoft is a French not-for-profit association for popular education." %}</p>
       <form class="fp-cluster" action="{% url 'set_language' %}" method="post">

@@ -11,7 +11,7 @@
 <meta property="og:description" content="{{ tagline }}">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="{{ settings.SITE_NAME }}">
-<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static "img/pytitions.jpg" %}">
+<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static "img/brand/hero-1440.jpg" %}">
 {% endblock extrameta %}
 
 {% block extracss %}
@@ -20,8 +20,9 @@
 
 {% block main_content %}
 {% if not petitions.has_previous %}
-<section class="fp-section fp-section-tinted fp-hero" aria-labelledby="hero-title">
-  <div class="fp-container">
+<section class="fp-slant fp-hero" aria-labelledby="hero-title">
+  {% include "components/picture.html" with name="hero" widths="640 960 1440 1920" fallback="1440" width="1440" height="810" sizes="100vw" class="fp-slant-media" eager=True %}
+  <div class="fp-container fp-hero-content">
     <p class="fp-kicker">{% trans "Free and ethical" %}</p>
     <h1 id="hero-title">{% trans "Petitions that respect you and the people who sign them" %}</h1>
     <p class="fp-lead">{% blocktrans trimmed %}
@@ -37,22 +38,22 @@
   </div>
 </section>
 
-<section class="fp-section fp-values" aria-labelledby="values-title">
+<section class="fp-section fp-values fp-bubbles" aria-labelledby="values-title">
   <div class="fp-container">
     <h2 id="values-title">{% trans "Our commitments" %}</h2>
     <ul class="fp-grid fp-grid-3 fp-values-list">
       <li class="fp-value">
-        <span class="fp-value-icon">{% include "components/icon.html" with name="eye" %}</span>
+        <span class="fp-icon-ring fp-value-icon">{% include "components/icon.html" with name="eye-slash" %}</span>
         <h3 class="fp-value-title">{% trans "No ads, no trackers" %}</h3>
         <p>{% trans "No advertising, no audience measurement by third parties, no resale of data. The list of signatories is never published: only their number." %}</p>
       </li>
       <li class="fp-value">
-        <span class="fp-value-icon">{% include "components/icon.html" with name="person" %}</span>
+        <span class="fp-icon-ring fp-icon-ring-orange fp-value-icon">{% include "components/icon.html" with name="user-shield" %}</span>
         <h3 class="fp-value-title">{% trans "Your signature, your data" %}</h3>
         <p>{% trans "Each signatory receives a personal link to view, download or delete their signature at any time. Unconfirmed signatures are deleted automatically." %}</p>
       </li>
       <li class="fp-value">
-        <span class="fp-value-icon">{% include "components/icon.html" with name="code" %}</span>
+        <span class="fp-icon-ring fp-value-icon">{% include "components/icon.html" with name="code" %}</span>
         <h3 class="fp-value-title">{% trans "Free software, run by an association" %}</h3>
         <p>{% trans "The service is based on free software and is hosted in France by Framasoft, a not-for-profit association funded by donations." %}</p>
       </li>

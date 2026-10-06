@@ -9,26 +9,31 @@
 {% endblock extracss %}
 
 {% block main_content %}
-<div class="fp-container fp-auth fp-auth-wide">
-  <div class="fp-page-header">
-    <h1>{% trans "Create an account" %}</h1>
-    <p class="fp-lead">{% trans "An account lets you create petitions and follow their signatures. No account is needed to sign a petition." %}</p>
-  </div>
+<div class="fp-bubbles">
+<div class="fp-container fp-auth-layout">
+  <div class="fp-auth fp-auth-wide">
+    <div class="fp-page-header">
+      <h1>{% trans "Create an account" %}</h1>
+      <p class="fp-lead">{% trans "An account lets you create petitions and follow their signatures. No account is needed to sign a petition." %}</p>
+    </div>
 
-  <div class="fp-auth-card">
-    {% include "components/form_errors.html" with form=form %}
-    <form action="" method="post" novalidate>
-      {% csrf_token %}
-      {% for hidden_field in form.hidden_fields %}{{ hidden_field }}{% endfor %}
-      {% for field in form.visible_fields %}
-      {% include "components/field.html" with field=field %}
-      {% endfor %}
-      <button class="fp-btn fp-btn-primary fp-btn-block" type="submit">{% trans "Create my account" %}</button>
-    </form>
-    <ul class="fp-auth-links">
-      <li>{% trans "Already have an account?" %} <a href="{% url "login" %}">{% trans "Log in" %}</a></li>
-    </ul>
+    <div class="fp-auth-card">
+      {% include "components/form_errors.html" with form=form %}
+      <form action="" method="post" novalidate>
+        {% csrf_token %}
+        {% for hidden_field in form.hidden_fields %}{{ hidden_field }}{% endfor %}
+        {% for field in form.visible_fields %}
+        {% include "components/field.html" with field=field %}
+        {% endfor %}
+        <button class="fp-btn fp-btn-primary fp-btn-block" type="submit">{% trans "Create my account" %}</button>
+      </form>
+      <ul class="fp-auth-links">
+        <li>{% trans "Already have an account?" %} <a href="{% url "login" %}">{% trans "Log in" %}</a></li>
+      </ul>
+    </div>
   </div>
+  {% include "components/picture.html" with name="contributors" widths="480 960" fallback="960" width="960" height="904" sizes="28rem" class="fp-art-frame fp-auth-art" only %}
+</div>
 </div>
 {% endblock main_content %}
 

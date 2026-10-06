@@ -562,7 +562,7 @@ summary.fp-nav-link {
 
 /* 5. Icons ------------------------------------------------------------ */
 
-/* Open Iconic sprite (8x8 grid), see components/icon.html */
+/* Font Awesome Free sprite (symbols keep their own viewBox), see components/icon.html */
 .fp-icon {
   display: inline-block;
   flex-shrink: 0;
@@ -1090,6 +1090,24 @@ summary.fp-nav-link {
   background: var(--fp-primary-soft);
 }
 
+/* Default painting (BRAND-04): a 16:9 window on a wide picture, moved
+ * along it from card to card so that a list does not repeat one image */
+.fp-petition-card-art img {
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  object-position: 0 50%;
+  border-radius: var(--fp-radius) var(--fp-radius) 0 0;
+  background: var(--fp-primary-soft);
+}
+
+.fp-card-grid > li:nth-child(3n+2) .fp-petition-card-art img {
+  object-position: 50% 50%;
+}
+
+.fp-card-grid > li:nth-child(3n) .fp-petition-card-art img {
+  object-position: 100% 50%;
+}
+
 .fp-petition-card .fp-card-body {
   display: flex;
   flex-direction: column;
@@ -1520,16 +1538,9 @@ summary.fp-nav-link {
   text-align: center;
 }
 
-.fp-empty-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 3.5rem;
-  height: 3.5rem;
-  border-radius: 50%;
-  background: var(--fp-primary-soft);
-  color: var(--fp-primary);
-  font-size: 1.5rem;
+.fp-empty-art {
+  --fp-art-size: 7rem;
+  margin-bottom: var(--fp-s2);
 }
 
 .fp-empty-title {
@@ -1932,4 +1943,137 @@ summary.fp-nav-link {
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
+}
+
+/* 22. Illustrations (BRAND-04) ----------------------------------------- */
+
+/* Paintings by David Revoy (CC BY 4.0, credits in the footer and in
+ * static/img/CREDITS.md), served by components/picture.html. Always
+ * decorative (alt=""): text never relies on them. */
+.fp-picture {
+  display: block;
+}
+
+.fp-picture img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Slanted band, as on the Framasoft service pages: the painting is cut by
+ * a slanted edge and a violet wedge shows below it, on the left. */
+.fp-slant {
+  position: relative;
+  isolation: isolate;
+}
+
+.fp-slant::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background: var(--fp-primary);
+  clip-path: polygon(0 0, 0 100%, 100% 93%, 100% 0);
+}
+
+.fp-slant-media {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  clip-path: polygon(0 0, 100% 0, 100% 98%, 0 95%);
+}
+
+.fp-slant-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (min-width: 768px) {
+  .fp-slant::before {
+    clip-path: polygon(0 0, 0 100%, 100% 83%, 100% 0);
+  }
+
+  .fp-slant-media {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 88%);
+  }
+}
+
+/* Light bubbles behind a page or a section, as on the Framasoft service
+ * pages. Light enough for --fp-text, --fp-text-muted and --fp-primary;
+ * do not put --fp-text-subtle directly on it. */
+.fp-bubbles {
+  background: var(--fp-bg) url("../img/brand/bubbles.svg") repeat;
+}
+
+/* Round detail of a painting, like a porthole */
+.fp-art-round {
+  --fp-art-size: 6rem;
+  position: relative;
+  flex-shrink: 0;
+  width: var(--fp-art-size);
+  height: var(--fp-art-size);
+}
+
+.fp-art-round img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border: 3px solid var(--fp-surface);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--fp-violet-6), var(--fp-shadow-md);
+}
+
+/* Small violet badge on a round painting, like the Framasoft service icons */
+.fp-art-badge {
+  position: absolute;
+  right: -.25rem;
+  bottom: -.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 3px solid var(--fp-surface);
+  border-radius: 50%;
+  background: var(--fp-primary);
+  color: var(--fp-text-on-primary);   /* 5.99:1 */
+  font-size: 1rem;
+}
+
+/* Painting in a card frame */
+.fp-art-frame img {
+  border-radius: var(--fp-radius);
+  box-shadow: var(--fp-shadow-md);
+}
+
+/* Icon in a ring, Framasoft style: violet and orange alternate */
+.fp-icon-ring {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border: 2px solid var(--fp-violet-6);
+  border-radius: 50%;
+  background: var(--fp-surface);
+  color: var(--fp-primary);
+  font-size: 1.5rem;
+}
+
+.fp-icon-ring-orange {
+  border-color: var(--fp-orange-5);
+  color: var(--fp-orange-6);           /* 3.55:1, icon only */
+}
+
+/* Credits line of the footer */
+.fp-footer-credits {
+  margin: var(--fp-s4) 0 0;
+  font-size: var(--fp-text-sm);
+  color: var(--fp-text-muted);
+}
+
+.fp-footer-credits a {
+  color: inherit;
+  text-decoration: underline;
 }

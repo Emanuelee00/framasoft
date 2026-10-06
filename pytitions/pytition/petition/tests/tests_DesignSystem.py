@@ -1,4 +1,5 @@
 import re
+from pathlib import Path
 
 from django import forms
 from django.core.paginator import Paginator
@@ -130,7 +131,19 @@ class ComponentsTest(TestCase):
     def test_icon_is_decorative_unless_labelled(self):
         html = render_to_string("components/icon.html", {"name": "person"})
         self.assertIn('aria-hidden="true"', html)
-        self.assertIn('open-iconic.min.svg#person"', html)
+        self.assertIn('fontawesome-free-6.5.2/sprite.svg#person"', html)
         html = render_to_string("components/icon.html", {"name": "globe", "label": "Language"})
         self.assertIn('role="img" aria-label="Language"', html)
         self.assertNotIn('aria-hidden', html)
+
+    def test_every_icon_name_is_in_the_sprite(self):
+        base = Path(__file__).resolve().parent.parent
+        sprite = (base / "static/vendor/fontawesome-free-6.5.2/sprite.svg").read_text()
+        symbols = set(re.findall(r'<symbol id="([a-z0-9-]+)"', sprite))
+        used = set()
+        for template in (base / "templates").rglob("*.html"):
+            text = template.read_text()
+            used.update(re.findall(r'components/icon\.html" with name="([a-z0-9-]+)"', text))
+            used.update(re.findall(r'empty_state\.html" with icon="([a-z0-9-]+)"', text))
+        self.assertTrue(used)
+        self.assertEqual(used - symbols, set())

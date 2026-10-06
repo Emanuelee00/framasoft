@@ -5,6 +5,34 @@
 
 /* Home: hero ------------------------------------------------------------ */
 
+/* Painting of the Framapetitions page (big fish and school of small fish,
+ * David Revoy, CC BY 4.0) under a slanted edge, as on the Framasoft
+ * service pages. Below 992px the text sits on a plain tint and the painting
+ * is a band under it; from 992px the painting fills the hero and the text
+ * sits on a light veil (--fp-veil) over its left part. */
+.fp-hero {
+  padding-block: var(--fp-s10) 15rem;
+  filter: var(--fp-art-shadow);
+}
+
+.fp-hero .fp-slant-media {
+  background: var(--fp-primary-soft);
+}
+
+.fp-hero .fp-slant-media img {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 16rem;
+  object-position: 60% 70%;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 3rem);
+  mask-image: linear-gradient(180deg, transparent 0, #000 3rem);
+}
+
+.fp-hero-content > * {
+  max-width: 36rem;
+}
+
 .fp-hero h1 {
   max-width: 22ch;
   margin-bottom: var(--fp-s4);
@@ -12,6 +40,7 @@
 
 .fp-hero .fp-lead {
   margin-bottom: var(--fp-s8);
+  color: var(--fp-text);
 }
 
 .fp-hero-actions .fp-btn {
@@ -21,6 +50,44 @@
 @media (min-width: 576px) {
   .fp-hero-actions .fp-btn {
     flex: 0 0 auto;
+  }
+}
+
+@media (min-width: 768px) {
+  .fp-hero {
+    padding-block: var(--fp-s16) 17rem;
+  }
+
+  .fp-hero .fp-slant-media img {
+    height: 19rem;
+  }
+}
+
+@media (min-width: 992px) {
+  .fp-hero {
+    min-height: 36rem;
+    padding-block: var(--fp-s16) var(--fp-s20);
+  }
+
+  .fp-hero .fp-slant-media img {
+    position: static;
+    height: 100%;
+    object-position: 60% 40%;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  .fp-hero .fp-slant-media::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, var(--fp-veil) 0, var(--fp-veil) 62%, var(--fp-veil-clear) 82%);
+  }
+}
+
+@media (min-width: 1440px) {
+  .fp-hero .fp-slant-media::after {
+    background: linear-gradient(90deg, var(--fp-veil) 0, var(--fp-veil) 56%, var(--fp-veil-clear) 74%);
   }
 }
 
@@ -42,16 +109,7 @@
 }
 
 .fp-value-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 3rem;
-  height: 3rem;
   margin-bottom: var(--fp-s3);
-  border-radius: 50%;
-  background: var(--fp-primary-soft);
-  color: var(--fp-primary);
-  font-size: 1.25rem;
 }
 
 .fp-value-title {
@@ -236,14 +294,6 @@
 
 .fp-result-note {
   margin: var(--fp-s6) 0 0;
-}
-
-/* Petitions without their own image: a short tinted band instead of a large
- * repeated default illustration (the default file is settings.DEFAULT_INDEX_THUMBNAIL) */
-.fp-petition-grid .fp-petition-card-img[src$="/img/petition_icon.svg"] {
-  aspect-ratio: 5 / 1;
-  object-fit: contain;
-  padding: var(--fp-s2) 0;
 }
 
 .fp-sort-link {

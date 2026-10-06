@@ -12,6 +12,40 @@
   max-width: 36rem;
 }
 
+/* Log in and sign up: the painting of two contributors (David Revoy,
+ * CC BY 4.0) beside the form from 992px, hidden below (BRAND-06) */
+.fp-auth-layout .fp-auth {
+  margin-inline: auto;
+}
+
+.fp-auth-art {
+  display: none;
+}
+
+@media (min-width: 992px) {
+  .fp-auth-layout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--fp-s12);
+    max-width: calc(var(--fp-container-wide) + 2 * var(--fp-gutter-lg));
+  }
+
+  .fp-auth-layout .fp-auth {
+    flex: 0 1 30rem;
+    margin-inline: 0;
+  }
+
+  .fp-auth-layout .fp-auth-wide {
+    flex-basis: 36rem;
+  }
+
+  .fp-auth-art {
+    display: block;
+    flex: 0 1 26rem;
+  }
+}
+
 .fp-auth .fp-page-header {
   padding-top: 0;
   padding-bottom: var(--fp-s5);
@@ -59,10 +93,36 @@
   padding-left: var(--fp-s5);
 }
 
-/* Error pages */
+/* Error pages: text and a round detail of the default painting (BRAND-06) */
 .fp-error-page {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--fp-s6);
   max-width: 40rem;
   padding-block: var(--fp-s12) var(--fp-s16);
+}
+
+.fp-error-art {
+  --fp-art-size: 8rem;
+}
+
+@media (min-width: 768px) {
+  .fp-error-page {
+    flex-direction: row-reverse;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--fp-s10);
+    max-width: 56rem;
+  }
+
+  .fp-error-art {
+    --fp-art-size: 15rem;
+  }
+
+  .fp-error-text {
+    max-width: 36rem;
+  }
 }
 
 .fp-error-code {

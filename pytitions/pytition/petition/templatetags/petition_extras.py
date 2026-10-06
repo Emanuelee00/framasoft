@@ -1,4 +1,5 @@
 from django import template
+from django.templatetags.static import static
 from django.utils.formats import number_format
 from petition.helpers import sanitize_html
 
@@ -52,3 +53,13 @@ def progress_percent(count, target):
 def grouped(value):
     """Localized number with thousands separators (1 234 567 in French)"""
     return number_format(value, force_grouping=True)
+
+
+@register.simple_tag
+def brand_image(name, widths, ext):
+    """URL (one width) or srcset (several widths) of an illustration of static/img/brand,
+    named <name>-<width>.<ext>: {% brand_image "hero" "640 960" "webp" %}"""
+    widths = str(widths).split()
+    if len(widths) == 1:
+        return static("img/brand/%s-%s.%s" % (name, widths[0], ext))
+    return ", ".join("%s %sw" % (static("img/brand/%s-%s.%s" % (name, w, ext)), w) for w in widths)

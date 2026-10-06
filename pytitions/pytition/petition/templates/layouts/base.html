@@ -12,10 +12,14 @@
     <title>{% block title %}{% trans "Homepage" %}{% endblock title %} – {{ settings.SITE_NAME }}</title>
     <script nonce="{{ request.csp_nonce }}">document.documentElement.className = document.documentElement.className.replace("no-js", "js");</script>
 
+    <link rel="icon" href="{% static "favicon.ico" %}" sizes="32x32">
+    <link rel="icon" href="{% static "img/brand/framapetitions.svg" %}" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="{% static "apple-touch-icon.png" %}">
+    <link rel="manifest" href="{% static "manifest.json" %}">
+    <meta name="theme-color" content="#725794">
     <link rel="preload" href="{% static "vendor/tovari-sans/TovariSans.woff2" %}" as="font" type="font/woff2" crossorigin>
     <!-- Bootstrap -->
     <link href="{% static "vendor/bootstrap-4.6.2/css/bootstrap.min.css" %}" rel="stylesheet">
-    <link href="{% static "vendor/open-iconic-1.1.1/font/css/open-iconic-bootstrap.min.css" %}" rel="stylesheet">
     <link href="{% static "css/common.css" %}" rel="stylesheet">
     <link href="{% static "css/custom.css" %}" rel="stylesheet">
     <!-- Design system: tokens, then components -->

@@ -60,6 +60,22 @@ class ContrastTest(SimpleTestCase):
             with self.subTest(fg=fg, bg=bg):
                 self.assertGreaterEqual(contrast(self.t(fg), self.t(bg)), 3)
 
+    def test_text_on_the_veil_over_a_painting(self):
+        """BRAND-04: text on --fp-veil stays readable whatever the painting below, even black"""
+        veil = re.search(r'--fp-veil:\s*rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)', (CSS / "fp-tokens.css").read_text())
+        alpha = float(veil.group(4))
+        worst = "#" + "".join("%02x" % round(int(veil.group(i)) * alpha) for i in (1, 2, 3))
+        for fg in ("fp-text", "fp-text-muted"):
+            with self.subTest(fg=fg):
+                self.assertGreaterEqual(contrast(self.t(fg), worst), 4.5)
+
+    def test_brand_icons(self):
+        """BRAND-04: icons in rings and the badge of round paintings"""
+        for fg, bg in (("fp-orange-6", "#ffffff"), ("fp-violet-6", "#ffffff"), ("fp-primary", "#ffffff"),
+                       ("fp-text-on-primary", "fp-primary")):
+            with self.subTest(fg=fg, bg=bg):
+                self.assertGreaterEqual(contrast(self.t(fg), self.t(bg)), 3)
+
     def test_share_buttons_keep_white_labels_readable(self):
         components = (CSS / "fp-components.css").read_text()
         colours = re.findall(r'\.fp-share \.rrssb-buttons li\.rrssb-\w+ a(?::hover)? \{ background-color: (#[0-9a-fA-F]{6}); \}', components)
