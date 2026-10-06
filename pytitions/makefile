@@ -30,4 +30,8 @@ db:
 migrate:
 	cd pytition && DJANGO_SETTINGS_MODULE=pytition.settings.local uv run --no-sync python manage.py migrate
 
-.PHONY: run install db migrate
+# Upgrades all dependencies (asks for confirmation, logs changes to upgraded.md)
+upgrade:
+	bash upgrade.sh
+
+.PHONY: run install db migrate upgrade

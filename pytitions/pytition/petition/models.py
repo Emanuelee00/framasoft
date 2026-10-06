@@ -697,6 +697,7 @@ class PetitionTemplate(models.Model):
     has_mastodon_share_button = models.BooleanField(default=False)
     has_whatsapp_share_button = models.BooleanField(default=False)
     paper_signatures_enabled = models.BooleanField(default=False)
+    paper_signatures = models.IntegerField(default=0)
 
     def __str__(self):
         return self.name
