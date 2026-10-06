@@ -35,7 +35,8 @@
   --fp-tap: 44px;
 }
 
-:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+/* :is() (not :where()) so that the ring wins over Bootstrap's .btn:focus / .form-control:focus { outline: 0 } */
+:is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
   outline: 3px solid var(--fp-primary-strong);
   outline-offset: 2px;
   box-shadow: none;
@@ -56,6 +57,12 @@ html {
 .btn:focus,
 .btn.focus {
   box-shadow: none;
+}
+
+/* Bootstrap's rgba(0, 0, 0, .5) navbar text is 3.98:1 on white */
+.navbar-light .navbar-nav .nav-link,
+.navbar-light .navbar-toggler {
+  color: var(--fp-text-muted);
 }
 
 .invalid-feedback,

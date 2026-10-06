@@ -239,7 +239,7 @@ def confirm(request, petition_id, confirmation_hash):
     elif retention is not None and signature.date < timezone.now() - timedelta(days=retention):
         state = "expired"
     elif request.method != "POST":
-        state = "confirm"
+        state = "pending"
     else:
         # Conditional update: two concurrent POSTs confirm (and subscribe) only once
         if Signature.objects.filter(pk=signature.pk, confirmed=False).update(confirmed=True,
@@ -260,7 +260,7 @@ def confirm(request, petition_id, confirmation_hash):
             return redirect(petition.url)
     if state == "already_confirmed":
         ctx['manage_url'] = build_manage_url(request, signature)
-    ctx['state'] = state
+    ctx["confirm_state"] = state
     return _private(render(request, 'petition/confirm.html', ctx))
 
 

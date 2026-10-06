@@ -50,7 +50,7 @@ class ConfirmViewTest(TestCase):
         signature = self.create()
         response = self.client.get(self.url(signature))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context['state'], 'confirm')
+        self.assertEqual(response.context['confirm_state'], 'pending')
         self.assertContains(response, '<form method="post" action="%s">' % self.url(signature))
         self.assertContains(response, 'csrfmiddlewaretoken')
         self.assertContains(response, '<meta name="robots" content="noindex">')
@@ -79,7 +79,7 @@ class ConfirmViewTest(TestCase):
         signature = self.create(confirmed=True)
         for method in (self.client.get, self.client.post):
             response = method(self.url(signature))
-            self.assertEqual(response.context['state'], 'already_confirmed')
+            self.assertEqual(response.context['confirm_state'], 'already_confirmed')
             self.assertContains(response, 'Your signature was already confirmed')
             self.assertContains(response, '/signature/manage/')
 
@@ -89,7 +89,7 @@ class ConfirmViewTest(TestCase):
         signature.refresh_from_db()
         first = signature.confirmed_at
         response = self.client.post(self.url(signature))
-        self.assertEqual(response.context['state'], 'already_confirmed')
+        self.assertEqual(response.context['confirm_state'], 'already_confirmed')
         signature.refresh_from_db()
         self.assertEqual(signature.confirmed_at, first)
 
@@ -98,7 +98,7 @@ class ConfirmViewTest(TestCase):
         Signature.objects.filter(pk=signature.pk).update(date=timezone.now() - timedelta(days=8))
         for method in (self.client.get, self.client.post):
             response = method(self.url(signature))
-            self.assertEqual(response.context['state'], 'expired')
+            self.assertEqual(response.context['confirm_state'], 'expired')
             self.assertContains(response, 'This confirmation link has expired', status_code=200)
             self.assertNotContains(response, '<form method="post"')
         signature.refresh_from_db()
@@ -119,19 +119,19 @@ class ConfirmViewTest(TestCase):
         self.assertFalse(Signature.objects.filter(pk=first.pk).exists())
         self.assertEqual(self.petition.get_signature_number(confirmed=True), 1)
         response = self.client.post(self.url(first))
-        self.assertEqual(response.context['state'], 'invalid_link')
+        self.assertEqual(response.context['confirm_state'], 'invalid_link')
 
     def test_InvalidLink(self):
         for method in (self.client.get, self.client.post):
             response = method(self.url('not-a-hash'))
-            self.assertEqual(response.context['state'], 'invalid_link')
+            self.assertEqual(response.context['confirm_state'], 'invalid_link')
             self.assertContains(response, 'This confirmation link is not valid')
 
     def test_HashOfAnotherPetitionIsInvalid(self):
         other = Petition.objects.exclude(pk=self.petition.pk).filter(published=True).first()
         signature = Signature.objects.create(first_name="A", last_name="B", email="o@example.org", petition=other)
         response = self.client.post(self.url(signature))
-        self.assertEqual(response.context['state'], 'invalid_link')
+        self.assertEqual(response.context['confirm_state'], 'invalid_link')
         signature.refresh_from_db()
         self.assertFalse(signature.confirmed)
 

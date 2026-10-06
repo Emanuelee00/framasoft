@@ -140,3 +140,26 @@ p[id="white_description"] {
 td[id="no_element"] {
     text-align: center;
 }
+
+/* Sortable column headers (FE-09) */
+th .sort-btn {
+    font: inherit;
+    font-weight: 600;
+    color: inherit;
+    text-align: inherit;
+    text-transform: inherit;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: underline dotted;
+}
+
+th .sort-btn:focus-visible {
+    outline: 3px solid #50386e;
+    outline-offset: 2px;
+}
+
+th[aria-sort="descending"] .sort-btn::after {
+    content: " \2193";
+}

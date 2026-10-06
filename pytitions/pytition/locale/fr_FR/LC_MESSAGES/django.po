@@ -107,17 +107,23 @@ msgstr "Vous pouvez consulter, télécharger ou supprimer votre signature à tou
 msgid "Back to the petition"
 msgstr "Retour à la pétition"
 
+msgid "I confirm my signature"
+msgstr "Je confirme ma signature"
+
+msgid "This confirmation link has expired"
+msgstr "Ce lien de confirmation a expiré"
+
+msgid "Unconfirmed signatures are deleted after a few days. You can sign the petition again."
+msgstr "Les signatures non confirmées sont supprimées après quelques jours. Vous pouvez signer à nouveau la pétition."
+
+msgid "Sign the petition again"
+msgstr "Signer à nouveau la pétition"
+
 msgid "This confirmation link is not valid"
 msgstr "Ce lien de confirmation n'est pas valide"
 
 msgid "It may be incomplete, or the unconfirmed signature may have been deleted. You can sign the petition again."
 msgstr "Il est peut-être incomplet, ou la signature non confirmée a été supprimée. Vous pouvez signer à nouveau la pétition."
-
-msgid "This confirmation link has expired"
-msgstr "Ce lien de confirmation a expiré"
-
-msgid "The signature was not confirmed in time and will be deleted. You can sign the petition again."
-msgstr "La signature n'a pas été confirmée à temps et sera supprimée. Vous pouvez signer à nouveau la pétition."
 
 msgid "Your data."
 msgstr "Vos données."
@@ -2899,6 +2905,18 @@ msgstr ""
 #: pytition/petition/templates/petition/petition_detail.html:336
 msgid "Sign the petition!"
 msgstr "Signer la pétition !"
+
+msgid "Share the petition"
+msgstr "Partager la pétition"
+
+msgid "Link copied"
+msgstr "Lien copié"
+
+msgid "Copy the link"
+msgstr "Copier le lien"
+
+msgid "Share…"
+msgstr "Partager…"
 
 #: pytition/petition/templates/petition/petition_detail.html:372
 msgid "Published on: "

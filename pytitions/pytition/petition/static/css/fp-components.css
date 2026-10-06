@@ -361,3 +361,49 @@
   color: var(--fp-text);
   padding: var(--fp-s3);
 }
+
+/* Share links after the signature form (FE-06) */
+.fp-share {
+  margin-top: var(--fp-s6);
+}
+
+.fp-share-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--fp-text);
+}
+
+.fp-share-copy .btn {
+  min-height: var(--fp-tap);
+  margin: 0 var(--fp-s2) var(--fp-s2) 0;
+}
+
+.fp-share-status {
+  color: var(--fp-success);
+  font-weight: 600;
+}
+
+.fp-share .rrssb-buttons li a {
+  min-height: var(--fp-tap);
+}
+
+/* Share button colours darkened to reach 4.5:1 with their white label (FE-05) */
+.fp-share .rrssb-buttons li.rrssb-email a { background-color: var(--fp-primary); }
+.fp-share .rrssb-buttons li.rrssb-email a:hover { background-color: var(--fp-primary-strong); }
+.fp-share .rrssb-buttons li.rrssb-twitter a { background-color: #0b6f8f; }
+.fp-share .rrssb-buttons li.rrssb-twitter a:hover { background-color: #095a74; }
+.fp-share .rrssb-buttons li.rrssb-mastodon a { background-color: #2074b1; }
+.fp-share .rrssb-buttons li.rrssb-mastodon a:hover { background-color: #195d8e; }
+.fp-share .rrssb-buttons li.rrssb-whatsapp a { background-color: #14792b; }
+.fp-share .rrssb-buttons li.rrssb-whatsapp a:hover { background-color: #126b2a; }
+
+/* Icon-only share buttons keep their name for screen readers (rrssb hides it with visibility) */
+.fp-share .rrssb-buttons li.small a .rrssb-text {
+  visibility: visible;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

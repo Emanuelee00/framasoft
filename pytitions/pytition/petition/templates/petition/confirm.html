@@ -2,8 +2,18 @@
 {% load i18n %}
 {% load static %}
 
-{# Context: petition, state ("confirm", "confirmed", "already_confirmed", "expired" or "invalid_link"), #}
-{# confirmation_hash (for "confirm"), manage_url (optional) #}
+{% comment %}
+Signature confirmation page (FE-03). Two steps: a GET shows this page, only the POST of the button
+confirms, so that link scanners opening e-mails do not confirm on behalf of a person. No JavaScript needed.
+
+Context contract (the view belongs to the GDPR stream):
+  petition           Petition
+  confirm_state      "pending" | "confirmed" | "already_confirmed" | "expired" | "invalid_link"
+                     ("state" is read when "confirm_state" is missing; "confirm" is read as "pending")
+  confirmation_hash  required when pending and form_action is missing
+  form_action        optional POST target, default: url "confirm" petition.id confirmation_hash
+  manage_url         optional, link to the "manage my signature" page
+{% endcomment %}
 
 {% block title %}{% trans "Confirm my signature" %}{% endblock title %}
 
@@ -13,23 +23,24 @@
 {% endblock %}
 
 {% block main_content %}
+{% firstof confirm_state state as cstate %}
 <div class="container fp-narrow fp-confirm mb-4">
-  {% if state == "confirm" %}
+  {% if cstate == "pending" or cstate == "confirm" %}
   <h1 class="h2">{% trans "Confirm my signature" %}</h1>
   <p>{% blocktrans trimmed with title=petition.title|striptags %}
     One last step: confirm your signature to the petition “{{ title }}” so that it is counted.
   {% endblocktrans %}</p>
-  <form method="post" action="{% url 'confirm' petition.id confirmation_hash %}">
+  <form method="post" action="{% if form_action %}{{ form_action }}{% else %}{% url 'confirm' petition.id confirmation_hash %}{% endif %}">
     {% csrf_token %}
-    <button type="submit" class="btn btn-primary btn-block fp-sign-btn">{% trans "Confirm my signature" %}</button>
+    <button type="submit" class="btn btn-primary btn-block fp-sign-btn">{% trans "I confirm my signature" %}</button>
   </form>
   <p class="fp-hint mt-3">{% trans "You did not sign this petition? Do nothing: the signature will be deleted automatically." %}</p>
 
-  {% elif state == "confirmed" or state == "already_confirmed" %}
+  {% elif cstate == "confirmed" or cstate == "already_confirmed" %}
   <div class="fp-state fp-alert-success" role="status">
     <h1 class="fp-state-title h3" tabindex="-1" data-autofocus>
       {% include "components/alert_icon.html" with kind="success" %}
-      {% if state == "confirmed" %}{% trans "Thank you! Your signature is counted" %}{% else %}{% trans "Your signature was already confirmed" %}{% endif %}
+      {% if cstate == "confirmed" %}{% trans "Thank you! Your signature is counted" %}{% else %}{% trans "Your signature was already confirmed" %}{% endif %}
     </h1>
     <p>{% blocktrans trimmed with title=petition.title|striptags %}
       Petition: “{{ title }}”
@@ -40,15 +51,15 @@
   </div>
   <p><a href="{{ petition.url }}" class="fp-tap">{% trans "Back to the petition" %}</a></p>
 
-  {% elif state == "expired" %}
+  {% elif cstate == "expired" %}
   <div class="fp-state fp-alert-warning" role="alert">
     <h1 class="fp-state-title h3" tabindex="-1" data-autofocus>
       {% include "components/alert_icon.html" with kind="warning" %}
       {% trans "This confirmation link has expired" %}
     </h1>
-    <p>{% trans "The signature was not confirmed in time and will be deleted. You can sign the petition again." %}</p>
+    <p>{% trans "Unconfirmed signatures are deleted after a few days. You can sign the petition again." %}</p>
   </div>
-  <p><a href="{{ petition.url }}#signer" class="fp-tap">{% trans "Back to the petition" %}</a></p>
+  <p><a href="{{ petition.url }}#signer" class="fp-tap">{% trans "Sign the petition again" %}</a></p>
 
   {% else %}
   <div class="fp-state fp-alert-warning" role="alert">
@@ -58,7 +69,7 @@
     </h1>
     <p>{% trans "It may be incomplete, or the unconfirmed signature may have been deleted. You can sign the petition again." %}</p>
   </div>
-  <p><a href="{{ petition.url }}#signer" class="fp-tap">{% trans "Back to the petition" %}</a></p>
+  <p><a href="{{ petition.url }}#signer" class="fp-tap">{% trans "Sign the petition again" %}</a></p>
   {% endif %}
 </div>
 {% endblock main_content %}

@@ -109,6 +109,16 @@
         localStorage.setItem('mod_variables_display', x.style.display);
     }
 
+    // Sortable headers: keyboard-accessible buttons, the sorted column is announced with aria-sort
+    document.addEventListener('click', (event) => {
+        const button = event.target.closest('button[data-sort-table]');
+        if (!button) return;
+        const tableId = button.dataset.sortTable;
+        sortTable(tableId, Number(button.dataset.sortCol));
+        document.querySelectorAll(`#${tableId} th[aria-sort]`).forEach(th => th.removeAttribute('aria-sort'));
+        button.closest('th').setAttribute('aria-sort', 'descending');
+    });
+
     document.addEventListener('DOMContentLoaded', () => {
         const x = document.getElementById('mod_variables');
         const saved = localStorage.getItem('mod_variables_display');
@@ -176,10 +186,10 @@
                     <tr>
                         <th>{% trans "Selection" %}</th>
                         <th>{% trans "Username" %}</th>
-                        <th onclick="sortTable('monUserTable', 2)">{% trans "Total number of petitions" %}</th>
-                        <th onclick="sortTable('monUserTable', 3)">{% trans "Day number of petitions" %}</th>
-                        <th onclick="sortTable('monUserTable', 4)">{% trans "Number of moderated or monitored petitions" %}</th>
-                        <th onclick="sortTable('monUserTable', 5)">{% trans "Total number of signatures" %}</th>
+                        <th scope="col"><button type="button" class="sort-btn" data-sort-table="monUserTable" data-sort-col="2">{% trans "Total number of petitions" %}</button></th>
+                        <th scope="col"><button type="button" class="sort-btn" data-sort-table="monUserTable" data-sort-col="3">{% trans "Day number of petitions" %}</button></th>
+                        <th scope="col"><button type="button" class="sort-btn" data-sort-table="monUserTable" data-sort-col="4">{% trans "Number of moderated or monitored petitions" %}</button></th>
+                        <th scope="col"><button type="button" class="sort-btn" data-sort-table="monUserTable" data-sort-col="5">{% trans "Total number of signatures" %}</button></th>
                         <th>{% trans "Monitoring reason" %}</th>
                     </tr>
                 </thead>
@@ -249,10 +259,10 @@
                 <tr>
                     <th>{% trans "Selection" %}</th>
                     <th>{% trans "Username" %}</th>
-                    <th onclick="sortTable('userTable', 2)">{% trans "Total number of petitions" %}</th>
-                    <th onclick="sortTable('userTable', 3)">{% trans "Day number of petitions" %}</th>
-                    <th onclick="sortTable('userTable', 4)">{% trans "Number of moderated or monitored petitions" %}</th>
-                    <th onclick="sortTable('userTable', 5)">{% trans "Total number of signatures" %}</th>
+                    <th scope="col"><button type="button" class="sort-btn" data-sort-table="userTable" data-sort-col="2">{% trans "Total number of petitions" %}</button></th>
+                    <th scope="col"><button type="button" class="sort-btn" data-sort-table="userTable" data-sort-col="3">{% trans "Day number of petitions" %}</button></th>
+                    <th scope="col"><button type="button" class="sort-btn" data-sort-table="userTable" data-sort-col="4">{% trans "Number of moderated or monitored petitions" %}</button></th>
+                    <th scope="col"><button type="button" class="sort-btn" data-sort-table="userTable" data-sort-col="5">{% trans "Total number of signatures" %}</button></th>
                     <th width="50%">{% trans "Moderation reason" %}</th>
                 </tr>
             </thead>
@@ -334,10 +344,10 @@
                 <th>{% trans "Title" %}</th>
                 <th>{% trans "Owner type" %}</th>
                 <th>{% trans "Owner" %}</th>
-                <th onclick="sortTable('monPetitionTable', 4)">{% trans "Total number of signatures" %}</th>
-                <th onclick="sortTable('monPetitionTable', 5)">{% trans "Number of signatures today" %}</th>
-                <th onclick="sortTable('monPetitionTable', 6)">{% trans "Number of signatures yesterday" %}</th>
-                <th onclick="sortTable('monPetitionTable', 7)">{% trans "Number of unconfirmed signatures in the last 6h" %}</th>
+                <th scope="col"><button type="button" class="sort-btn" data-sort-table="monPetitionTable" data-sort-col="4">{% trans "Total number of signatures" %}</button></th>
+                <th scope="col"><button type="button" class="sort-btn" data-sort-table="monPetitionTable" data-sort-col="5">{% trans "Number of signatures today" %}</button></th>
+                <th scope="col"><button type="button" class="sort-btn" data-sort-table="monPetitionTable" data-sort-col="6">{% trans "Number of signatures yesterday" %}</button></th>
+                <th scope="col"><button type="button" class="sort-btn" data-sort-table="monPetitionTable" data-sort-col="7">{% trans "Number of unconfirmed signatures in the last 6h" %}</button></th>
                 <th>{% trans "Number of signatures checked at each signature ? (if False, periodically)" %}</th>
                 <th>{% trans "Monitoring reason" %}</th>
             </tr>
@@ -420,10 +430,10 @@
                     <th>{% trans "Title" %}</th>
                     <th>{% trans "Owner type" %}</th>
                     <th>{% trans "Owner" %}</th>
-                    <th onclick="sortTable('modPetitionTable', 4)">{% trans "Total number of signatures" %}</th>
-                    <th onclick="sortTable('modPetitionTable', 5)">{% trans "Number of signatures today" %}</th>
-                    <th onclick="sortTable('modPetitionTable', 6)">{% trans "Number of signatures yesterday" %}</th>
-                    <th onclick="sortTable('modPetitionTable', 7)">{% trans "Number of unconfirmed signatures in the last 6h" %}</th>
+                    <th scope="col"><button type="button" class="sort-btn" data-sort-table="modPetitionTable" data-sort-col="4">{% trans "Total number of signatures" %}</button></th>
+                    <th scope="col"><button type="button" class="sort-btn" data-sort-table="modPetitionTable" data-sort-col="5">{% trans "Number of signatures today" %}</button></th>
+                    <th scope="col"><button type="button" class="sort-btn" data-sort-table="modPetitionTable" data-sort-col="6">{% trans "Number of signatures yesterday" %}</button></th>
+                    <th scope="col"><button type="button" class="sort-btn" data-sort-table="modPetitionTable" data-sort-col="7">{% trans "Number of unconfirmed signatures in the last 6h" %}</button></th>
                     <th>{% trans "Number of signatures checked at each signature? (if False, periodically)" %}</th>
                     <th>{% trans "Moderation reason" %}</th>
                 </tr>
@@ -586,12 +596,12 @@
                 <tr>
                     <th>{% trans "Selection" %}</th>
                     <th>{% trans "Name" %}</th>
-                    <th onclick="sortTable('monOrgTable', 2)">{% trans "Total number of petitions" %}</th>
-                    <th onclick="sortTable('monOrgTable', 3)">{% trans "Day number of petitions" %}</th>
-                    <th onclick="sortTable('monOrgTable', 4)">{% trans "Total number of members" %}</th>
-                    <th onclick="sortTable('monOrgTable', 5)">{% trans "Number of moderated members" %}</th>
-                    <th onclick="sortTable('monOrgTable', 6)">{% trans "Number of moderated or monitored petitions" %}</th>
-                    <th onclick="sortTable('monOrgTable', 7)">{% trans "Total number of signatures" %}</th>
+                    <th scope="col"><button type="button" class="sort-btn" data-sort-table="monOrgTable" data-sort-col="2">{% trans "Total number of petitions" %}</button></th>
+                    <th scope="col"><button type="button" class="sort-btn" data-sort-table="monOrgTable" data-sort-col="3">{% trans "Day number of petitions" %}</button></th>
+                    <th scope="col"><button type="button" class="sort-btn" data-sort-table="monOrgTable" data-sort-col="4">{% trans "Total number of members" %}</button></th>
+                    <th scope="col"><button type="button" class="sort-btn" data-sort-table="monOrgTable" data-sort-col="5">{% trans "Number of moderated members" %}</button></th>
+                    <th scope="col"><button type="button" class="sort-btn" data-sort-table="monOrgTable" data-sort-col="6">{% trans "Number of moderated or monitored petitions" %}</button></th>
+                    <th scope="col"><button type="button" class="sort-btn" data-sort-table="monOrgTable" data-sort-col="7">{% trans "Total number of signatures" %}</button></th>
                     <th>{% trans "Monitoring reason" %}</th>
                 </tr>
             </thead>
@@ -663,12 +673,12 @@
                 <tr>
                     <th>{% trans "Selection" %}</th>
                     <th>{% trans "Name" %}</th>
-                    <th onclick="sortTable('orgTable', 2)">{% trans "Total number of petitions" %}</th>
-                    <th onclick="sortTable('orgTable', 3)">{% trans "Day number of petitions" %}</th>
-                    <th onclick="sortTable('orgTable', 4)">{% trans "Total number of members" %}</th>
-                    <th onclick="sortTable('orgTable', 5)">{% trans "Number of moderated members" %}</th>
-                    <th onclick="sortTable('orgTable', 6)">{% trans "Number of moderated or monitored petitions" %}</th>
-                    <th onclick="sortTable('orgTable', 7)">{% trans "Total number of signatures" %}</th>
+                    <th scope="col"><button type="button" class="sort-btn" data-sort-table="orgTable" data-sort-col="2">{% trans "Total number of petitions" %}</button></th>
+                    <th scope="col"><button type="button" class="sort-btn" data-sort-table="orgTable" data-sort-col="3">{% trans "Day number of petitions" %}</button></th>
+                    <th scope="col"><button type="button" class="sort-btn" data-sort-table="orgTable" data-sort-col="4">{% trans "Total number of members" %}</button></th>
+                    <th scope="col"><button type="button" class="sort-btn" data-sort-table="orgTable" data-sort-col="5">{% trans "Number of moderated members" %}</button></th>
+                    <th scope="col"><button type="button" class="sort-btn" data-sort-table="orgTable" data-sort-col="6">{% trans "Number of moderated or monitored petitions" %}</button></th>
+                    <th scope="col"><button type="button" class="sort-btn" data-sort-table="orgTable" data-sort-col="7">{% trans "Total number of signatures" %}</button></th>
                     <th>{% trans "Moderation reason" %}</th>
                 </tr>
             </thead>
