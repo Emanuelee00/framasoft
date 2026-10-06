@@ -41,7 +41,8 @@ class SignerPagesDesignTest(TestCase):
         self.assertIn('<dl class="fp-datalist">', html)
         self.assertIn('<span class="fp-badge fp-badge-warning">awaiting confirmation</span>', html)
         self.assertIn('class="fp-signer-section fp-danger-zone"', html)
-        self.assertNotIn('fp-expiry', html)
+        # every petition has a deletion date (EXP-01), shown to the signer
+        self.assertIn('class="fp-expiry"', html)
 
     def test_lost_link_errors_are_tied_to_the_field(self):
         response = self.client.post(reverse('forgot_signature_link', args=[self.petition.id]), {'email': 'nope'})

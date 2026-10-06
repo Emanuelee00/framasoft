@@ -1,0 +1,47 @@
+{% load i18n %}
+{% comment %}
+  Filter, page size and actions of one moderation table (CRE-06).
+  {% include "admin/moderation_toolbar.html" with form_id="action_rep_petition" table_id="repPetitionTable" limit_name="limit_rep" actions=actions_rep_petitions help=help %}
+  Rows carry <input type="checkbox" name="selected_…" form="{{ form_id }}">. Deleting asks for confirmation in a dialog.
+{% endcomment %}
+{% trans "delete user" as del_user %}{% trans "delete organization" as del_org %}{% trans "delete petition" as del_petition %}
+<div class="fp-mod-toolbar">
+  <div class="fp-mod-filter fp-js-only">
+    <label class="fp-label" for="filter-{{ table_id }}">{% trans "Filter" %}</label>
+    <input type="search" class="fp-input" id="filter-{{ table_id }}" data-fp-filter="{{ table_id }}" autocomplete="off">
+  </div>
+  <form method="post" class="fp-mod-limit">
+    {% csrf_token %}
+    <label class="fp-label" for="limit-{{ table_id }}">{% trans "Rows shown" %}</label>
+    <div class="fp-cluster">
+      <select name="{{ limit_name }}" id="limit-{{ table_id }}" class="fp-select">
+        <option value="50">50</option>
+        <option value="200">200</option>
+        <option value="500">500</option>
+        <option value="None">{% trans "All" %}</option>
+      </select>
+      <button type="submit" class="fp-btn fp-btn-tertiary">{% trans "Apply" %}</button>
+    </div>
+  </form>
+</div>
+<form method="post" id="{{ form_id }}" class="fp-mod-actions" aria-label="{% trans "Actions on the selected rows" %}">
+  {% csrf_token %}
+  {% if help %}<p class="fp-help">{{ help }}</p>{% endif %}
+  <div class="fp-actions">
+    {% for action_name in actions %}
+    {% if action_name == del_user or action_name == del_org or action_name == del_petition %}
+    <button type="button" class="fp-btn fp-btn-tertiary fp-js-only" data-fp-dialog-open="confirm-{{ form_id }}">{{ action_name|capfirst }}</button>
+    <dialog class="fp-dialog" id="confirm-{{ form_id }}" aria-labelledby="confirm-{{ form_id }}-title">
+      <h2 class="fp-dialog-title" id="confirm-{{ form_id }}-title">{% trans "Delete the selected rows?" %}</h2>
+      <p>{% trans "Everything selected is deleted with its petitions and signatures. This cannot be undone. To only hide content, use the other actions." %}</p>
+      <div class="fp-dialog-actions">
+        <button type="button" class="fp-btn fp-btn-tertiary" data-fp-dialog-close>{% trans "Cancel" %}</button>
+        <button type="submit" name="action" value="{{ action_name }}" class="fp-btn fp-btn-danger">{{ action_name|capfirst }}</button>
+      </div>
+    </dialog>
+    {% else %}
+    <button type="submit" name="action" value="{{ action_name }}" class="fp-btn fp-btn-secondary fp-btn-sm">{{ action_name|capfirst }}</button>
+    {% endif %}
+    {% endfor %}
+  </div>
+</form>

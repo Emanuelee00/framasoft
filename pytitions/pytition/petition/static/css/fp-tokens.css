@@ -168,6 +168,13 @@
   box-shadow: none;
 }
 
+/* Chromium: the calendar button of a date input takes the focus on its own */
+input::-webkit-calendar-picker-indicator:focus-visible {
+  outline: 3px solid var(--fp-primary-strong);
+  outline-offset: 1px;
+  border-radius: 2px;
+}
+
 html {
   scroll-padding-top: 5rem;
 }

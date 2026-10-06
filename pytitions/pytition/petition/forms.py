@@ -87,7 +87,8 @@ class ReportForm(forms.Form):
 
 class PetitionCreationStep1(forms.Form):
     ### Ask for title ###
-    title = forms.CharField(max_length=200)
+    title = forms.CharField(max_length=80, label=_("Title of the petition"),
+                            help_text=_("80 characters maximum. Say what you ask, and to whom. You can change it later."))
 
     def clean_title(self):
         title = self.cleaned_data.get('title')
@@ -119,7 +120,7 @@ class PetitionCreationStep1(forms.Form):
 
 class PetitionCreationStep2(forms.Form):
     ### Ask for content ###
-    message = forms.CharField(widget=TinyMCE)
+    message = forms.CharField(widget=TinyMCE, label=_("Text of the petition"))
 
 
 class ExpiryFieldMixin:
@@ -152,7 +153,8 @@ def expires_at_field(required):
 
 class PetitionCreationStep3(ExpiryFieldMixin, forms.Form):
     ### Ask for publication ###
-    publish = forms.BooleanField(required=False, label=_("Publish the petition now?"))
+    publish = forms.BooleanField(required=False, label=_("Publish the petition now"),
+                                 help_text=_("If you leave it unticked, the petition is saved as a draft that only you and your organization can see. You can publish it later from your dashboard."))
     # empty: default lifetime (PETITION_DEFAULT_LIFETIME_DAYS)
     expires_at = expires_at_field(required=False)
     configure = forms.BooleanField(required=False, label=_("Save & Configure"))

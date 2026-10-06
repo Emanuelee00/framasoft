@@ -1,93 +1,36 @@
 {% extends 'layouts/wizard_layout.html' %}
 {% load i18n %}
-{% load widget_tweaks %}
-{% load petition_extras %}
-{% load static %}
-{% block media %}
-    {{ form.media }}
-{% endblock %}
 
 {% block wizard_content %}
-<div id="step-3" class="px-3 pt-3">
-  <form method="POST">{% csrf_token %}
+<form method="POST" novalidate class="fp-wizard-form">{% csrf_token %}
+  {{ wizard.management_form }}
   {{ form.use_template }}
   {{ form.template_id }}
-  {{ wizard.management_form }}
-  <input type="hidden" name="redirect" id="redirectField" value="0">
-    <div class="col-xl-4 col-lg-6 col-sm-12 col-12 mx-auto text-center sb-preview">
-      <div class="card h-100 align-content-center">
-        <img class="card-img-top img-fluid img-thumbnail" src="{% static "img/petition_icon.svg" %}">
-        <div class="card-body d-flex flex-column">
-          <h4 class="card-title">{{ title }}</h4>
-          <p class="card-text">{{ message|striptags|truncatechars:225 }}</p>
-        </div>
-        <div class="card-footer mt-auto">
-          <div class="btn-toolbar">
-            <div class="btn-group-toggle">
-              <button class="btn btn-secondary"
-                      title="{% trans "Save & Configure" %}" id="save_and_edit_btn">
-                  {{ form.configure }} <span class="oi oi-pencil"></span> {{ form.configure.label }}
-              </button>
-              <button type="submit" class="btn btn-secondary"
-                      title="{% trans "Save" %}"><span class="oi oi-clipboard"></span> {% trans "Save" %}</button>
-            </div>
-          </div>
-          <div class="form-group mt-3">
-            {% with form.publish as field %}
-              <div class="custom-control custom-switch">
-                  {{ field|add_class:"custom-control-input" }}
-                  <label class="custom-control-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-              </div>
-            {% endwith %}
-          </div>
-        </div>
-      </div>
+
+  <section class="fp-card fp-wizard-summary" aria-labelledby="summary-title">
+    <div class="fp-card-body">
+      <p class="fp-muted fp-small" id="summary-title">{% trans "Your petition" %}</p>
+      <h2 class="fp-card-title">{{ title }}</h2>
+      <p class="fp-muted">{{ message|striptags|truncatechars:225 }}</p>
     </div>
-    <div class="d-flex justify-content-start">
-      {% if wizard.steps.prev %}
-          <button name="wizard_goto_step" id="go_first" class="btn btn-primary" type="submit" value="{{ wizard.steps.first }}">{% trans "First step" %}</button>
-          <button name="wizard_goto_step" id="go_prev" class="btn btn-primary ml-3" type="submit" value="{{ wizard.steps.prev }}">{% trans "Previous step" %}</button>
-      {% endif %}
-    </div>
-  </form>
-</div>
+  </section>
+
+  {% include "components/field.html" with field=form.publish %}
+  {% if form.expires_at %}{% include "petition/expiry_field.html" with field=form.expires_at %}{% endif %}
+
+  <p class="fp-help">{% trans "Next you can add an image, a goal of signatures and sharing options. You can change everything later." %}</p>
+  <div class="fp-actions fp-wizard-actions">
+    <button type="submit" name="redirect" value="1" class="fp-btn fp-btn-primary">{% trans "Create and finish the settings" %}</button>
+    <button type="submit" name="redirect" value="0" class="fp-btn fp-btn-secondary">{% trans "Create and go to the dashboard" %}</button>
+    <button name="wizard_goto_step" class="fp-btn fp-btn-tertiary" type="submit" value="{{ wizard.steps.prev }}" formnovalidate>{% include "components/icon.html" with name="arrow-left" %}{% trans "Back" %}</button>
+  </div>
+</form>
 {% endblock %}
 
-{% block extrajs %}
-    {{ block.super }}
-    <script type="text/javascript" src="{%  static 'vendor/smartwizard/dist/js/jquery.smartWizard.min.js' %}"></script>
-    <script type="text/javascript" nonce="{{ request.csp_nonce }}">
-    $(document).ready(function(){
-      $('#smartwizard').smartWizard({
-                                    theme: 'arrows',
-                                    toolbarSettings: {
-                                        showNextButton: false,
-                                        showPreviousButton: false,
-                                    },
-                                    });
-    });
-    $("#step1_link").on("click", function () {
-        $("#go_first").click();
-    });
-    $("#step2_link").on("click", function () {
-        $("#go_prev").click();
-    });
-
-    $(function() {
-       $("#save_and_edit_btn").on("click", function(){
-           var redirect = $("#redirectField");
-           redirect.prop("value", "1");
-           redirect.closest("form").submit();
-       });
-    });
-
-    document.location.hash = "step-3";
-    $('html, body').scrollTop('0px');
-
-    $(function() {
-        $("form").on("submit", function(){
-           document.location.hash = "";
-        });
-    });
-    </script>
+{% block wizard_help %}
+<ul class="fp-wizard-tips">
+  <li>{% trans "A draft is only visible to you (and to your organization). Publish when the text is ready." %}</li>
+  <li>{% trans "Framapétitions shows no advertising and uses no tracker." %}</li>
+  <li>{% trans "Signatories’ data is kept for a limited time, then deleted. You will be reminded before, to download the list." %}</li>
+</ul>
 {% endblock %}

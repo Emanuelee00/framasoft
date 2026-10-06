@@ -1,578 +1,275 @@
 {% extends 'layouts/edit_layout.html' %}
 {% load i18n %}
-{% load static %}
 {% load petition_extras %}
-{% block media %}
-    {{ block.super }}
-    {{ content_form.media }}
-    {{ email_form.media }}
-    {{ newsletter_form.media }}
-    {{ social_network_form.media }}
-    {{ style_form.media }}
-{% endblock %}
-
-{% block extracss %}
-<link href="{% static "css/framapetitions.css" %}" rel="stylesheet" type="text/css">
-{{ block.super }}
-    <style>
-    .custom-switch ~ .invalid-feedback {
-        display: block;
-    }
-    </style>
-{% endblock extracss %}
-
+{% load fp_dashboard %}
 {% comment %}
-# FIXME: Don't forget to make sure form is submited if something is modified and user changed tab.
+  Petition settings (also used by edit_template.html with is_template=True).
+  Tabs are links to panels (data-fp-tabs, fp-ui.js); each form posts back to its own panel (action="#tab_…").
+  Fields of content_form are placed by name. The deletion date has its own form (expiry_form, GDPR) in the
+  "Deletion of data" card, anchor #expiry (linked from the reminder emails).
 {% endcomment %}
 
-{% block main_title %}
-{% trans "Petition settings" %}
-{% endblock main_title %}
+{% block title %}{% if is_template %}{% trans "Template settings" %}{% else %}{% trans "Petition settings" %}{% endif %}{% endblock title %}
 
-
-<!-- Display according to publish status -->
 {% block edit_content %}
+<div class="fp-page-header fp-dash-head">
+  <div>
+    <p class="fp-muted">{% block main_title %}{% trans "Petition settings" %}{% endblock main_title %}</p>
+    <h1 id="fp-page-title">{% if is_template %}{{ petition.name }}{% else %}{{ petition.title|striptags }}{% endif %}</h1>
+  </div>
+  {% if not is_template %}
+  <div class="fp-actions">
+    <a class="fp-btn fp-btn-secondary" href="{{ petition.url }}">{% include "components/icon.html" with name="eye" %}{% trans "View the petition" %}</a>
+  </div>
+  {% endif %}
+</div>
+
 {% if not is_template %}
+{% with moderated=petition.is_moderated count=petition.signature_number %}
+<div class="fp-editor-status">
+  <section class="fp-card" aria-labelledby="status-visibility">
+    <div class="fp-card-body">
+      <h2 id="status-visibility">{% trans "Visibility" %}</h2>
+      {% if moderated %}
+      <p><span class="fp-badge fp-badge-danger">{% trans "Hidden by moderation" %}</span></p>
+      <p class="fp-small">{% trans "This petition breaks the moderation charter: it is hidden from the public and cannot be published." %}</p>
+      {% elif petition.published %}
+      <p><span class="fp-badge fp-badge-success">{% trans "Published" %}</span></p>
+      <p class="fp-small">{% trans "Anyone with the link can read and sign it." %}</p>
+      <form method="post" action="{% url "petition_unpublish" petition.id %}" data-fp-async>{% csrf_token %}
+        <button type="submit" class="fp-btn fp-btn-tertiary">{% trans "Unpublish" %}</button>
+      </form>
+      {% else %}
+      <p><span class="fp-badge">{% trans "Draft, not visible" %}</span></p>
+      <p class="fp-small">{% trans "Only you and your organization can see it. Publish it when the text is ready." %}</p>
+      <form method="post" action="{% url "petition_publish" petition.id %}" data-fp-async>{% csrf_token %}
+        <button type="submit" class="fp-btn fp-btn-primary">{% include "components/icon.html" with name="globe" %}{% trans "Publish" %}</button>
+      </form>
+      {% endif %}
+    </div>
+  </section>
+  <section class="fp-card" aria-labelledby="status-signatures">
+    <div class="fp-card-body">
+      <h2 id="status-signatures">{% trans "Signatures" %}</h2>
+      <p><strong class="fp-prow-count">{{ count|grouped }}</strong>{% if petition.target > 0 %} <span class="fp-muted">{% blocktrans with target=petition.target|grouped %}of {{ target }}{% endblocktrans %}</span>{% endif %}</p>
+      {% if petition.target > 0 %}<progress class="fp-progress-bar fp-progress-bar-sm" max="100" value="{{ count|progress_percent:petition.target }}" aria-label="{% trans 'Progress towards the goal' %}">{{ count|progress_percent:petition.target }}%</progress>{% endif %}
+      {% if not org or user_permissions.can_view_signatures %}
+      <a class="fp-btn fp-btn-tertiary" href="{% url "show_signatures" petition.id %}">{% trans "Signatures and export" %}</a>
+      {% endif %}
+    </div>
+  </section>
+  <section class="fp-card" aria-labelledby="status-expiry">
+    <div class="fp-card-body">
+      <h2 id="status-expiry">{% trans "Deletion of data" %}</h2>
+      {% if petition.expires_at %}
+      {% if expiry_form_submitted and not expiry_form.errors %}{% include "petition/saved_alert.html" %}{% endif %}
+      <p>{% blocktrans with date=petition.expires_at|date:"DATE_FORMAT" %}The petition and its signatories’ data will be deleted on <strong>{{ date }}</strong>.{% endblocktrans %}</p>
+      <p>{% include "petition/expiry_badge.html" %}</p>
+      {% if expiry_form %}
+      <form method="POST" action="{% url "edit_petition" petition.id %}#expiry" class="fp-stack" novalidate>{% csrf_token %}
+        <input type="hidden" name="expiry_form_submitted" value="yes">
+        {% include "petition/expiry_field.html" with field=expiry_form.expires_at %}
+        <div><button type="submit" class="fp-btn fp-btn-secondary">{% trans "Save the date" %}</button></div>
+      </form>
+      {% endif %}
+      {% else %}
+      <p class="fp-small">{% blocktrans with date=petition.creation_date|date:"DATE_FORMAT" %}Created on {{ date }}.{% endblocktrans %}</p>
+      {% endif %}
+    </div>
+  </section>
+</div>
+{% endwith %}
+{% endif %}
 
-<!-- Checkbox input displaying publish status -->
-<div data-petition-id="{{ petition.id }}" data-petition-unpublish="{% url 'petition_unpublish' petition.id %}" data-petition-publish="{% url 'petition_publish' petition.id %}"
-    class="petition-publish-switch mb-4 custom-control custom-switch
-                       {% if not petition.published %}
-                       text-muted
-                       {% else %}
-                       text-success
-                       {% endif %}" data-action="publish">
-    <input type="checkbox" class="custom-control-input"
-                           name="petition_published_{{ petition.id }}"
-                           id="petition_published_{{ petition.id }}"
-                           {% if petition.published %} checked {% endif %}>
-    <label class="custom-control-label" for="petition_published_{{ petition.id }}">
-        {% if not petition.published %}
-        {% trans "Not published" %}
+<div data-fp-tabs>
+  <ul class="fp-tabs">
+    <li><a class="fp-tab" href="#tab_content_form">{% include "components/icon.html" with name="document" %}{% trans "Text and goal" %} <span class="fp-unsaved" data-fp-unsaved="content" hidden>{% trans "(unsaved)" %}</span></a></li>
+    <li><a class="fp-tab" href="#tab_social_network_form">{% include "components/icon.html" with name="share-boxed" %}{% trans "Sharing" %} <span class="fp-unsaved" data-fp-unsaved="sharing" hidden>{% trans "(unsaved)" %}</span></a></li>
+    <li><a class="fp-tab" href="#tab_email_form">{% include "components/icon.html" with name="envelope-closed" %}{% trans "Emails" %} <span class="fp-unsaved" data-fp-unsaved="email" hidden>{% trans "(unsaved)" %}</span></a></li>
+    {% if not settings.DISABLE_NEWSLETTER and petition.has_newsletter %}
+    <li><a class="fp-tab" href="#tab_newsletter_form">{% include "components/icon.html" with name="rss" %}{% trans "Newsletter" %} <span class="fp-unsaved" data-fp-unsaved="newsletter" hidden>{% trans "(unsaved)" %}</span></a></li>
+    {% endif %}
+    {% if not is_template %}
+    <li><a class="fp-tab" href="#tab_preview">{% include "components/icon.html" with name="eye" %}{% trans "Preview" %}</a></li>
+    {% endif %}
+  </ul>
+
+  {# Text and goal #}
+  <section class="fp-tab-panel" id="tab_content_form" aria-label="{% trans "Text and goal" %}">
+    {% if content_form_submitted and not content_form.errors %}{% include "petition/saved_alert.html" %}{% endif %}
+    <form method="POST" action="#tab_content_form" class="fp-editor-form" data-fp-track="content" novalidate>{% csrf_token %}
+      {% if content_form.errors %}{% include "petition/form_errors.html" with form=content_form %}{% endif %}
+      <fieldset class="fp-fieldset">
+        <legend class="fp-legend">{% trans "Text" %}</legend>
+        {% if is_template %}
+        {% trans "Template name" as l %}{% include "petition/edit_field.html" with field=content_form.name label=l %}
         {% else %}
-        {% trans "Published" %}
+        {% trans "Title of the petition" as l %}{% include "petition/edit_field.html" with field=content_form.title label=l %}
         {% endif %}
-    </label>
+        {% trans "Text of the petition" as l %}{% include "petition/edit_field.html" with field=content_form.text label=l %}
+      </fieldset>
 
-    <!-- Alert message displayed only if petition is not published -->
-    <div class="alert alert-warning alert-dismissible fade show" id="publication-warning" role="alert" style="display: none">
-        <strong>{% trans "Caution!" %}</strong>
-            {% blocktrans trimmed %}
-              This petition is not published yet. You can only see it because you are logged-in as either its creator or a member of the organization
-              which created it. Other visitors won't be able to see it.
-            {% endblocktrans %}
-    </div>
-</div>
-{% endif %}
+      <fieldset class="fp-fieldset">
+        <legend class="fp-legend">{% trans "Goal and signatures" %}</legend>
+        {% trans "Goal (number of signatures)" as l %}{% trans "Shown as a progress bar on the petition. A reachable goal motivates people to sign." as h %}
+        {% include "petition/edit_field.html" with field=content_form.target label=l help=h %}
+        {% trans "Also count paper signatures" as l %}{% trans "Add the signatures you collected on paper to the counter." as h %}
+        {% include "petition/edit_field.html" with field=content_form.paper_signatures_enabled label=l help=h reveal="paper-signatures" %}
+        <div id="paper-signatures">
+          {% trans "Number of paper signatures" as l %}{% include "petition/edit_field.html" with field=content_form.paper_signatures label=l %}
+        </div>
+      </fieldset>
 
-<!-- 5 different menus to edit petition -->
-<div class="list-group list-group-horizontal mb-5" id="list-tab" role="tablist">
-    <a href="#content_form" class="list-group-item list-group-item-info list-group-item-action active"
-    data-toggle="list" aria-controls="content_form" role="tab"><span class="oi oi-clipboard" aria-current="true"></span> {% trans "Content" %}</a>
-    <!-- <a href="#style_form" class="list-group-item list-group-item-info list-group-item-action"
-    data-toggle="list" aria-controls="style_form" role="tab"><span class="oi oi-brush"></span> {% trans "Style & Look" %}</a> -->
-    <a href="#social_network_form" class="list-group-item list-group-item-info list-group-item-action"
-    data-toggle="list" aria-controls="social_network_form" role="tab"><span class="oi oi-share-boxed"></span> {% trans "Social Networks" %}</a>
-    <a href="#email_form" class="list-group-item list-group-item-info list-group-item-action"
-    data-toggle="list" aria-controls="email_form" role="tab"><span class="oi oi-envelope-closed"></span> {% trans "E-mail setup" %}</a>
-    {% if not settings.DISABLE_NEWSLETTER %}
-        <a href="#newsletter_form" class="list-group-item list-group-item-info list-group-item-action"
-        data-toggle="list" aria-controls="newsletter_form" role="tab"><span class="oi oi-rss"></span> {% trans "Newsletter setup" %}</a>
-    {% endif %}
-    <a href="#preview" class="list-group-item list-group-item-info list-group-item-action"
-    data-toggle="list" aria-controls="preview" role="tab"><span class="oi oi-clipboard"></span> {% trans "Preview petition" %}</a>
-</div>
-<div class="tab-content" id="nav-tabContent">
+      {% if not is_template %}
+      <fieldset class="fp-fieldset">
+        <legend class="fp-legend">{% trans "Publication and data" %}</legend>
+        {% trans "Publication date" as l %}{% trans "Format: YYYY-MM-DD." as h %}
+        {% include "petition/edit_field.html" with field=content_form.publication_date label=l help=h %}
+        {% trans "Show the publication date on the petition" as l %}{% include "petition/edit_field.html" with field=content_form.show_publication_date label=l %}
+      </fieldset>
+      {% endif %}
 
-    <!-- 'Content' panel -->
-    <!-- implemented with Django in `forms.py` -->
-    <div class="tab-pane fade show active" id="content_form" role="tabpanel"
-         aria-labelledby="list-content-form-list">
-        <form method="POST" id="form_content">{% csrf_token %}
-            {% include "petition/bs4_form.html" with form=content_form %}
-            <button name="content_form_submitted" class="btn btn-primary" value="yes" type="submit">{% trans "Save" %}</button>
-        </form>
-    </div>
+      <details class="fp-details fp-fieldset">
+        <summary>{% trans "Additional texts (optional)" %}</summary>
+        {% trans "Text next to the signature form" as l %}{% include "petition/edit_field.html" with field=content_form.side_text label=l %}
+        {% trans "Text at the bottom of the petition" as l %}{% include "petition/edit_field.html" with field=content_form.footer_text label=l %}
+        {% trans "Links at the bottom of the petition" as l %}{% include "petition/edit_field.html" with field=content_form.footer_links label=l %}
+        {% trans "Note under the signature form" as l %}{% trans "For example who collects the signatures and why." as h %}
+        {% include "petition/edit_field.html" with field=content_form.sign_form_footer label=l help=h %}
+      </details>
 
-    <!-- 'Social Networks' panel -->
-    <div class="tab-pane fade" id="social_network_form" role="tabpanel"
-         aria-labelledby="list-social-network-form-list">
-     <form method="POST" id="form_sn" enctype="multipart/form-data">
-         {% csrf_token %}
+      <div class="fp-editor-save">
+        <button name="content_form_submitted" class="fp-btn fp-btn-primary" value="yes" type="submit">{% trans "Save" %}</button>
+      </div>
+    </form>
+  </section>
 
-        <!-- Select petition image group -->
-        <div class="form-group row">
-            <div class="input-group">
-            <input type="checkbox" name="remove_twitter_image" id="remove_twitter_image" hidden>
+  {# Sharing #}
+  <section class="fp-tab-panel" id="tab_social_network_form" aria-label="{% trans "Sharing" %}">
+    {% if social_network_form_submitted and not social_network_form.errors %}{% include "petition/saved_alert.html" %}{% endif %}
+    <form method="POST" action="#tab_social_network_form" enctype="multipart/form-data" class="fp-editor-form" data-fp-track="sharing">{% csrf_token %}
+      {% if social_network_form.errors %}{% include "petition/form_errors.html" with form=social_network_form %}{% endif %}
+      <fieldset class="fp-fieldset">
+        <legend class="fp-legend">{% trans "When the petition is shared" %}</legend>
+        <p class="fp-help">{% trans "The image and the description appear in the preview shown by social networks and messaging apps." %}</p>
+        <div{% if not petition.twitter_image %} hidden{% endif %}>
+          <img class="fp-image-preview" id="img_preview" alt="{% trans "Current sharing image" %}" src="{{ petition.twitter_image|default:"data:," }}">
+          {% if petition.twitter_image %}
+          <div class="fp-check">
+            <input type="checkbox" class="fp-check-input" name="remove_twitter_image" id="remove_twitter_image">
+            <label for="remove_twitter_image">{% trans "Remove the current image" %}</label>
+          </div>
+          {% endif %}
+        </div>
+        <div class="fp-field">
+          <label class="fp-label" for="id_twitter_image">{% trans "Sharing image" %} <span class="fp-optional">{% trans "(optional)" %}</span></label>
+          <p class="fp-help" id="id_twitter_image-help">{% trans "JPEG or PNG, ideally 1200 × 630 pixels." %}</p>
+          <input type="file" class="fp-input" id="id_twitter_image" name="twitter_image" accept="image/*" aria-describedby="id_twitter_image-help" data-fp-image-preview="img_preview">
+        </div>
+        <div class="fp-field">
+          <label class="fp-label" for="id_twitter_description">{% trans "Sharing description" %} <span class="fp-optional">{% trans "(optional)" %}</span></label>
+          <p class="fp-help" id="id_twitter_description-help">{% trans "One or two sentences, 200 characters maximum." %}</p>
+          <textarea name="twitter_description" maxlength="200" rows="3" class="fp-textarea" id="id_twitter_description" aria-describedby="id_twitter_description-help">{{ petition.twitter_description }}</textarea>
+        </div>
+        <div class="fp-field">
+          <label class="fp-label" for="id_org_twitter_handle">{% trans "Twitter/X account to mention" %} <span class="fp-optional">{% trans "(optional)" %}</span></label>
+          <input type="text" name="org_twitter_handle" maxlength="20" class="fp-input" id="id_org_twitter_handle" value="{{ petition.org_twitter_handle }}">
+        </div>
+      </fieldset>
+      <fieldset class="fp-fieldset">
+        <legend class="fp-legend">{% trans "Share buttons on the petition" %}</legend>
+        {% trans "Email" as l %}{% include "petition/perm_check.html" with name="has_email_share_button" label=l checked=petition.has_email_share_button %}
+        {% include "petition/perm_check.html" with name="has_mastodon_share_button" label="Mastodon" checked=petition.has_mastodon_share_button %}
+        {% include "petition/perm_check.html" with name="has_facebook_share_button" label="Facebook" checked=petition.has_facebook_share_button %}
+        {% include "petition/perm_check.html" with name="has_twitter_share_button" label="Twitter/X" checked=petition.has_twitter_share_button %}
+        {% include "petition/perm_check.html" with name="has_linkedin_share_button" label="LinkedIn" checked=petition.has_linkedin_share_button %}
+        {% include "petition/perm_check.html" with name="has_whatsapp_share_button" label="WhatsApp" checked=petition.has_whatsapp_share_button %}
+        {% include "petition/perm_check.html" with name="has_tumblr_share_button" label="Tumblr" checked=petition.has_tumblr_share_button %}
+      </fieldset>
+      <div class="fp-editor-save">
+        <button name="social_network_form_submitted" class="fp-btn fp-btn-primary" value="yes" type="submit">{% trans "Save" %}</button>
+      </div>
+    </form>
 
-            <!-- the variable 'twitter_image' handles the image of the petition -->
-            <label for="inputGroupFileAddon01" class="col-sm-12 col-md-3 col-lg-2 col-form-label">{% trans "Petition image" %}</label>
-                <div class="input-group-prepend">
-                    <a class="input-group-text" id="inputGroupFileAddon01">{% trans "Upload" %}</a>
-                </div>
-                <div class="custom-file">
-                    <input type="file" class="custom-file-input" id="id_twitter_image"
-                      aria-describedby="inputGroupFileAddon01" name="twitter_image">
-                    <label class="custom-file-label" for="id_twitter_image">{% trans "Choose file" %}</label>
-                </div>
-            </div>
-        </div>
-
-        <!-- Preview petition image group -->
-        <div class="form-group row">
-            <label for="img_preview" class="col-sm-12 col-md-3 col-lg-2 col-form-label"></label>
-            <div class="col-sm-12 col-md-9 col-lg-10">
-                <div class="card" id="twitter_img_card" style="width: 18rem;" {% if not petition.twitter_image %}hidden{% endif %}>
-                    <div class="card-header">{% trans "Image" %}</div>
-                    <div class="card-body mx-auto text-center">
-                        <div class="card-text">
-                            {% if petition.twitter_image %}
-                                        <img class="img-thumbnail img-fluid" alt="uploaded image preview" src="{{ petition.twitter_image }}" style="max-width: 200px; max-height: 200px;" id="img_preview"/>
-                            {% else %}
-                                        <img class="img-thumbnail img-fluid" alt="cloud clipart" src="{% static "vendor/open-iconic-1.1.1/png/cloud-upload-8x.png" %}" style="max-width: 200px; max-height: 200px;" id="img_preview"/>
-                            {% endif %}
-                        </div>
-                        <br/>
-                        <button type="button" class="btn btn-danger" id="twitter_img_remove_btn">
-                            <span class="oi oi-trash"> {% trans "Remove image" %}</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-  <div class="form-group row">
-    <label for="id_twitter_description" class="col-sm-12 col-md-3 col-lg-2 col-form-label">{% trans "Twitter description" %}</label>
-        <div class="col-sm-12 col-md-9 col-lg-10">
-            <textarea type="text" name="twitter_description" maxlength="200" class="is-valid form-control" id="id_twitter_description"
-             {% if petition.twitter_description %}value="{{ petition.twitter_description }}"{% endif %}>
-            </textarea>
-        </div>
-  </div>
-  <div class="form-group row">
-    <label for="id_org_twitter_handle" class="col-sm-12 col-md-3 col-lg-2 col-form-label">{% trans "Org twitter handle" %}</label>
-        <div class="col-sm-12 col-md-9 col-lg-10">
-            <input type="text" name="org_twitter_handle" maxlength="20" class="is-valid form-control" id="id_org_twitter_handle"
-             {% if petition.org_twitter_handle %}value="{{ petition.org_twitter_handle }}"{% endif %}>
-        </div>
-  </div>
-    <div class="form-group row">
-        <label for="id_has_email_share_button" class="col-sm-12 col-md-3 col-lg-2 col-form-label">{% trans "Enable email share button?" %}</label>
-        <div class="col-sm-12 col-md-9 col-lg-10">
-            <div class="custom-control custom-switch">
-                <input type="checkbox" name="has_email_share_button"  class="is-valid custom-control-input" id="id_has_email_share_button"
-                        {% if petition.has_email_share_button %} checked {% endif %}>
-                <label class="custom-control-label" for="id_has_email_share_button">{% trans "Enable email share button?" %}</label>
-            </div>
-        </div>
-    </div>
-    <div class="form-group row">
-        <label for="id_has_facebook_share_button" class="col-sm-12 col-md-3 col-lg-2 col-form-label">{% trans "Enable Facebook share button?" %}</label>
-        <div class="col-sm-12 col-md-9 col-lg-10">
-            <div class="custom-control custom-switch">
-                <input type="checkbox" name="has_facebook_share_button"  class="is-valid custom-control-input" id="id_has_facebook_share_button"
-                        {% if petition.has_facebook_share_button %} checked {% endif %}>
-                <label class="custom-control-label" for="id_has_facebook_share_button">{% trans "Enable Facebook share button?" %}</label>
-            </div>
-        </div>
-    </div>
-    <div class="form-group row">
-        <label for="id_has_tumblr_share_button" class="col-sm-12 col-md-3 col-lg-2 col-form-label">{% trans "Enable Tumblr share button?" %}</label>
-        <div class="col-sm-12 col-md-9 col-lg-10">
-            <div class="custom-control custom-switch">
-                <input type="checkbox" name="has_tumblr_share_button"  class="is-valid custom-control-input" id="id_has_tumblr_share_button"
-                        {% if petition.has_tumblr_share_button %} checked {% endif %}>
-                <label class="custom-control-label" for="id_has_tumblr_share_button">{% trans "Enable Tumblr share button?" %}</label>
-            </div>
-        </div>
-    </div>
-    <div class="form-group row">
-        <label for="id_has_linkedin_share_button" class="col-sm-12 col-md-3 col-lg-2 col-form-label">{% trans "Enable LinkedIn share button?" %}</label>
-        <div class="col-sm-12 col-md-9 col-lg-10">
-            <div class="custom-control custom-switch">
-                <input type="checkbox" name="has_linkedin_share_button"  class="is-valid custom-control-input" id="id_has_linkedin_share_button"
-                        {% if petition.has_linkedin_share_button %} checked {% endif %}>
-                <label class="custom-control-label" for="id_has_linkedin_share_button">{% trans "Enable LinkedIn share button?" %}</label>
-            </div>
-        </div>
-    </div>
-    <div class="form-group row">
-        <label for="id_has_twitter_share_button" class="col-sm-12 col-md-3 col-lg-2 col-form-label">{% trans "Enable Twitter share button?" %}</label>
-        <div class="col-sm-12 col-md-9 col-lg-10">
-            <div class="custom-control custom-switch">
-                <input type="checkbox" name="has_twitter_share_button"  class="is-valid custom-control-input" id="id_has_twitter_share_button"
-                        {% if petition.has_twitter_share_button %} checked {% endif %}>
-                <label class="custom-control-label" for="id_has_twitter_share_button">{% trans "Enable Twitter share button?" %}</label>
-            </div>
-        </div>
-    </div>
-    <div class="form-group row">
-        <label for="id_has_mastodon_share_button" class="col-sm-12 col-md-3 col-lg-2 col-form-label">{% trans "Enable Mastodon share button?" %}</label>
-        <div class="col-sm-12 col-md-9 col-lg-10">
-            <div class="custom-control custom-switch">
-                <input type="checkbox" name="has_mastodon_share_button"  class="is-valid custom-control-input" id="id_has_mastodon_share_button"
-                        {% if petition.has_mastodon_share_button %} checked {% endif %}>
-                <label class="custom-control-label" for="id_has_mastodon_share_button">{% trans "Enable Mastodon share button?" %}</label>
-            </div>
-        </div>
-    </div>
-    <div class="form-group row">
-        <label for="id_has_whatsapp_share_button" class="col-sm-12 col-md-3 col-lg-2 col-form-label">{% trans "Enable Whatsapp share button?" %}</label>
-        <div class="col-sm-12 col-md-9 col-lg-10">
-            <div class="custom-control custom-switch">
-                <input type="checkbox" name="has_whatsapp_share_button"  class="is-valid custom-control-input" id="id_has_whatsapp_share_button"
-                        {% if petition.has_whatsapp_share_button %} checked {% endif %}>
-                <label class="custom-control-label" for="id_has_whatsapp_share_button">{% trans "Enable Whatsapp share button?" %}</label>
-            </div>
-        </div>
-    </div>
-
-<button name="social_network_form_submitted" class="btn btn-primary" value="yes" type="submit" >{% trans "Save" %}</button>
-        </form>
-        <p>
-
-        <!-- Permalink info -->
-        <div class="alert alert-info">
-            {% blocktrans %}
-                A permlink (permanent link) is what allows you to share your petition with a nice link
-                containing a meaningful small title instead of a number.
-                With a permlink your petition can be accessible via a link like:
-            {% endblocktrans %}
-            <b>
-            {{ example_url }}
-            </b>
-        </div>
-
-        <!-- Permalink -->
-        <form action="{% url "add_new_slug" petition.id %}" method="POST" class="form-inline">
-        {% csrf_token %}
-        <table class="table table-striped" id="slugTable">
-            <thead class="thead-light">
+    {% if not is_template %}
+    <section class="fp-editor-form fp-fieldset" aria-labelledby="slugs-title">
+      <h2 class="fp-dash-section-title" id="slugs-title">{% trans "Web addresses" %}</h2>
+      <p class="fp-help">{% blocktrans trimmed %}
+        A readable address is easier to share than a number. Example: <code>{{ example_url }}</code>
+      {% endblocktrans %}</p>
+      {% with slugs=petition.slugmodel_set.all %}
+      {% if slugs %}
+      <div class="fp-table-wrap" role="region" aria-labelledby="slugs-title" tabindex="0">
+        <table class="fp-table fp-slug-table">
+          <thead><tr><th>{% trans "Address" %}</th><th><span class="fp-sr-only">{% trans "Actions" %}</span></th></tr></thead>
+          <tbody>
+            {% for slug in slugs %}
             <tr>
-                <th>{% trans "Permlinks" %}</th>
-                <th>{% trans "Actions" %}</th>
+              <td><code>{{ slug_prefix }}/{{ slug }}</code></td>
+              <td>
+                <form method="post" action="{% url "del_slug" petition.id %}?slugid={{ slug.id }}">{% csrf_token %}
+                  <button type="submit" class="fp-btn fp-btn-tertiary fp-btn-sm">{% trans "Delete" %}<span class="fp-sr-only"> {{ slug }}</span></button>
+                </form>
+              </td>
             </tr>
-            </thead>
-            <tbody>
-            {% for slug in petition.slugmodel_set.all %}
-                <tr>
-                <td>{{ slug_prefix }}/<b>{{ slug }}</b></td>
-                <td data-slugid="{{ slug.id }}"><input type="button" class="btn btn-danger" data-action="slugDelete" value="{% trans "Delete" %}"></td>
-                </tr>
             {% endfor %}
-            </tbody>
+          </tbody>
         </table>
-        </form>
-        </p>
-        <button class="btn btn-success" id="addSlug"><span class="oi oi-plus"></span></button>
-    </div>
-
-    <!-- 'Style & Look' panel -->
-    <div class="tab-pane fade" id="style_form" role="tabpanel"
-         aria-labelledby="style-form-list">
-        <form method="POST" id="form_style">{% csrf_token %}
-            {% include "petition/bs4_form.html" with form=style_form %}
-            <button name="style_form_submitted" class="btn btn-primary" value="yes" type="submit" >{% trans "Save" %}</button>
-        </form>
-    </div>
-
-    <!-- 'E-mail setup' panel -->
-    <div class="tab-pane fade" id="email_form" role="tabpanel"
-        aria-labelledby="list-email-form-list">
-        <form method="POST" id="form_email">{% csrf_token %}
-            {% include "petition/bs4_form.html" with form=email_form %}
-            <button name="email_form_submitted" class="btn btn-primary" value="yes" type="submit">{% trans "Save" %}</button>
-        </form>
-    </div>
-    {% if not settings.DISABLE_NEWSLETTER %}
-        <div class="tab-pane fade" id="newsletter_form" role="tabpanel"
-            aria-labelledby="list-newsletter-form-list">
-            <form method="POST" id="form_newsletter">{% csrf_token %}
-                {% include "petition/bs4_form.html" with form=newsletter_form %}
-                <button name="newsletter_form_submitted" class="btn btn-primary" value="yes" type="submit">{% trans "Save" %}</button>
-            </form>
+      </div>
+      {% endif %}
+      {% endwith %}
+      <form action="{% url "add_new_slug" petition.id %}" method="POST" class="fp-field">{% csrf_token %}
+        <label class="fp-label" for="slugtext">{% trans "Add an address" %}</label>
+        <p class="fp-help" id="slugtext-help">{{ slug_prefix }}/…</p>
+        <div class="fp-input-group">
+          <input type="text" name="slugtext" class="fp-input" id="slugtext" required aria-describedby="slugtext-help">
+          <button type="submit" class="fp-btn fp-btn-secondary">{% trans "Add" %}</button>
         </div>
+      </form>
+    </section>
     {% endif %}
+  </section>
 
-    <!-- 'Preview petition' panel -->
-    <div class="tab-pane fade" id="preview" role="tabpanel"
-        aria-labelledby="list-preview-list" data-src="{{ petition.url }}">
-            <div class="alert alert-warning" role="alert">
-            {% blocktrans %}
-            Beware: this preview shows the current state of the petition.<br />
-            If you modified some settings, please save if you want to see them in the preview.
-            {% endblocktrans %}
-            </div>
-            <div class="embed-responsive embed-responsive-4by3">
-                <iframe class="embed-responsive-item" src=""></iframe>
-            </div>
+  {# Emails #}
+  <section class="fp-tab-panel" id="tab_email_form" aria-label="{% trans "Emails" %}">
+    {% if email_form_submitted and not email_form.errors %}{% include "petition/saved_alert.html" %}{% endif %}
+    <form method="POST" action="#tab_email_form" class="fp-editor-form" data-fp-track="email" novalidate>{% csrf_token %}
+      {% if email_form.errors %}{% include "petition/form_errors.html" with form=email_form %}{% endif %}
+      {% trans "Reply-to address" as l %}{% trans "Each signatory receives a confirmation email. If they reply to it, their message goes to this address. Leave empty if you do not want to receive replies." as h %}
+      {% include "petition/edit_field.html" with field=email_form.confirmation_email_reply label=l help=h %}
+      <div class="fp-editor-save">
+        <button name="email_form_submitted" class="fp-btn fp-btn-primary" value="yes" type="submit">{% trans "Save" %}</button>
+      </div>
+    </form>
+  </section>
+
+  {# Newsletter (hidden on Framapétitions unless a petition already uses it) #}
+  {% if not settings.DISABLE_NEWSLETTER and petition.has_newsletter %}
+  <section class="fp-tab-panel" id="tab_newsletter_form" aria-label="{% trans "Newsletter" %}">
+    {% if newsletter_form_submitted and not newsletter_form.errors %}{% include "petition/saved_alert.html" %}{% endif %}
+    <form method="POST" action="#tab_newsletter_form" class="fp-editor-form" data-fp-track="newsletter" novalidate>{% csrf_token %}
+      {% if newsletter_form.errors %}{% include "petition/form_errors.html" with form=newsletter_form %}{% endif %}
+      {% include "petition/edit_field.html" with field=newsletter_form.has_newsletter reveal="newsletter-fields" %}
+      <div id="newsletter-fields">
+        {% for field in newsletter_form.visible_fields %}{% if field.name != "has_newsletter" %}
+        {% include "petition/edit_field.html" with field=field %}
+        {% endif %}{% endfor %}
+      </div>
+      <div class="fp-editor-save">
+        <button name="newsletter_form_submitted" class="fp-btn fp-btn-primary" value="yes" type="submit">{% trans "Save" %}</button>
+      </div>
+    </form>
+  </section>
+  {% endif %}
+
+  {% if not is_template %}
+  <section class="fp-tab-panel" id="tab_preview" aria-label="{% trans "Preview" %}">
+    <div class="fp-alert fp-alert-info">
+      {% include "components/alert_icon.html" with kind="info" %}
+      <p>{% trans "The preview shows the saved version. Save your changes to see them here." %} <a href="{{ petition.url }}" target="_blank" rel="noopener">{% trans "Open in a new tab" %}</a></p>
     </div>
+    <iframe class="fp-preview-frame" src="{{ petition.url }}" loading="lazy" title="{% trans "Preview of the petition" %}"></iframe>
+  </section>
+  {% endif %}
 </div>
-{% endblock %}
-
-{% block extrajs %}
-    {{ block.super }}
-    <script src="{% static "vendor/bs-custom-file-input-1.3.4/bs-custom-file-input.min.js" %}"></script>
-<script nonce="{{ request.csp_nonce }}">
-function readURL(input) {
-  if (input.files && input.files[0]) {
-    let reader = new FileReader();
-    reader.onload = function(e) {
-      $('#img_preview').prop('src', e.target.result);
-    }
-    reader.readAsDataURL(input.files[0]); // convert to base64 string
-  }
-}
-$(function () {
-  $("#twitter_img_remove_btn").on("click", function() { /* reset input and remove preview when clicked delete button */
-     var label = $("label[for='" + $("#id_twitter_image").attr('id') + "']");
-     $("#remove_twitter_image").prop("checked", true);
-     $("#twitter_img_card").prop("hidden", true);
-     label.text('{% trans "Choose file" %}');
-  });
-  $("#id_twitter_image").change(function() { /* update image preview when file input changed */
-      readURL(this);
-      $("#twitter_img_card").prop("hidden", false);
-      $("#remove_twitter_image").prop("checked", false);
-  });
-});
-$(document).ready(function () { /* init bootstrap custom input */
-  bsCustomFileInput.init();
-});
-$(function (){
-$('a[data-toggle="list"]').on('shown.bs.tab', function(e){
-    const paneID = $(e.target).attr('href');
-    const src = $(paneID).attr('data-src');
-    const formcontent = $('#form_content');
-    const formstyle = $('#form_style');
-    const formemail = $('#form_email');
-    const formsn = $('#form_sn');
-    const formnewsletter = $('#form_newsletter');
-
-    if(paneID === "#preview" && $(paneID+" div iframe").attr("src") === "") {
-        // update the iframe src attribute using the custom data-attribute value
-        $(paneID+" div iframe").attr("src", src);
-    }
-    if ((formcontent.serialize() !== formcontent.data('serialize')) || formcontent.data('mce_changed')) {
-        $('a[href="#content_form"]').html(`
-        <div class="d-flex">
-            <span class="oi oi-clipboard"></span>
-            <span>&nbsp;</span>
-            <div class="d-flex flex-column">
-                <div>* <i>{% trans "Content" %}</i> </div>
-                <div>&nbsp; ({% trans "unsaved" %})</div>
-            </div>
-        </div>
-        `);
-    } else {
-        $('a[href="#content_form"]').html('<span class="oi oi-clipboard"></span> {% trans "Content" %}');
-    }
-    if (formstyle.serialize() !== formstyle.data('serialize')) {
-        $('a[href="#style_form"]').html(`
-        <div class="d-flex">
-            <span class="oi oi-brush"></span>
-            <span>&nbsp;</span>
-            <div class="d-flex flex-column">
-                <div>* <i>{% trans "Style & Look" %}</i> </div>
-                <div>&nbsp; ({% trans "unsaved" %})</div>
-            </div>
-        </div>
-        `);
-    } else {
-        $('a[href="#style_form"]').html('<span class="oi oi-brush"></span> {% trans "Style & Look" %}');
-    }
-    if (formemail.serialize() !== formemail.data('serialize')) {
-        $('a[href="#email_form"]').html(`
-        <div class="d-flex">
-            <span class="oi oi-envelope-closed"></span>
-            <span>&nbsp;</span>
-            <div class="d-flex flex-column">
-                <div>* <i>{% trans "E-mail setup" %}</i> </div>
-                <div>&nbsp; ({% trans "unsaved" %})</div>
-            </div>
-        </div>
-        `);
-    } else {
-        $('a[href="#email_form"]').html('<span class="oi oi-envelope-closed"></span> {% trans "E-mail setup" %}');
-    }
-    if (formsn.serialize() !== formsn.data('serialize')) {
-        $('a[href="#social_network_form"]').html(`
-        <div class="d-flex">
-            <span class="oi oi-share-boxed"></span>
-            <span>&nbsp;</span>
-            <div class="d-flex flex-column">
-                <div>* <i>{% trans "Social Networks" %}</i> </div>
-                <div>&nbsp; ({% trans "unsaved" %})</div>
-            </div>
-        </div>
-        `);
-    } else {
-        $('a[href="#social_network_form"]').html('<span class="oi oi-share-boxed"></span> {% trans "Social Networks" %}');
-    }
-    if (formnewsletter.serialize() !== formnewsletter.data('serialize')) {
-        $('a[href="#newsletter_form"]').html(`
-        <div class="d-flex">
-            <span class="oi oi-rss"></span>
-            <span>&nbsp;</span>
-            <div class="d-flex flex-column">
-                <div>* <i>{% trans "Newsletter setup" %}</i> </div>
-                <div>&nbsp; ({% trans "unsaved" %})</div>
-            </div>
-        </div>
-        `);
-    } else {
-        $('a[href="#newsletter_form"]').html('<span class="oi oi-rss"></span> {% trans "Newsletter setup" %}');
-    }
-});
-});
-// FIXME: This is because the checkbox+label gets ugly green color if is-valid
-$(function (){
-    $(".custom-switch input[type='checkbox']").removeClass('is-valid');
-});
-
-function hide_others_than(elem, do_hide) {
-    const parent_form_group = elem.closest('.form-group');
-    const all_form_groups = parent_form_group.siblings('.form-group');
-    const all_except_this = all_form_groups.not(parent_form_group);
-    if (do_hide)
-        all_except_this.hide();
-    else
-        all_except_this.show();
-}
-
-$(function () {
-   const newsletter_box = $('#id_has_newsletter');
-   if (!newsletter_box.is(':checked'))
-       hide_others_than(newsletter_box, true);
-});
-
-{% if not petition.paper_signatures_enabled %}
-$(function () {
-   paper_signatures = $('#id_paper_signatures').parent().parent().hide();
-});
-{% endif %}
-
-$(function () {
-   $('#id_has_newsletter').on("change", function() {
-        const box = $(this);
-        const checked = box.prop('checked');
-        if (!checked)
-            hide_others_than(box, true);
-        else
-            hide_others_than(box, false)
-   });
-});
-
-// Javascript to enable link to tab
-$(function () {
-    const hash = document.location.hash;
-    const prefix = "tab_";
-    if (hash) {
-        $('.list-group a[href="' + hash.replace(prefix, "") + '"]').tab('show');
-    }
-
-// Change hash for page-reload
-    $('.list-group a').on('shown.bs.tab', function (e) {
-        window.location.hash = e.target.hash.replace("#", "#" + prefix);
-    });
-});
-
-//show first tab pane where there is an :invalid field
-$(function () {
-    const pane_id = $('input.is-invalid').closest('.tab-pane').attr('id');
-    $('.list-group a[href="#' + pane_id + '"]').tab('show');
-});
-
-var new_slugs_num = 0;
-
-$(function () {
-    $("#addSlug").on("click", function () {
-       var newform;
-       const slugTable = $("#slugTable");
-
-       new_slugs_num++;
-       $("#addSlugTd").prop('rowspan', new_slugs_num);
-
-       newform = `
-        <tr class="bg-light">
-        <td><div class="form-group d-flex"><label class="mr-1" for="sluginputfield">{{ slug_prefix }}/ </label>
-        <input type="text" name="slugtext" class="form-control flex-grow-1" id="sluginputfield" required="required">
-        </div></td>`;
-        if (new_slugs_num === 1)
-            newform += `
-            <td rowspan="` + new_slugs_num +`" id="addSlugTd">
-                <input type="submit" class="btn btn-success" value="{% trans "OK" %}">
-            </td>
-            `;
-       newform += "</tr>";
-       slugTable.find("tbody").append(newform);
-    });
-});
-
-$(function () {
-   $('input[data-action="slugDelete"]').on("click", function() {
-       const slugId = $(this).closest("td[data-slugid]").data("slugid");
-       window.location = "{% url "del_slug" petition.id %}" + "?slugid=" + slugId;
-   });
-});
-
-$(function() {
-    const formcontent = $('#form_content');
-    const formstyle = $('#form_style');
-    const formemail = $('#form_email');
-    const formsn = $('#form_sn');
-    const formnewsletter = $('#form_newsletter');
-
-    formsn.data('serialize', formsn.serialize());
-    formcontent.data('serialize', formcontent.serialize());
-    formstyle.data('serialize', formstyle.serialize());
-    formnewsletter.data('serialize', formnewsletter.serialize());
-    formemail.data('serialize', formemail.serialize());
-});
-
-function formHasChanged(){
-    const formcontent = $('#form_content');
-    const formstyle = $('#form_style');
-    const formemail = $('#form_email');
-    const formsn = $('#form_sn');
-    const formnewsletter = $('#form_newsletter');
-    const content_tab_changed = (formcontent.serialize() !== formcontent.data('serialize'))
-                                    || formcontent.data('mce_changed');
-
-    return (formsn.serialize() !== formsn.data('serialize') && !formsn.data('submitted'))
-        || (content_tab_changed && !formcontent.data('submitted'))
-        || (formstyle.serialize() !== formstyle.data('serialize') && !formstyle.data('submitted'))
-        || (formemail.serialize() !== formemail.data('serialize') && !formemail.data('submitted'))
-        {% if not settings.DISABLE_NEWSLETTER %}
-        || (formnewsletter.serialize() !== formnewsletter.data('serialize') && !formnewsletter.data('submitted'))
-        {% endif %}
-        ;
-
-}
-
-$('form').on('submit', function(){
-   $(this).data('submitted', true);
-});
-
-// if publication checkbox is unchecked, display publication-warning message
-$(window).on('load', function(){
-    if (!document.getElementById('petition_published_{{ petition.id }}').checked) {
-        document.getElementById("publication-warning").style.display = "block";
-    }
-});
-
-$(window).on('beforeunload', function(){
-  if (formHasChanged()) {
-      return "You have un-saved modifications in the petition, are you sure you want to leave this page? You would lose your changes.";
-  }
-});
-
-function set_mce_changed(ed) {
-    $(ed.formElement).data('mce_changed', true);
-}
-
-var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
-function get_csrf_token() {
-    return csrftoken;
-}
-</script>
-{% endblock %}
+{% endblock edit_content %}

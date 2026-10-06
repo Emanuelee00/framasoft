@@ -1,0 +1,10 @@
+{% load i18n %}
+{% comment %}
+  Error summary, hidden fields and visible fields of a form, with the design system field.
+  {% include "petition/form_fields.html" with form=form %}
+{% endcomment %}
+{% include "petition/form_errors.html" with form=form %}
+{% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+{% for field in form.visible_fields %}
+{% include "components/field.html" with field=field %}
+{% endfor %}

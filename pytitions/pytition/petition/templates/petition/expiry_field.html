@@ -1,0 +1,25 @@
+{% load i18n %}{% load fp_dashboard %}
+{% comment %}
+  Petition.expires_at in the wizard and the petition settings (GDPR retention).
+  {% include "petition/expiry_field.html" with field=form.expires_at petition=petition %}
+  The "Extend by 12 months" button (js/fp-editor.js) fills the field; saving the form makes it real.
+  It never goes beyond the max attribute of the input, or 24 months from today without one.
+{% endcomment %}
+<div class="fp-field fp-expiry{% if field.errors %} fp-field-invalid{% endif %}" id="expiry">
+  <label class="fp-label" for="{{ field.id_for_label }}">{{ field.label|default:_("Deletion date") }}</label>
+  {% if field.help_text %}<p class="fp-help" id="{{ field.auto_id }}-help">{{ field.help_text }}</p>{% endif %}
+  <p class="fp-help" id="{{ field.auto_id }}-explain">{% blocktrans trimmed %}
+    You will receive a reminder by email 30, 20 and 10 days before, to download the list of signatories.
+  {% endblocktrans %}</p>
+  {% if field.errors %}<p class="fp-field-error" id="{{ field.auto_id }}-error">{% include "components/icon.html" with name="warning" %}<span>{{ field.errors|join:" " }}</span></p>{% endif %}
+  <div class="fp-expiry-control">
+    {% fp_widget_described field field.auto_id|add:"-explain" %}
+    <button type="button" class="fp-btn fp-btn-secondary" hidden
+            data-fp-extend="{{ field.id_for_label }}" data-fp-extend-months="12" data-fp-extend-limit-months="24"
+            data-fp-extend-done="{% trans "New date: {date}. Save to confirm it." %}"
+            data-fp-extend-max="{% trans "This is already the latest possible date." %}">
+      {% include "components/icon.html" with name="clock" %}{% trans "Extend by 12 months" %}
+    </button>
+  </div>
+  <p class="fp-help fp-expiry-status" role="status" aria-live="polite"></p>
+</div>

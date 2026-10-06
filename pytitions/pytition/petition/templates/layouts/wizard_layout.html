@@ -1,29 +1,61 @@
 {% extends base_template %}
 {% load i18n %}
-{% load widget_tweaks %}
-{% load petition_extras %}
 {% load static %}
+{% comment %}
+  Petition creation wizard (FE-10). Steps fill: wizard_content (the form) and wizard_help (tips).
+  Behaviours (slug preview, expiry extension, TinyMCE hooks) come from js/fp-editor.js.
+{% endcomment %}
+
+{% block title %}{% trans "New petition" %}{% endblock title %}
+
 {% block media %}
     {{ form.media }}
 {% endblock %}
+
 {% block extracss %}
   {{ block.super }}
-    <link href="{% static 'vendor/smartwizard/dist/css/smart_wizard_theme_arrows.css' %}" rel="stylesheet" type="text/css" />
+  <link href="{% static "css/fp-editor.css" %}" rel="stylesheet">
 {% endblock %}
 
-{% block content %}
-  <h1 class="my-3">{% trans "Create a new petition!" %}</h1>
-  <div id="smartwizard">
-    <ul>
-      <li><a href="#step-1" id="step1_link">{% trans "Title" %}<br />
-          <small>{% trans "Give a title to your petition" %}</small></a></li>
-      <li><a href="#step-2" id="step2_link">{% trans "Content" %}<br />
-          <small>{% trans "Write your petition content" %}</small></a></li>
-      <li><a href="#step-3" id="step3_link">{% trans "Publish" %}<br />
-          <small>{% trans "Save your petition and publish it if it's ready" %}</small></a></li>
-    </ul>
-    {% block wizard_content %}
-    {% endblock wizard_content %}
-  </div>
+{% block dash_nav %}{% endblock dash_nav %}
 
+{% block content %}
+<div class="fp-page-header fp-dash-head">
+  <div>
+    <h1 id="fp-page-title">{% if org %}{% blocktrans with name=org.name %}New petition for {{ name }}{% endblocktrans %}{% else %}{% trans "New petition" %}{% endif %}</h1>
+    <p class="fp-lead">{% trans "Three short steps. Nothing is public until you decide to publish." %}</p>
+  </div>
+</div>
+
+{% with current=wizard.steps.step1 %}
+<ol class="fp-stepper" aria-label="{% trans "Steps" %}">
+  <li class="fp-step{% if current > 1 %} is-done{% endif %}"{% if current == 1 %} aria-current="step"{% endif %}>
+    <span class="fp-step-marker"></span>
+    <span class="fp-step-label">{% trans "Title" %}<span class="fp-step-hint">{% trans "Short and clear" %}</span></span>
+  </li>
+  <li class="fp-step{% if current > 2 %} is-done{% endif %}"{% if current == 2 %} aria-current="step"{% endif %}>
+    <span class="fp-step-marker"></span>
+    <span class="fp-step-label">{% trans "Text" %}<span class="fp-step-hint">{% trans "What you ask and why" %}</span></span>
+  </li>
+  <li class="fp-step"{% if current == 3 %} aria-current="step"{% endif %}>
+    <span class="fp-step-marker"></span>
+    <span class="fp-step-label">{% trans "Publication" %}<span class="fp-step-hint">{% trans "Now or later" %}</span></span>
+  </li>
+</ol>
+{% endwith %}
+
+<div class="fp-wizard">
+  <div class="fp-wizard-main">
+    {% block wizard_content %}{% endblock wizard_content %}
+  </div>
+  <aside class="fp-wizard-help" aria-labelledby="wizard-help-title">
+    <h2 class="fp-wizard-help-title" id="wizard-help-title">{% include "components/icon.html" with name="lightbulb" %}{% trans "Tips" %}</h2>
+    {% block wizard_help %}{% endblock wizard_help %}
+  </aside>
+</div>
+{% endblock content %}
+
+{% block extrajs %}
+  {{ block.super }}
+  <script src="{% static "js/fp-editor.js" %}" defer></script>
 {% endblock %}

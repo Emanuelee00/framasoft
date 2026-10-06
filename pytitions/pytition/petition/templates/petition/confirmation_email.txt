@@ -7,7 +7,9 @@ You have just signed the petition “{{ title }}” on Framapétitions. To have 
 {% if days %}
 {% blocktrans trimmed %}Without confirmation within {{ days }} days, your signature and your data will be deleted automatically.{% endblocktrans %}
 {% endif %}
-{% trans "You did not sign this petition?" %} {% trans "Do nothing: the signature will be deleted." %}
+{% if expires_at %}{% blocktrans trimmed with date=expires_at|date:"DATE_FORMAT" %}The petition and its signatures will be deleted on {{ date }}.{% endblocktrans %}
+
+{% endif %}{% trans "You did not sign this petition?" %} {% trans "Do nothing: the signature will be deleted." %}
 {% if manage_url %}
 {% trans "At any time, you can view, download or delete your signature here:" %}
 {{ manage_url }}

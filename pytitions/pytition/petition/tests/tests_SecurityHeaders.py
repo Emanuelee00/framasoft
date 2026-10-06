@@ -101,6 +101,8 @@ class SecurityHeadersTest(TestCase):
         self.assertEqual(directives['object-src'], "'none'")
         self.assertEqual(directives['base-uri'], "'self'")
         self.assertEqual(directives['frame-ancestors'], "'self'")
+        # the preview tab of the petition settings frames the petition page (same origin, also over http)
+        self.assertIn("'self'", directives['frame-src'].split())
 
     @override_settings(CSP_REPORT_ONLY=True)
     def test_report_only(self):

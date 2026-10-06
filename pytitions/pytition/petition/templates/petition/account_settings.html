@@ -1,169 +1,83 @@
-{% extends "layouts/layout.html" %}
-{% load i18n %}
-{% block container_type %}container{% endblock container_type %}
+{% extends "petition/user_base.html" %}
+{% load i18n %}{% load fp_dashboard %}
 
-{% block main_content %}
-<div class="container">
-  <div class="row">
-    <div class="col-4">
-        <div class="list-group" id="list-tab" role="tablist">
-            <span class="list-group-item disabled"><b>{% trans "Personal Settings" %}</b></span>
-            <a href="#update_info_form" class="list-group-item list-group-item-action active" data-toggle="list" id="a_update_info_form" aria-controls="update_info_form" role="tab"><span class="oi oi-person"></span>  {% trans "Personal Information" %}</a>
-            <a href="#password_change_form" class="list-group-item list-group-item-action" data-toggle="list" id="a_password_change" aria-controls="password_change_form" role="tab"><span class="oi oi-key"></span>  {% trans "Change Password" %}</a>
-            <a href="#org_form" class="list-group-item list-group-item-action" data-toggle="list" aria-controls="org_form" id="a_org_form" role="tab"><span class="oi oi-people"></span>  {% trans "Organizations" %}</a>
-            <a href="#delete_account_form" class="list-group-item list-group-item-action" data-toggle="list" id="a_delete_account" aria-controls="delete_account_form" role="tab"><span class="oi oi-trash"></span>  {% trans "Delete your account" %}</a>
-        </div>
-    </div>
-    <div class="col-8">
-        <div class="tab-content" id="nav-tabContent">
-            <div class="tab-pane fade show active" id="update_info_form" role="tabpanel"
-                 aria-labelledby="update-info-form-list">
-                <h3 class="mb-4">{% trans "Personal Information" %}</h3>
-                <form method="POST">{% csrf_token %}
-                    {% include "petition/bs4_form.html" with form=update_info_form %}
-                    <div class="text-center">
-                        <button name="update_info_form_submitted" class="btn btn-primary" value="yes" type="submit">{% trans "Update" %}</button>
-                    </div>
-                </form>
-            </div>
-            <div class="tab-pane fade" id="password_change_form" role="tabpanel"
-                 aria-labelledby="password-change-form-list">
-                <h3 class="mb-4">{% trans "Change password" %}</h3>
-                <form method="POST">{% csrf_token %}
-                    {% include "petition/bs4_form.html" with form=password_change_form %}
-                    <div class="text-center">
-                        <button name="password_change_form_submitted" class="btn btn-primary" value="yes" type="submit">{% trans "Change password" %}</button>
-                    </div>
-                </form>
-            </div>
-            <div class="tab-pane fade" id="org_form" role="tabpanel">
-                <div>
-                    <h3 class="mb-4">{% trans "Organizations" %}</h3>
-                </div>
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            <strong>{{ message }}</strong>
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                    {% endfor %}
-                {% endif %}
+{% block title %}{% trans "Account and organizations" %}{% endblock title %}
 
-                {% if orgs|length > 0 %}
-                <div class="list-group">
-                    {% for org in orgs %}
-                        <div class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h5 class="mt-2 mb-2"><a href="{% url 'org_dashboard' org.slugname %}">{{org.name }}</a></h5>
-                                {% if org.leave %}
-                                <button type="button" class="btn btn-light btn-delete-org" data-orgname="{{org.name}}" data-leaveurl="{% url 'leave_org' org.slugname%}">Leave</button>
-                                {% else %}
-                                <span class="d-inline-block" tabindex="0" data-toggle="tooltip" title="{% trans 'You cannot leave an organization where you are either the last administrator or the last member' %}">
-                                    <button type="button" class="btn btn-light" style="pointer-events: none;" disabled>Leave</button>
-                                </span>
-                                {% endif %}
-                            </div>
-                        </div>
-                    {% endfor %}
-                </div>
-                {% else %}
-                <i>{% trans "You are not part of any organization" %}</i>
-                {% endif %}
-                <div class="text-center mt-5">
-                    <a href="{% url 'org_create' %}" class="btn btn-primary">{% trans "Create an Organization" %}</a>
-                </div>
-            </div>
-            <div class="tab-pane fade" id="delete_account_form" role="tabpanel"
-                 aria-labelledby="delete-account-form-list">
-                <h3 class="mb-4">{% trans "Delete Account" %}</h3>
-
-                            <div class="alert alert-warning alert-dismissible show fade">
-                                <button type="button" class="close" data-dismiss="alert" aria-label="{% trans 'Close' %}"><span aria-hidden="true">&times;</span></button>
-                                <div class="row">
-                                    <div class="col-1 alert-icon-col">
-                                        <span class="oi oi-warning"></span>
-                                    </div>
-                                    <div class="col">
-                                        {% blocktrans %}
-                                            WARNING: If you do this, your data will be permanently deleted.<br />
-                                            Please, confirm you understand the risks by entering the following sentence
-                                            in the validation field:
-                                        {% endblocktrans %}
-                                        <br />
-                                        {% trans "DROP MY ACCOUNT" %}
-                                    </div>
-                                </div>
-                            </div>
-                <form method="POST">{% csrf_token %}
-                    {% include "petition/bs4_form.html" with form=delete_account_form %}
-                    <div class="text-center">
-                        <button name="delete_account_form_submitted" class="btn btn-danger" value="yes" type="submit">{% trans "Delete" %}</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+{% block content %}
+<div class="fp-page-header fp-dash-head">
+  <div>
+    <h1 id="fp-page-title">{% trans "Account and organizations" %}</h1>
+    <p class="fp-lead">{% trans "Your name and email address are only used to manage your petitions. They are not shown to signatories unless you write them in a petition." %}</p>
   </div>
 </div>
 
-<div class="modal fade" id="org_leave_modal" tabindex="-1" role="dialog" aria-labelledby="org_leave_modal_label" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-          <h5 class="modal-title" id="org_leave_modal_label">{% trans "Leaving an organization" %}</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-          {% trans "Are you sure you want to leave" %} <span id="orgname_modal"></span> ?
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-        <a href="#" id="leavelink"><button type="button" class="btn btn-primary">Leave</button></a>
-      </div>
+<div class="fp-settings">
+  <section class="fp-settings-section" id="a_update_info_form" aria-labelledby="info-title">
+    <h2 id="info-title">{% trans "Personal information" %}</h2>
+    <form method="POST" class="fp-form-narrow" novalidate>{% csrf_token %}
+      {% include "petition/form_fields.html" with form=update_info_form %}
+      <button name="update_info_form_submitted" class="fp-btn fp-btn-primary" value="yes" type="submit">{% trans "Save my information" %}</button>
+    </form>
+  </section>
+
+  <section class="fp-settings-section" id="a_password_change" aria-labelledby="password-title">
+    <h2 id="password-title">{% trans "Change password" %}</h2>
+    <form method="POST" class="fp-form-narrow">{% csrf_token %}
+      {% if password_change_form_submitted %}
+      {% include "petition/form_fields.html" with form=password_change_form %}
+      {% else %}
+      {% for field in password_change_form.visible_fields %}{% include "components/field.html" with field=field|fp_no_autofocus %}{% endfor %}
+      {% endif %}
+      <button name="password_change_form_submitted" class="fp-btn fp-btn-secondary" value="yes" type="submit">{% trans "Change password" %}</button>
+    </form>
+  </section>
+
+  <section class="fp-settings-section" id="a_org_form" aria-labelledby="orgs-settings-title">
+    <div class="fp-dash-section-head">
+      <h2 id="orgs-settings-title">{% trans "Organizations" %}</h2>
+      {% if not settings.RESTRICT_ORG_CREATION or request.user.is_superuser %}
+      <a href="{% url 'org_create' %}" class="fp-btn fp-btn-secondary">{% include "components/icon.html" with name="plus" %}{% trans "New organization" %}</a>
+      {% endif %}
     </div>
-  </div>
+    {% if orgs %}
+    <ul class="fp-dash-list">
+      {% for org in orgs %}
+      <li class="fp-dash-list-item">
+        <a href="{% url 'org_dashboard' org.slugname %}">{{ org.name }}</a>
+        {% if org.leave %}
+        <button type="button" class="fp-btn fp-btn-tertiary fp-btn-sm fp-js-only" data-fp-dialog-open="leave-{{ org.slugname }}">{% trans "Leave" %}<span class="fp-sr-only"> {{ org.name }}</span></button>
+        <dialog class="fp-dialog" id="leave-{{ org.slugname }}" aria-labelledby="leave-{{ org.slugname }}-title">
+          <h2 class="fp-dialog-title" id="leave-{{ org.slugname }}-title">{% blocktrans with name=org.name %}Leave {{ name }}?{% endblocktrans %}</h2>
+          <p>{% trans "You will no longer see the petitions and signatories of this organization. A member will have to invite you again." %}</p>
+          <form method="post" action="{% url 'leave_org' org.slugname %}" class="fp-dialog-actions">{% csrf_token %}
+            <button type="button" class="fp-btn fp-btn-tertiary" data-fp-dialog-close>{% trans "Cancel" %}</button>
+            <button type="submit" class="fp-btn fp-btn-danger">{% trans "Leave" %}</button>
+          </form>
+        </dialog>
+        {% else %}
+        <span class="fp-muted fp-small">{% trans "You are the last administrator or the last member: you cannot leave." %}</span>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="fp-muted">{% trans "You are not part of any organization yet." %}</p>
+    {% endif %}
+  </section>
+
+  <section class="fp-settings-section fp-danger-zone" id="a_delete_account" aria-labelledby="delete-title">
+    <h2 id="delete-title">{% trans "Delete your account" %}</h2>
+    <p>{% trans "Your account, your petitions and the data of their signatories will be permanently deleted. Download the lists you still need first." %}</p>
+    <form method="POST" class="fp-form-narrow">{% csrf_token %}
+      {% with field=delete_account_form.validation %}
+      <div class="fp-field{% if field.errors %} fp-field-invalid{% endif %}">
+        <label class="fp-label" for="{{ field.id_for_label }}">{% blocktrans with phrase=_("DROP MY ACCOUNT") %}To confirm, type “{{ phrase }}”{% endblocktrans %}</label>
+        {% if field.errors %}<p class="fp-field-error" id="{{ field.auto_id }}-error">{% include "components/icon.html" with name="warning" %}<span>{{ field.errors|join:" " }}</span></p>{% endif %}
+        <input type="text" name="{{ field.html_name }}" id="{{ field.id_for_label }}" class="fp-input" autocomplete="off" required{% if field.errors %} aria-invalid="true" aria-describedby="{{ field.auto_id }}-error"{% endif %}>
+      </div>
+      {% endwith %}
+      <button name="delete_account_form_submitted" class="fp-btn fp-btn-danger" value="yes" type="submit">{% trans "Delete my account permanently" %}</button>
+    </form>
+  </section>
 </div>
-
-{% endblock main_content %}
-
-{% block extrajs %}
-{{ block.super }}
-<script nonce="{{ request.csp_nonce }}">
-$(function() {
-    {% if not password_change_form_submitted %}
-   $('#password_change_form').find('form input').removeClass('is-valid').removeClass('is-invalid');
-    {% endif %}
-    {% if not update_info_form_submitted %}
-   $('#update_info_form').find('form input').removeClass('is-valid').removeClass('is-invalid');
-    {% endif %}
-    {% if not delete_account_form_submitted %}
-   $('#delete_account_form_submitted').find('form input').removeClass('is-valid').removeClass('is-invalid');
-    {% endif %}
-
-    //show first tab pane where there is an :invalid field
-    var pane_id = $('input.is-invalid').closest('.tab-pane').attr('id');
-    $('.list-group a[href="#' + pane_id + '"]').tab('show');
-
-    $('.btn-delete-org').on('click', function(e) {
-        $('#orgname_modal').html($(this).data('orgname'));
-        $('#leavelink').attr('href', $(this).data('leaveurl'));
-        $('#org_leave_modal').modal('show');
-        return false;
-    });
-
-    if(window.location.hash) {
-        if(['#a_password_change', '#a_org_form', '#a_update_info_form', '#a_delete_account'].includes(window.location.hash)) {
-            $(window.location.hash).tab('show');
-        }
-    }
-
-    $('[data-toggle="tooltip"]').tooltip()
-
-})
-
-</script>
-{% endblock extrajs %}
+{% endblock content %}

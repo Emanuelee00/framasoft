@@ -1,0 +1,1 @@
+{% if petition.owner_type == 'user' %}<a href="{% url 'admin:custom_user_detail' petition.owner.id %}">{{ petition.owner }}</a>{% elif petition.owner_type == 'org' %}<a href="{% url 'admin:custom_org_detail' petition.owner %}">{{ petition.owner }}</a>{% endif %}

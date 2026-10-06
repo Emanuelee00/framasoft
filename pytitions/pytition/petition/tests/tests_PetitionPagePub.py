@@ -58,6 +58,7 @@ class ExpiryNoticeTest(TestCase):
         cls.petition = Petition.objects.create(title="Des pistes cyclables", org=org, published=True)
 
     def test_no_date_no_notice(self):
+        self.petition.expires_at = None
         html = render_to_string("components/expiry_notice.html", {"petition": self.petition})
         self.assertNotIn('fp-expiry', html)
 

@@ -1,14 +1,24 @@
 {% load i18n %}
-<div class="dashboard-nav-item py-3">
-  <div class="d-flex justify-content-between align-items-center flex-wrap">
-    <h4><span class="oi oi-people"></span>&nbsp;{% trans "Organizations" %}&nbsp;({{ user.organization_set.all.count }})</h4>
-    <a href="{% url "org_create" %}" class="btn btn-outline-primary btn-sm" data-toggle="tooltip" title="{% trans "Create a new organization" %}">{% trans "New organization" %}</a>
+<section class="fp-dash-section" aria-labelledby="orgs-title" id="organizations">
+  <div class="fp-dash-section-head">
+    <h2 class="fp-dash-section-title" id="orgs-title">{% trans "Your organizations" %}</h2>
+    {% if not settings.RESTRICT_ORG_CREATION or request.user.is_superuser %}
+    <a class="fp-btn fp-btn-secondary" href="{% url "org_create" %}">{% include "components/icon.html" with name="plus" %}{% trans "New organization" %}</a>
+    {% endif %}
   </div>
-  <ul class="dashboard-org-list">
-  {% for org in user.organization_set.all %}
-    <li data-orgname="{{ org.name }}" data-orgslugname="{{ org.slugname }}" data-leaveorg-url="{% url 'leave_org' org.slugname %}">
-      <a href="{% url "org_dashboard" org.slugname %}" class="text-dark">{{ org.name }}</a>
+  <p class="fp-help">{% trans "Create petitions together with other people and share the list of signatories." %}</p>
+  {% with orgs=user.organization_set.all %}
+  {% if orgs %}
+  <ul class="fp-dash-list">
+    {% for org in orgs %}
+    <li class="fp-dash-list-item">
+      <a href="{% url "org_dashboard" org.slugname %}">{{ org.name }}</a>
+      <span class="fp-muted fp-small">{% blocktrans trimmed count counter=org.members.count %}{{ counter }} member{% plural %}{{ counter }} members{% endblocktrans %}</span>
     </li>
-  {% endfor %}
+    {% endfor %}
   </ul>
-</div>
+  {% else %}
+  <p class="fp-muted">{% trans "You are not part of any organization yet." %}</p>
+  {% endif %}
+  {% endwith %}
+</section>

@@ -1,16 +1,11 @@
 {% load i18n %}
-<div class="dashboard-nav-item py-3">
-  <form>
-    <div class="form-inline-group">
-      <h4><label for="invite_user">{% trans "Invite user" %} : </label></h4>
-      <div class="input-group">
-        <div class="input-group-prepend">
-          <span class="input-group-text"><span class="oi oi-person"></span></span>
-        </div>
-        <input class="form-control" type="text" id="invite_user" placeholder="{% trans "Username" %}">
-      </div>
-    </div>
-    <div id="user_search_result" class="list-group">
-    </div>
-  </form>
-</div>
+<form class="fp-invite fp-js-only" role="search" data-fp-invite
+      data-fp-search-url="{% url "get_user_list" %}" data-fp-add-url="{% url "org_add_user" org.slugname %}"
+      data-fp-invite-label="{% trans "Invite" %}" data-fp-searching="{% trans "Searching…" %}" data-fp-none="{% trans "No account with this name." %}">
+  {% csrf_token %}
+  <label class="fp-label" for="invite_user">{% trans "Invite someone" %}</label>
+  <p class="fp-help" id="invite_user_help">{% trans "Type at least 2 letters of their username or name. They will receive an invitation on their dashboard." %}</p>
+  <input class="fp-input" type="search" id="invite_user" autocomplete="off" aria-describedby="invite_user_help" aria-controls="invite_results">
+  <ul class="fp-dash-list fp-invite-results" id="invite_results"></ul>
+  <p class="fp-invite-status" role="status" aria-live="polite"></p>
+</form>

@@ -55,7 +55,7 @@ class ConfirmViewTest(TestCase):
         self.assertContains(response, 'csrfmiddlewaretoken')
         self.assertContains(response, '<meta name="robots" content="noindex">')
         self.assertEqual(response['X-Robots-Tag'], 'noindex')
-        self.assertEqual(response['Referrer-Policy'], 'no-referrer')
+        self.assertEqual(response['Referrer-Policy'], 'same-origin')
         self.assertIn('no-cache', response['Cache-Control'])
         signature.refresh_from_db()
         self.assertFalse(signature.confirmed)
@@ -171,3 +171,32 @@ class ConfirmViewTest(TestCase):
         subscribe.assert_not_called()
         signature.refresh_from_db()
         self.assertIsNone(signature.newsletter_consent_at)
+
+
+class ConfirmCsrfTest(TestCase):
+    """The confirmation form passes the CSRF check as a browser sends it (Origin of the site)"""
+
+    @classmethod
+    def setUpTestData(cls):
+        add_default_data()
+
+    def test_post_with_csrf_checks_and_origin(self):
+        from django.test import Client
+        petition = Petition.objects.filter(published=True).first()
+        signature = Signature.objects.create(first_name="A", last_name="B", email="o@example.org", petition=petition)
+        url = reverse('confirm', args=[petition.id, signature.confirmation_hash])
+        client = Client(enforce_csrf_checks=True)
+        response = client.get(url)
+        # with "no-referrer" browsers send "Origin: null" and the CSRF check fails (403)
+        self.assertNotEqual(response['Referrer-Policy'], 'no-referrer')
+        self.assertNotContains(response, 'content="no-referrer"')
+        token = response.context['csrf_token']
+        response = client.post(url, {'csrfmiddlewaretoken': str(token)}, HTTP_ORIGIN='http://testserver')
+        self.assertNotEqual(response.status_code, 403)
+        signature.refresh_from_db()
+        self.assertTrue(signature.confirmed)
+        # the same request with "Origin: null" is what no-referrer produced
+        other = Signature.objects.create(first_name="C", last_name="D", email="n@example.org", petition=petition)
+        url = reverse('confirm', args=[petition.id, other.confirmation_hash])
+        client.get(url)
+        self.assertEqual(client.post(url, {'csrfmiddlewaretoken': str(token)}, HTTP_ORIGIN='null').status_code, 403)

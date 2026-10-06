@@ -1,199 +1,146 @@
 {% extends base_template %}
 {% load i18n %}
+{% load petition_extras %}
+
+{% block title %}{% trans "Signatures" %}{% endblock title %}
+
+{% block dash_nav %}{% endblock dash_nav %}
 
 {% block content %}
-    <div class="row">
-        <div class="col d-flex justify-content-center">
-            <h2>{% trans "Signatures" %}</h2>
+{% with total=page_obj.paginator.count|default:0 %}
+<div class="fp-page-header fp-dash-head">
+  <div>
+    <h1 id="fp-page-title">{% trans "Signatures" %}</h1>
+    <p class="fp-lead">{% blocktrans with title=petition.title|striptags trimmed count counter=petition.signature_number %}
+      {{ counter }} confirmed signature on “{{ title }}”.
+      {% plural %}
+      {{ counter }} confirmed signatures on “{{ title }}”.
+    {% endblocktrans %}</p>
+  </div>
+  <div class="fp-actions">
+    <a class="fp-btn fp-btn-tertiary" href="{{ petition.url }}">{% include "components/icon.html" with name="eye" %}{% trans "View the petition" %}</a>
+  </div>
+</div>
+
+<div class="fp-sig-tools">
+  <section class="fp-card" aria-labelledby="export-title">
+    <div class="fp-card-body">
+      <h2 class="fp-card-title" id="export-title">{% include "components/icon.html" with name="data-transfer-download" %}{% trans "Download the list" %}</h2>
+      {% if petition.expires_at %}
+      <p>{% blocktrans with date=petition.expires_at|date:"DATE_FORMAT" %}The signatories’ data will be deleted on <strong>{{ date }}</strong>. Download the list before if you need it.{% endblocktrans %} {% include "petition/expiry_badge.html" %}</p>
+      {% endif %}
+      <details class="fp-details fp-export">
+        <summary>{% trans "Export signatures as CSV" %}</summary>
+        <p class="fp-export-warning">{% blocktrans trimmed %}
+          You are about to download the personal data of your signatories. Signing a petition may reveal
+          political, religious or trade union opinions: these data must only be used for the purpose of
+          this petition. Following the recommendations of the CNIL, signatories are not "regular contacts":
+          do not reuse them for marketing. Keep this file safe and delete it when the petition is over.
+          You are responsible for this file.
+        {% endblocktrans %}</p>
+        <div class="fp-actions">
+          <a href="{% url "get_csv_confirmed_signature" petition.id %}" class="fp-btn fp-btn-primary">
+            {% include "components/icon.html" with name="spreadsheet" %}{% trans "Confirmed signatures (CSV)" %}
+          </a>
+          <a href="{% url "get_csv_signature" petition.id %}" class="fp-btn fp-btn-secondary">
+            {% include "components/icon.html" with name="spreadsheet" %}{% trans "All signatures, confirmed or not (CSV)" %}
+          </a>
         </div>
+      </details>
     </div>
-    <div class="row">
-        <div class="col d-flex justify-content-center">
-            <h4><i>{{ petition.title }}</i></h4>
-        </div>
+  </section>
+
+  <section class="fp-card" aria-labelledby="tools-title">
+    <div class="fp-card-body">
+      <h2 class="fp-card-title" id="tools-title">{% include "components/icon.html" with name="envelope-closed" %}{% trans "Follow-up" %}</h2>
+      <p class="fp-help">{% trans "A signature counts once the person has clicked the link in the confirmation email." %}</p>
+      <div class="fp-actions">
+        <form method="post">{% csrf_token %}
+          <input type="hidden" name="action" value="re-send-all">
+          <button type="submit" class="fp-btn fp-btn-secondary">{% trans "Re-send the email to all unconfirmed" %}</button>
+        </form>
+        <form method="post">{% csrf_token %}
+          <input type="hidden" name="action" value="show-signature-graph">
+          <button type="submit" class="fp-btn fp-btn-tertiary">{% include "components/icon.html" with name="graph" %}{% trans "Signatures over time" %}</button>
+        </form>
+        {% if petition.has_newsletter %}
+        <button type="button" class="fp-btn fp-btn-tertiary fp-js-only" data-fp-dialog-open="sympa-dialog">{% trans "Newsletter subscribers" %}</button>
+        {% endif %}
+      </div>
     </div>
-    <div class="row">
-        <form method="POST" id="signatureForm">
-        {% csrf_token %}
-        <div class="col">
-                <details class="fp-details fp-export">
-                    <summary>{% trans "Export signatures as CSV" %}</summary>
-                    <p class="fp-export-warning">{% blocktrans trimmed %}
-                        You are about to download the personal data of your signatories. Signing a petition may reveal
-                        political, religious or trade union opinions: these data must only be used for the purpose of
-                        this petition. Following the recommendations of the CNIL, signatories are not "regular contacts":
-                        do not reuse them for marketing. Keep this file safe and delete it when the petition is over.
-                        You are responsible for this file.
-                    {% endblocktrans %}</p>
-                    <a href="{% url "get_csv_signature" petition.id %}" class="btn btn-primary">
-                        <span class="oi oi-spreadsheet"></span>
-                        {% trans "Export <strong>ALL</strong> signatures as CSV" %}
-                    </a>
-                    <a href="{% url "get_csv_confirmed_signature" petition.id %}" class="btn btn-primary">
-                        <span class="oi oi-spreadsheet"></span>
-                        {% trans "Export <strong>confirmed</strong> signatures as CSV" %}
-                    </a>
-                </details>
-            <p>
-                <a>
-                    <button class="btn btn-primary" id="show-signature-graph">
-                    <span class="oi oi-spreadsheet"></span>
-                    {% trans "Show graph of signatures" %}</button>
-                </a>
-            </p>
-            <p>
-                <button class="btn btn-success" id="re-send-all">
-                    <span class="oi oi-envelope-closed"></span>
-                    {% trans "Re-send confirmation e-mail to all unconfirmed" %}</button>
-            </p>
-            <p>
-                <a href="#" class="btn btn-warning" id="show-sympa-mass-subscribe"
-                        data-toggle="modal" data-target="#sympa-modal" aria-disabled="true">
-                    {% trans "Subscribe signatories to the newsletter" %}
-                </a>
-                <div class="modal fade" id="sympa-modal">
-                <div class="modal-dialog">
-                  <div class="modal-content">
-                    <div class="modal-header">
-                      <h4 class="modal-title">
-                          {% trans "copy/paste the following text block into Sympa's mass-subscribe formular" %}</h4>
-                      <button type="button" class="close" data-dismiss="modal" aria-label="{% trans 'Close' %}"><span aria-hidden="true">&times;</span></button>
-                    </div>
+  </section>
+</div>
 
-                    <div class="modal-body" id="sympa_content">
+{% if petition.has_newsletter %}
+<dialog class="fp-dialog" id="sympa-dialog" aria-labelledby="sympa-dialog-title">
+  <div class="fp-dialog-header">
+    <h2 class="fp-dialog-title" id="sympa-dialog-title">{% trans "Newsletter subscribers" %}</h2>
+    <button type="button" class="fp-btn fp-btn-tertiary fp-btn-icon fp-dialog-close" data-fp-dialog-close>{% include "components/icon.html" with name="x" %}<span class="fp-sr-only">{% trans "Close" %}</span></button>
+  </div>
+  <p>{% trans "Copy these lines into the mass subscription form of your mailing list (Sympa). Only people who ticked the newsletter box are listed." %}</p>
+  <pre class="fp-sympa" data-fp-sympa-url="{% url "show_sympa_subscribe_bloc" petition.id %}" tabindex="0"></pre>
+</dialog>
+{% endif %}
 
-                    </div>
-
-                    <div class="modal-footer">
-                      <button type="button" class="btn btn-info" data-dismiss="modal">{% trans "Ok" %}</button>
-                    </div>
-
-                  </div>
-                </div>
-                </div>
-            </p>
-            <p>
-                <div class="form-row">
-                <div class="col-3">
-                <select class="custom-select" id="action" name="action">
-                    <option value="re-send">{% trans "Re-send selected confirmation e-mail" %}</option>
-                    <option value="delete">{% trans "Delete selected signatures" %}</option>
-                    <option value="re-send-all" hidden>
-                        {% trans "Re-send confirmation e-mail to all unconfirmed" %}
-                    </option>
-                    <option value="show-signature-graph" hidden>
-                        {% trans "Show signature graph" %}
-                    </option>
-                </select>
-                </div>
-                <div class="col-*">
-                <button type="submit" class="btn btn-info">{% trans "Ok" %}</button>
-                </div>
-                </div>
-            </p>
-            <table class="table table-striped">
-            <thead class="thead-light">
-                <tr>
-                    <th>
-                        <div class="custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input position-static" id="select-all" name="select-all">
-                            <label class="custom-control-label" for="select-all"></label>
-                        </div>
-                    </th>
-                    <th>{% trans "First name" %}</th>
-                    <th>{% trans "Last name" %}</th>
-                    <th>{% trans "E-Mail" %}</th>
-                    {% if settings.SIGNATURE_COLLECT_PHONE is not False %}
-                    <th>{% trans "Phone" %}</th>
-                    {% endif %}
-                    <th>{% trans "Confirmed?" %}</th>
-                    <th>{% trans "Subscribed to newsletter?" %}</th>
-                    <th>{% trans "Date" %}</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for signature in signatures %}
-                <tr>
-                    <td>
-                        <div class="custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input position-static" id="{{ signature.id }}"
-                                   value="{{ signature.id }}" name="signature_id">
-                            <label class="custom-control-label" for="{{ signature.id }}"></label>
-                        </div>
-                    </td>
-                    <td>
-                        {{ signature.first_name }}
-                    </td>
-                    <td>
-                        {{ signature.last_name }}
-                    </td>
-                    <td>
-                        {{ signature.email }}
-                    </td>
-                    {% if settings.SIGNATURE_COLLECT_PHONE is not False %}
-                    <td>
-                        {{ signature.phone }}
-                    </td>
-                    {% endif %}
-                    <td>
-                        {% if signature.confirmed %}
-                            <span class="oi oi-circle-check text-success"></span>
-                        {% else %}
-                            <span class="oi oi-circle-x text-danger"></span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if signature.subscribed_to_mailinglist %}
-                            <span class="oi oi-circle-check text-success"></span>
-                        {% else %}
-                            <span class="oi oi-circle-x text-danger"></span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {{ signature.date }}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-            </table>
-            {% include "components/pagination.html" with page=page_obj %}
-        </div>
-    </form>
+<section aria-labelledby="list-title">
+  <h2 class="fp-dash-section-title" id="list-title">{% blocktrans trimmed count counter=total %}{{ counter }} signature received{% plural %}{{ counter }} signatures received{% endblocktrans %}</h2>
+  {% if signatures %}
+  <form method="POST" id="fp-signatures" class="fp-stack">
+    {% csrf_token %}
+    <div class="fp-bulk" role="group" aria-label="{% trans "Actions on the selected signatures" %}">
+      <p class="fp-muted fp-small">{% trans "With the selected signatures:" %}</p>
+      <button type="submit" name="action" value="re-send" class="fp-btn fp-btn-secondary">{% trans "Re-send the confirmation email" %}</button>
+      <button type="button" class="fp-btn fp-btn-tertiary fp-js-only" data-fp-dialog-open="delete-signatures">{% trans "Delete" %}</button>
     </div>
+    <div class="fp-table-wrap" role="region" aria-labelledby="list-title" tabindex="0">
+      <table class="fp-table">
+        <thead>
+          <tr>
+            <th><input type="checkbox" class="fp-check-input" id="select-all" data-fp-select-all="signature_id"><label for="select-all" class="fp-sr-only">{% trans "Select all" %}</label></th>
+            <th>{% trans "First name" %}</th>
+            <th>{% trans "Last name" %}</th>
+            <th>{% trans "E-Mail" %}</th>
+            {% if settings.SIGNATURE_COLLECT_PHONE is not False %}
+            <th>{% trans "Phone" %}</th>
+            {% endif %}
+            <th>{% trans "Confirmed?" %}</th>
+            {% if petition.has_newsletter %}<th>{% trans "Newsletter" %}</th>{% endif %}
+            <th>{% trans "Date" %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for signature in signatures %}
+          <tr>
+            <td><input type="checkbox" class="fp-check-input" id="sig-{{ signature.id }}" value="{{ signature.id }}" name="signature_id"><label for="sig-{{ signature.id }}" class="fp-sr-only">{% blocktrans with first=signature.first_name last=signature.last_name %}Select {{ first }} {{ last }}{% endblocktrans %}</label></td>
+            <td>{{ signature.first_name }}</td>
+            <td>{{ signature.last_name }}</td>
+            <td>{{ signature.email }}</td>
+            {% if settings.SIGNATURE_COLLECT_PHONE is not False %}
+            <td>{{ signature.phone }}</td>
+            {% endif %}
+            <td>{% if signature.confirmed %}<span class="fp-yes">{% include "components/icon.html" with name="circle-check" %}{% trans "Yes" %}</span>{% else %}<span class="fp-no">{% include "components/icon.html" with name="clock" %}{% trans "Waiting" %}</span>{% endif %}</td>
+            {% if petition.has_newsletter %}<td>{% if signature.subscribed_to_mailinglist %}<span class="fp-yes">{% include "components/icon.html" with name="circle-check" %}{% trans "Yes" %}</span>{% else %}<span class="fp-no">{% trans "No" %}</span>{% endif %}</td>{% endif %}
+            <td>{{ signature.date|date:"SHORT_DATETIME_FORMAT" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </form>
+  {% include "components/pagination.html" with page=page_obj %}
+  <dialog class="fp-dialog" id="delete-signatures" aria-labelledby="delete-signatures-title">
+    <h2 class="fp-dialog-title" id="delete-signatures-title">{% trans "Delete the selected signatures?" %}</h2>
+    <p>{% trans "They will no longer be counted and their data will be erased. This cannot be undone." %}</p>
+    <div class="fp-dialog-actions">
+      <button type="button" class="fp-btn fp-btn-tertiary" data-fp-dialog-close>{% trans "Cancel" %}</button>
+      <button type="submit" form="fp-signatures" name="action" value="delete" class="fp-btn fp-btn-danger">{% trans "Delete" %}</button>
+    </div>
+  </dialog>
+  {% else %}
+    {% trans "No signature yet" as empty_title %}
+    {% trans "Share the petition: signatures will appear here as soon as people sign." as empty_text %}
+    {% include "components/empty_state.html" with icon="people" title=empty_title text=empty_text %}
+  {% endif %}
+</section>
+{% endwith %}
 {% endblock content %}
-
-{% block extrajs %}
-    {{ block.super }}
-    <script nonce="{{ request.csp_nonce }}">
-    $(function() {
-        $("#re-send-all").on("click", function() {
-            $("#action").val("re-send-all");
-            $("#signatureForm").submit();
-        });
-
-        $("#show-signature-graph").on("click", function() {
-            $("#action").val("show-signature-graph");
-            $("#signatureForm").submit();
-        });
-
-        $("#select-all").on("change", function() {
-           $(":checkbox").prop('checked', $(this).prop('checked'));
-        });
-
-        $("#show-sympa-mass-subscribe").on("click", function(){
-            $.ajax("{% url "show_sympa_subscribe_bloc" petition.id %}").done(function(data){
-              $("#sympa_content").html(data);
-            });
-        });
-    });
-    </script>
-{% endblock extrajs %}
-
-{% block extracss %}
-    {{ block.super }}
-    <style>
-    #sympa_content {
-        background-color: lightgrey;
-    }
-    </style>
-{% endblock extracss %}

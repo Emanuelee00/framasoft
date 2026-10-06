@@ -1,5 +1,34 @@
 {% extends 'petition/user_base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Your petitions" %}{% endblock title %}
 
 {% block content %}
-  {% include "petition/petition_list.html" with petitions=petitions.all title=_("Your petitions") search=False %}
-{% endblock %}
+<div class="fp-page-header fp-dash-head">
+  <div>
+    <h1 id="fp-page-title">{% trans "Your petitions" %}</h1>
+    <p class="fp-lead">{% trans "Follow your signatures, edit your texts and download the list of signatories before the data is deleted." %}</p>
+  </div>
+  {% if not settings.DISABLE_USER_PETITION %}
+  <div class="fp-actions">
+    <a class="fp-btn fp-btn-primary" href="{% url "user_petition_wizard" %}">{% include "components/icon.html" with name="plus" %}{% trans "New petition" %}</a>
+  </div>
+  {% endif %}
+</div>
+
+{% include "petition/user_invitations.html" %}
+
+{% include "petition/petition_list.html" with petitions=petitions.all can_create_petition=can_create_petition %}
+
+<div class="fp-grid fp-grid-2 fp-dash-secondary">
+  {% include "petition/user_org_list.html" %}
+  <section class="fp-dash-section" aria-labelledby="templates-title" id="templates">
+    <div class="fp-dash-section-head">
+      <h2 class="fp-dash-section-title" id="templates-title">{% trans "Petition templates" %}</h2>
+      <a class="fp-btn fp-btn-secondary" href="{% url "user_new_template" %}">{% include "components/icon.html" with name="plus" %}{% trans "New template" %}</a>
+    </div>
+    <p class="fp-help">{% trans "Reuse the same texts and settings in several petitions." %}</p>
+    {% include "petition/template_list.html" with templates=user.petitiontemplate_set.all owner=user %}
+  </section>
+</div>
+{% endblock content %}

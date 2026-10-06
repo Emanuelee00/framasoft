@@ -411,7 +411,7 @@ CSP_DIRECTIVES = {
     'font-src': ["'self'", "data:", "https://framasoft.org"],
     'connect-src': ["'self'", "https://framasoft.org"],
     'media-src': ["'self'", "https:"],
-    'frame-src': ["https:"],
+    'frame-src': ["'self'", "https:"],
     'object-src': ["'none'"],
     'base-uri': ["'self'"],
     'form-action': ["'self'"],

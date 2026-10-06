@@ -8,7 +8,8 @@ confirms, so that link scanners opening e-mails do not confirm on behalf of a pe
 
 Context contract (the view belongs to the GDPR stream):
   petition           Petition
-  confirm_state      "pending" | "confirmed" | "already_confirmed" | "expired" | "invalid_link"
+  confirm_state      "pending" | "confirmed" | "already_confirmed" | "expired" | "closed" | "invalid_link"
+                     ("closed": the petition reached its deletion date, EXP-03)
                      ("state" is read when "confirm_state" is missing; "confirm" is read as "pending")
   confirmation_hash  required when pending and form_action is missing
   form_action        optional POST target, default: url "confirm" petition.id confirmation_hash
@@ -23,7 +24,7 @@ Context contract (the view belongs to the GDPR stream):
 
 {% block extrameta %}
 <meta name="robots" content="noindex">
-<meta name="referrer" content="no-referrer">
+<meta name="referrer" content="same-origin">
 {% endblock %}
 
 {% block main_content %}
@@ -79,6 +80,18 @@ Context contract (the view belongs to the GDPR stream):
     <p>{% trans "Unconfirmed signatures are deleted after a few days. You can sign the petition again." %}</p>
   </div>
   <p class="fp-signer-back"><a href="{{ petition.url }}#signer" class="fp-btn fp-btn-primary">{% trans "Sign the petition again" %}</a></p>
+
+  {% elif cstate == "closed" %}
+  <div class="fp-page-header">
+    <p class="fp-signer-petition">{% blocktrans trimmed with title=petition.title|striptags %}Petition: “{{ title }}”{% endblocktrans %}</p>
+  </div>
+  <div class="fp-state fp-alert-warning" role="alert">
+    <h1 class="fp-state-title" tabindex="-1" data-autofocus>
+      {% include "components/alert_icon.html" with kind="warning" %}
+      {% trans "This petition no longer accepts signatures" %}
+    </h1>
+    <p>{% trans "This petition has reached its deletion date and no longer accepts signatures." %}</p>
+  </div>
 
   {% else %}
   <div class="fp-page-header">

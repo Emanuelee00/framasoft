@@ -3,7 +3,7 @@ from django.urls import reverse
 
 from .utils import add_default_data
 
-from petition.models import PytitionUser
+from petition.models import PytitionUser, Signature
 
 
 class ExportWarningTest(TestCase):
@@ -32,6 +32,9 @@ class PhoneColumnTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         add_default_data()
+        # The table is only rendered when there is at least one signature (empty state otherwise)
+        petition = PytitionUser.objects.get(user__username='julia').petition_set.first()
+        Signature.objects.create(petition=petition, first_name='Ada', last_name='L', email='ada@example.org')
 
     def get(self):
         self.client.login(username='julia', password='julia')

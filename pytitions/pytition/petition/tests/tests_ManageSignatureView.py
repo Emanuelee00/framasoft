@@ -31,7 +31,7 @@ class ManageSignatureViewTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'petition/manage_signature.html')
         self.assertContains(response, 'alan@john.org')
-        self.assertEqual(response['Referrer-Policy'], 'no-referrer')
+        self.assertEqual(response['Referrer-Policy'], 'same-origin')
         self.assertEqual(response['X-Robots-Tag'], 'noindex')
 
     def test_manage_signature_bad_token(self):

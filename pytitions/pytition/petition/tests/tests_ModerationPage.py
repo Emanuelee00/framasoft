@@ -1,32 +1,36 @@
 from django.contrib.auth import get_user_model
-from django.contrib.staticfiles import finders
 from django.test import TestCase
 from django.urls import reverse
 
 
-def page_script():
-    # The page script is a static file since the Content-Security-Policy (S13)
-    with open(finders.find('js/spam_page.js'), encoding='utf-8') as f:
-        return f.read()
-
-
 class ModerationPageTest(TestCase):
-    """The moderation admin page is a valid document (no markup before the doctype)"""
+    """The moderation page is a valid document, without inline script, with keyboard-usable controls"""
 
-    def test_page_starts_with_doctype(self):
+    def setUp(self):
         get_user_model().objects.create_superuser('admin', 'admin@example.org', 'admin')
         self.client.login(username='admin', password='admin')
+
+    def get_html(self):
         response = self.client.get(reverse('admin:moderatedelement_my_view'))
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.content.decode().lstrip().startswith('<!DOCTYPE html>'))
-        self.assertContains(response, 'js/spam_page.js')
-        self.assertIn('function toggle(source, name)', page_script())
+        return response.content.decode()
+
+    def test_page_starts_with_doctype(self):
+        self.assertTrue(self.get_html().lstrip().startswith('<!DOCTYPE html>'))
+
+    def test_behaviours_come_from_a_static_file(self):
+        html = self.get_html()
+        self.assertIn('js/fp-moderation.js', html)
+        for attribute in ('onclick=', 'onkeyup=', 'style="'):
+            self.assertNotIn(attribute, html)
 
     def test_sortable_headers_are_buttons(self):
-        get_user_model().objects.create_superuser('admin', 'admin@example.org', 'admin')
-        self.client.login(username='admin', password='admin')
-        html = self.client.get(reverse('admin:moderatedelement_my_view')).content.decode()
+        html = self.get_html()
         self.assertNotIn('<th onclick', html)
-        self.assertIn('<th scope="col"><button type="button" class="sort-btn" data-sort-table="userTable" data-sort-col="2">', html)
-        self.assertIn("setAttribute('aria-sort', 'descending')", page_script())
-        self.assertIn('function sortTable(table_id, column)', page_script())
+        self.assertIn('<th scope="col"><button type="button" class="fp-sort" data-sort-table="userTable" data-sort-col="3">', html)
+
+    def test_actions_are_buttons_and_deletion_is_confirmed(self):
+        html = self.get_html()
+        self.assertIn('<button type="submit" name="action" value="moderate petition"', html)
+        self.assertIn('data-fp-dialog-open="confirm-action_rep_petition"', html)
+        self.assertNotIn('<select name="action">', html)

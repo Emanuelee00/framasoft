@@ -1,72 +1,30 @@
 {% extends 'layouts/wizard_layout.html' %}
 {% load i18n %}
-{% load widget_tweaks %}
-{% load petition_extras %}
-{% load static %}
-{% block media %}
-    {{ form.media }}
-{% endblock %}
 
 {% block wizard_content %}
-  <div id="step-2" class="px-3 pt-3">
-      <form method="POST">{% csrf_token %}
-          {{ wizard.management_form }}
-          <div class="form-group">
-          {% with form.message as field %}
-              {{ field.label_tag }}
-              {% if form.is_bound %}
-                {% if field.errors %}
-                  {% render_field field|bootstrap class="is-invalid" %}
-                  {% for error in field.errors %}
-                    <div class="invalid-feedback">
-                      {{ error }}
-                    </div>
-                  {% endfor %}
-                {% else %}
-                  {% render_field field|bootstrap class="is-valid" %}
-                {% endif %}
-              {% else %}
-                {% render_field field|bootstrap %}
-              {% endif %}
-
-              {% if field.help_text %}
-                <small class="form-text text-muted">{{ field.help_text }}</small>
-              {% endif %}
-          {% endwith %}
-          </div>
-      <div class="d-flex justify-content-between">
-      {% if wizard.steps.prev %}
-          <button name="wizard_goto_step" id="go_prev" class="btn btn-primary" type="submit" value="{{ wizard.steps.prev }}">{% trans "Previous step" %}</button>
-      {% endif %}
-          <button type="submit" class="btn btn-primary">{% trans "Next" %}</button>
-      </div>
-      </form>
+<form method="POST" novalidate class="fp-wizard-form">{% csrf_token %}
+  {{ wizard.management_form }}
+  {% include "petition/form_fields.html" with form=form %}
+  {% if form.expires_at %}{% include "petition/expiry_field.html" with field=form.expires_at %}{% endif %}
+  <div class="fp-actions fp-wizard-actions">
+    <button type="submit" class="fp-btn fp-btn-primary">{% trans "Next: publication" %}{% include "components/icon.html" with name="arrow-right" %}</button>
+    {% if wizard.steps.prev %}
+    <button name="wizard_goto_step" class="fp-btn fp-btn-tertiary" type="submit" value="{{ wizard.steps.prev }}" formnovalidate>{% include "components/icon.html" with name="arrow-left" %}{% trans "Back" %}</button>
+    {% endif %}
   </div>
+</form>
 {% endblock %}
 
-{% block extrajs %}
-    {{ block.super }}
-    <script type="text/javascript" src="{%  static 'vendor/smartwizard/dist/js/jquery.smartWizard.min.js' %}"></script>
-    <script type="text/javascript" nonce="{{ request.csp_nonce }}">
-    $(document).ready(function(){
-      $('#smartwizard').smartWizard({
-                                    theme: 'arrows',
-                                    toolbarSettings: {
-                                        showNextButton: false,
-                                        showPreviousButton: false,
-                                    },
-                                    });
-    });
-    $("#step1_link").on("click", function () {
-        $("#go_prev").click();
-    });
-
-    document.location.hash = "step-2";
-    $('html, body').scrollTop('0px');
-    var csrftoken = jQuery("[name=csrfmiddlewaretoken]").val();
-    function get_csrf_token() {
-        return csrftoken;
-    }
-    function set_mce_changed(ed) {}
-    </script>
+{% block wizard_help %}
+<p>{% trans "A clear text in four parts:" %}</p>
+<ol class="fp-wizard-tips">
+  <li><strong>{% trans "To whom" %}</strong> – {% trans "the person or institution who can decide." %}</li>
+  <li><strong>{% trans "What" %}</strong> – {% trans "one precise, achievable request." %}</li>
+  <li><strong>{% trans "Why" %}</strong> – {% trans "facts and sources, without exaggeration." %}</li>
+  <li><strong>{% trans "Who you are" %}</strong> – {% trans "a sentence about the people behind the petition." %}</li>
+</ol>
+<details class="fp-details">
+  <summary>{% trans "What is not allowed" %}</summary>
+  <p>{% trans "Hateful or discriminatory content, personal attacks against private individuals, advertising and false information are removed according to the moderation charter." %}</p>
+</details>
 {% endblock %}

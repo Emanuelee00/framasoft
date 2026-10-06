@@ -185,6 +185,18 @@ class ExpiryViewsTest(TestCase):
         self.assertEqual(petition.expires_at, new_date)
         self.assertIsNone(petition.expiry_reminder_days)
 
+    def test_edit_page_renders_the_expiry_form(self):
+        from django.urls import reverse
+        petition = Petition.objects.create(title="P", user=self.julia)
+        self.client.login(username="julia", password="julia")
+        response = self.client.get(reverse('edit_petition', args=[petition.id]))
+        self.assertContains(response, 'id="expiry"')
+        self.assertContains(response, 'name="expiry_form_submitted"')
+        self.assertContains(response, 'name="expires_at"')
+        self.assertContains(response, 'max="{}"'.format(Petition.expiry_bounds()[1].isoformat()))
+        response = self.edit(petition, (timezone.localdate() + timedelta(days=731)).isoformat())
+        self.assertContains(response, 'class="fp-field-error" id="id_expires_at-error"')
+
     def test_extension_out_of_range_is_refused(self):
         petition = Petition.objects.create(title="P", user=self.julia)
         before = petition.expires_at
@@ -251,7 +263,10 @@ class ExpiredPetitionTest(TestCase):
     def test_confirm_is_refused(self):
         from django.urls import reverse
         url = reverse('confirm', args=[self.petition.id, self.pending.confirmation_hash])
-        self.assertEqual(self.client.get(url).context['confirm_state'], "closed")
+        response = self.client.get(url)
+        self.assertEqual(response.context['confirm_state'], "closed")
+        self.assertContains(response, "reached its deletion date")
+        self.assertNotContains(response, "This confirmation link is not valid")
         self.assertEqual(self.client.post(url).context['confirm_state'], "closed")
         self.pending.refresh_from_db()
         self.assertFalse(self.pending.confirmed)
@@ -282,6 +297,17 @@ class ExpiryContextTest(TestCase):
             helpers.send_confirmation_email(RequestFactory().get('/'), self.signature)
         for call in render.call_args_list:
             self.assertEqual(call.args[1]['expires_at'], self.petition.expires_at)
+
+    def test_confirmation_email_shows_the_date(self):
+        from django.core import mail
+        from django.test import RequestFactory
+        from django.utils.formats import date_format
+        from petition import helpers
+        helpers.send_confirmation_email(RequestFactory().get('/'), self.signature)
+        message = mail.outbox[-1]
+        expected = "will be deleted on {}.".format(date_format(self.petition.expires_at))
+        self.assertIn(expected, message.body)
+        self.assertIn(expected, message.alternatives[0][0])
 
     def test_pages_have_the_petition(self):
         from django.urls import reverse

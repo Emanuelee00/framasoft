@@ -6,7 +6,7 @@
     <meta charset="UTF-8">
 </head>
 <body>
-{# Context: firstname, url (confirmation link); optional: petition_title, creator_name, manage_url, days, privacy_url #}
+{# Context: firstname, url (confirmation link); optional: petition_title, creator_name, manage_url, days, privacy_url, expires_at #}
 
 <p>{% blocktrans trimmed %}Hello {{ firstname }},{% endblocktrans %}</p>
 
@@ -20,6 +20,10 @@ Now, in order to confirm your signature, you only need to click here :
 
 {% if days %}
 <p>{% blocktrans trimmed %}Without confirmation within {{ days }} days, your signature and your data will be deleted automatically.{% endblocktrans %}</p>
+{% endif %}
+
+{% if expires_at %}
+<p>{% blocktrans trimmed with date=expires_at|date:"DATE_FORMAT" %}The petition and its signatures will be deleted on {{ date }}.{% endblocktrans %}</p>
 {% endif %}
 
 <p><strong>{% trans "You did not sign this petition?" %}</strong> {% trans "Do nothing: the signature will be deleted." %}</p>

@@ -438,7 +438,9 @@ def _signature_from_manage_token(token):
 
 
 def _private(response):
-    response["Referrer-Policy"] = "no-referrer"
+    # same-origin, not no-referrer: with no-referrer browsers send "Origin: null" on the page's own
+    # forms (confirm, delete) and the CSRF check refuses them; other sites still get no Referer.
+    response["Referrer-Policy"] = "same-origin"
     response["X-Robots-Tag"] = "noindex"
     return response
 
@@ -575,11 +577,12 @@ def org_bin(request, orgslugname):
     else:
         petitions = org.petition_set.all().filter(in_bin_date__isnull=True)
         petitions_bin = org.petition_set.all().filter(in_bin_date__isnull=False)
+        permissions = Permission.objects.filter(organization=org, user=user).first()
         return render(
             request,
             'petition/org_bin.html',
             {'org': org, 'petitions': petitions, 'petitions_bin': petitions_bin,
-            'displaying_dashboard': True}
+            'user_permissions': permissions, 'displaying_dashboard': True}
         )
 
 # /user/dashboard

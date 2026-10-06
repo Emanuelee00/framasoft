@@ -4522,3 +4522,774 @@ msgstr ""
 
 msgid "Back to the home page"
 msgstr "Retour à l’accueil"
+
+msgid "This action could not be done. Reload the page and try again."
+msgstr "Cette action n’a pas pu être effectuée. Rechargez la page et réessayez."
+
+msgid "Bin"
+msgstr "Corbeille"
+
+msgid "Petitions in the bin are unpublished. Restore them or delete them permanently with their signatures."
+msgstr "Les pétitions dans la corbeille ne sont plus publiées. Restaurez-les ou supprimez-les définitivement avec leurs signatures."
+
+msgid "The bin is empty"
+msgstr "La corbeille est vide"
+
+msgid "Petitions you move to the bin will appear here."
+msgstr "Les pétitions que vous mettez à la corbeille apparaîtront ici."
+
+msgid "Dashboard sections"
+msgstr "Sections du tableau de bord"
+
+msgid "Account and organizations"
+msgstr "Compte et organisations"
+
+msgid "Expires today"
+msgstr "Expire aujourd’hui"
+
+msgid "Expires in %(days)s day"
+msgid_plural "Expires in %(days)s days"
+msgstr[0] "Expire dans %(days)s jour"
+msgstr[1] "Expire dans %(days)s jours"
+
+msgid "Petitions of %(name)s"
+msgstr "Pétitions de %(name)s"
+
+msgid "Petitions shared by the members of this organization, with the permissions each member has."
+msgstr "Les pétitions partagées par les membres de cette organisation, selon les droits de chacun·e."
+
+msgid "Reuse the same texts and settings in several petitions."
+msgstr "Réutilisez les mêmes textes et réglages pour plusieurs pétitions."
+
+msgid "Invite"
+msgstr "Inviter"
+
+msgid "Searching…"
+msgstr "Recherche…"
+
+msgid "No account with this name."
+msgstr "Aucun compte avec ce nom."
+
+msgid "Invite someone"
+msgstr "Inviter une personne"
+
+msgid "Type at least 2 letters of their username or name. They will receive an invitation on their dashboard."
+msgstr "Tapez au moins 2 lettres de son identifiant ou de son nom. L’invitation apparaîtra sur son tableau de bord."
+
+msgid "Each member has their own permissions: who can publish, see the signatories or manage the other members."
+msgstr "Chaque membre a ses propres droits : publier, voir les signataires ou gérer les autres membres."
+
+msgid "You"
+msgstr "Vous"
+
+msgid "Permissions"
+msgstr "Droits"
+
+msgid "Leave"
+msgstr "Quitter"
+
+msgid "Remove"
+msgstr "Retirer"
+
+msgid "Leave %(name)s?"
+msgstr "Quitter %(name)s ?"
+
+msgid "You will no longer see the petitions and signatories of this organization. A member will have to invite you again."
+msgstr "Vous ne verrez plus les pétitions ni les signataires de cette organisation. Un·e membre devra vous inviter à nouveau."
+
+msgid "Remove %(name)s from the organization?"
+msgstr "Retirer %(name)s de l’organisation ?"
+
+msgid "This person will no longer see the petitions and signatories of this organization."
+msgstr "Cette personne ne verra plus les pétitions ni les signataires de cette organisation."
+
+msgid "This member could not be removed. The last administrator of an organization cannot leave it."
+msgstr "Ce membre n’a pas pu être retiré. Le dernier administrateur ou la dernière administratrice d’une organisation ne peut pas la quitter."
+
+msgid "Write a title and a text, then publish when you are ready. It takes a few minutes."
+msgstr "Écrivez un titre et un texte, puis publiez quand vous êtes prêt·e. Cela prend quelques minutes."
+
+msgid "You are not allowed to create petitions in this organization."
+msgstr "Vous n’avez pas le droit de créer des pétitions dans cette organisation."
+
+msgid "Hidden by moderation"
+msgstr "Masquée par la modération"
+
+msgid "In the bin since %(date)s"
+msgstr "Dans la corbeille depuis le %(date)s"
+
+msgid "Draft, not visible"
+msgstr "Brouillon, non visible"
+
+msgid "Under review"
+msgstr "En cours d’examen"
+
+msgid "This petition breaks the moderation charter: it is hidden from the public and cannot be published."
+msgstr "Cette pétition ne respecte pas la charte de modération : elle est masquée au public et ne peut pas être publiée."
+
+msgid "of %(target)s"
+msgstr "sur %(target)s"
+
+msgid "Deletion of data"
+msgstr "Suppression des données"
+
+msgid "Created"
+msgstr "Créée le"
+
+msgid "Restore"
+msgstr "Restaurer"
+
+msgid "Delete permanently"
+msgstr "Supprimer définitivement"
+
+msgid "Edit"
+msgstr "Modifier"
+
+msgid "More"
+msgstr "Plus"
+
+msgid "actions for %(title)s"
+msgstr "actions pour %(title)s"
+
+msgid "View the petition"
+msgstr "Voir la pétition"
+
+msgid "Signatures and export"
+msgstr "Signatures et export"
+
+msgid "Unpublish"
+msgstr "Dépublier"
+
+msgid "Transfer to someone else"
+msgstr "Transférer à quelqu’un d’autre"
+
+msgid "Move to the bin"
+msgstr "Mettre à la corbeille"
+
+msgid "Delete this petition permanently?"
+msgstr "Supprimer définitivement cette pétition ?"
+
+msgid "“%(title)s” and its %(counter)s signature will be deleted. This cannot be undone."
+msgid_plural "“%(title)s” and its %(counter)s signatures will be deleted. This cannot be undone."
+msgstr[0] "« %(title)s » et sa %(counter)s signature seront supprimées. C’est irréversible."
+msgstr[1] "« %(title)s » et ses %(counter)s signatures seront supprimées. C’est irréversible."
+
+msgid "Download the list of signatories first if you still need it."
+msgstr "Téléchargez d’abord la liste des signataires si vous en avez encore besoin."
+
+msgid "Move this petition to the bin?"
+msgstr "Mettre cette pétition à la corbeille ?"
+
+msgid "“%(title)s” will be unpublished. You can restore it from the bin later."
+msgstr "« %(title)s » ne sera plus publiée. Vous pourrez la restaurer depuis la corbeille."
+
+msgid "Default"
+msgstr "Par défaut"
+
+msgid "Use"
+msgstr "Utiliser"
+
+msgid "actions for %(name)s"
+msgstr "actions pour %(name)s"
+
+msgid "Stop using as default"
+msgstr "Ne plus utiliser par défaut"
+
+msgid "Use as default for new petitions"
+msgstr "Utiliser par défaut pour les nouvelles pétitions"
+
+msgid "The template “%(name)s” will be deleted. Petitions created from it are not affected."
+msgstr "Le modèle « %(name)s » sera supprimé. Les pétitions créées à partir de ce modèle ne changent pas."
+
+msgid "No template yet."
+msgstr "Aucun modèle pour l’instant."
+
+msgid "Follow your signatures, edit your texts and download the list of signatories before the data is deleted."
+msgstr "Suivez vos signatures, modifiez vos textes et téléchargez la liste des signataires avant la suppression des données."
+
+msgid "You are invited to join <strong>%(orgname)s</strong>."
+msgstr "Vous êtes invité·e à rejoindre <strong>%(orgname)s</strong>."
+
+msgid "Decline"
+msgstr "Refuser"
+
+msgid "Your organizations"
+msgstr "Vos organisations"
+
+msgid "Create petitions together with other people and share the list of signatories."
+msgstr "Créez des pétitions avec d’autres personnes et partagez la liste des signataires."
+
+msgid "%(counter)s member"
+msgid_plural "%(counter)s members"
+msgstr[0] "%(counter)s membre"
+msgstr[1] "%(counter)s membres"
+
+msgid "You are not part of any organization yet."
+msgstr "Vous ne faites encore partie d’aucune organisation."
+
+msgid "%(counter)s confirmed signature on “%(title)s”."
+msgid_plural "%(counter)s confirmed signatures on “%(title)s”."
+msgstr[0] "%(counter)s signature confirmée sur « %(title)s »."
+msgstr[1] "%(counter)s signatures confirmées sur « %(title)s »."
+
+msgid "Download the list"
+msgstr "Télécharger la liste"
+
+msgid "The signatories’ data will be deleted on <strong>%(date)s</strong>. Download the list before if you need it."
+msgstr "Les données des signataires seront supprimées le <strong>%(date)s</strong>. Téléchargez la liste avant si vous en avez besoin."
+
+msgid "Confirmed signatures (CSV)"
+msgstr "Signatures confirmées (CSV)"
+
+msgid "All signatures, confirmed or not (CSV)"
+msgstr "Toutes les signatures, confirmées ou non (CSV)"
+
+msgid "Follow-up"
+msgstr "Suivi"
+
+msgid "A signature counts once the person has clicked the link in the confirmation email."
+msgstr "Une signature compte une fois que la personne a cliqué sur le lien de l’e-mail de confirmation."
+
+msgid "Re-send the email to all unconfirmed"
+msgstr "Renvoyer l’e-mail à toutes les signatures non confirmées"
+
+msgid "Signatures over time"
+msgstr "Évolution des signatures"
+
+msgid "Newsletter subscribers"
+msgstr "Abonné·es à la lettre d’information"
+
+msgid "Copy these lines into the mass subscription form of your mailing list (Sympa). Only people who ticked the newsletter box are listed."
+msgstr "Copiez ces lignes dans le formulaire d’abonnement en masse de votre liste de diffusion (Sympa). Seules les personnes qui ont coché la case de la lettre d’information y figurent."
+
+msgid "%(counter)s signature received"
+msgid_plural "%(counter)s signatures received"
+msgstr[0] "%(counter)s signature reçue"
+msgstr[1] "%(counter)s signatures reçues"
+
+msgid "Actions on the selected signatures"
+msgstr "Actions sur les signatures sélectionnées"
+
+msgid "With the selected signatures:"
+msgstr "Avec les signatures sélectionnées :"
+
+msgid "Re-send the confirmation email"
+msgstr "Renvoyer l’e-mail de confirmation"
+
+msgid "Select all"
+msgstr "Tout sélectionner"
+
+msgid "Newsletter"
+msgstr "Lettre d’information"
+
+msgid "Select %(first)s %(last)s"
+msgstr "Sélectionner %(first)s %(last)s"
+
+msgid "Yes"
+msgstr "Oui"
+
+msgid "Waiting"
+msgstr "En attente"
+
+msgid "No"
+msgstr "Non"
+
+msgid "Delete the selected signatures?"
+msgstr "Supprimer les signatures sélectionnées ?"
+
+msgid "They will no longer be counted and their data will be erased. This cannot be undone."
+msgstr "Elles ne seront plus comptées et leurs données seront effacées. C’est irréversible."
+
+msgid "No signature yet"
+msgstr "Aucune signature pour l’instant"
+
+msgid "Share the petition: signatures will appear here as soon as people sign."
+msgstr "Partagez la pétition : les signatures apparaîtront ici dès que des personnes signeront."
+
+msgid "Back to the signatures"
+msgstr "Retour aux signatures"
+
+msgid "Cumulative number of signatures per day, %(counter)s signature in total"
+msgid_plural "Cumulative number of signatures per day, %(counter)s signatures in total"
+msgstr[0] "Nombre cumulé de signatures par jour, %(counter)s signature au total"
+msgstr[1] "Nombre cumulé de signatures par jour, %(counter)s signatures au total"
+
+msgid "Your name and email address are only used to manage your petitions. They are not shown to signatories unless you write them in a petition."
+msgstr "Votre nom et votre adresse e-mail servent uniquement à gérer vos pétitions. Ils ne sont pas montrés aux signataires, sauf si vous les écrivez dans une pétition."
+
+msgid "Personal information"
+msgstr "Informations personnelles"
+
+msgid "Save my information"
+msgstr "Enregistrer mes informations"
+
+msgid "You are the last administrator or the last member: you cannot leave."
+msgstr "Vous êtes le dernier administrateur ou le dernier membre : vous ne pouvez pas partir."
+
+msgid "Your account, your petitions and the data of their signatories will be permanently deleted. Download the lists you still need first."
+msgstr "Votre compte, vos pétitions et les données de leurs signataires seront définitivement supprimés. Téléchargez d’abord les listes dont vous avez encore besoin."
+
+msgid "To confirm, type “%(phrase)s”"
+msgstr "Pour confirmer, tapez « %(phrase)s »"
+
+msgid "Delete my account permanently"
+msgstr "Supprimer définitivement mon compte"
+
+msgid "Please correct the following:"
+msgstr "Merci de corriger les points suivants :"
+
+msgid "New petition template"
+msgstr "Nouveau modèle de pétition"
+
+msgid "A template is not a petition: it holds default texts and settings that you can reuse, for example the same reply-to address for several petitions."
+msgstr "Un modèle n’est pas une pétition : il contient des textes et réglages par défaut que vous pouvez réutiliser, par exemple la même adresse de réponse pour plusieurs pétitions."
+
+msgid "Each template must have a different name."
+msgstr "Chaque modèle doit avoir un nom différent."
+
+msgid "Create and configure"
+msgstr "Créer et configurer"
+
+msgid "An organization lets several people create petitions together. You will be its administrator and can invite other members afterwards."
+msgstr "Une organisation permet à plusieurs personnes de créer des pétitions ensemble. Vous en serez l’administrateur ou l’administratrice et pourrez inviter d’autres membres ensuite."
+
+msgid "Create the organization"
+msgstr "Créer l’organisation"
+
+msgid "Give “%(title)s” to another person or organization."
+msgstr "Confier « %(title)s » à une autre personne ou organisation."
+
+msgid "Before transferring"
+msgstr "Avant de transférer"
+
+msgid "The new owner will get the petition and the list of its signatories, and you will lose access to it unless you are a member of the receiving organization. The petition is unpublished during the transfer."
+msgstr "Le nouveau propriétaire recevra la pétition et la liste de ses signataires, et vous n’y aurez plus accès, sauf si vous êtes membre de l’organisation qui la reçoit. La pétition est dépubliée pendant le transfert."
+
+msgid "organization"
+msgstr "organisation"
+
+msgid "No account or organization with this name."
+msgstr "Aucun compte ni aucune organisation avec ce nom."
+
+msgid "Name of the person or organization"
+msgstr "Nom de la personne ou de l’organisation"
+
+msgid "Type at least 2 letters, then choose in the list."
+msgstr "Tapez au moins 2 lettres, puis choisissez dans la liste."
+
+msgid "“%(title)s” will be transferred to:"
+msgstr "« %(title)s » sera transférée à :"
+
+msgid "Permissions of %(name)s"
+msgstr "Droits de %(name)s"
+
+msgid "What this member can do in %(org)s. Changes apply immediately after saving."
+msgstr "Ce que ce membre peut faire dans %(org)s. Les changements s’appliquent dès l’enregistrement."
+
+msgid "You can see these permissions but not change them: you need the permission to manage permissions."
+msgstr "Vous pouvez voir ces droits mais pas les modifier : il faut le droit de gérer les droits."
+
+msgid "Create petitions"
+msgstr "Créer des pétitions"
+
+msgid "Edit, publish and unpublish petitions"
+msgstr "Modifier, publier et dépublier les pétitions"
+
+msgid "Move petitions to the bin and delete them"
+msgstr "Mettre les pétitions à la corbeille et les supprimer"
+
+msgid "Signatories"
+msgstr "Signataires"
+
+msgid "Signatories’ names and email addresses are personal data: only give access to people who need it."
+msgstr "Les noms et adresses e-mail des signataires sont des données personnelles : n’en donnez l’accès qu’aux personnes qui en ont besoin."
+
+msgid "See and export the list of signatories"
+msgstr "Voir et exporter la liste des signataires"
+
+msgid "Modify signatures"
+msgstr "Modifier les signatures"
+
+msgid "Delete signatures"
+msgstr "Supprimer des signatures"
+
+msgid "Create templates"
+msgstr "Créer des modèles"
+
+msgid "Edit templates"
+msgstr "Modifier les modèles"
+
+msgid "Delete templates"
+msgstr "Supprimer des modèles"
+
+msgid "Invite new members"
+msgstr "Inviter de nouveaux membres"
+
+msgid "Remove members"
+msgstr "Retirer des membres"
+
+msgid "Manage the permissions of members (administrator)"
+msgstr "Gérer les droits des membres (administration)"
+
+msgid "Save permissions"
+msgstr "Enregistrer les droits"
+
+msgid "Back to members"
+msgstr "Retour aux membres"
+
+msgid "Title of the petition"
+msgstr "Titre de la pétition"
+
+msgid "80 characters maximum. Say what you ask, and to whom. You can change it later."
+msgstr "80 caractères maximum. Dites ce que vous demandez, et à qui. Vous pourrez le modifier plus tard."
+
+msgid "Text of the petition"
+msgstr "Texte de la pétition"
+
+msgid "Publish the petition now"
+msgstr "Publier la pétition maintenant"
+
+msgid "If you leave it unticked, the petition is saved as a draft that only you and your organization can see. You can publish it later from your dashboard."
+msgstr "Si vous ne cochez pas, la pétition est enregistrée comme brouillon, visible seulement par vous et votre organisation. Vous pourrez la publier plus tard depuis votre tableau de bord."
+
+msgid "New petition for %(name)s"
+msgstr "Nouvelle pétition pour %(name)s"
+
+msgid "Three short steps. Nothing is public until you decide to publish."
+msgstr "Trois étapes courtes. Rien n’est public tant que vous ne décidez pas de publier."
+
+msgid "Steps"
+msgstr "Étapes"
+
+msgid "Short and clear"
+msgstr "Court et clair"
+
+msgid "What you ask and why"
+msgstr "Ce que vous demandez et pourquoi"
+
+msgid "Publication"
+msgstr "Publication"
+
+msgid "Now or later"
+msgstr "Maintenant ou plus tard"
+
+msgid "Tips"
+msgstr "Conseils"
+
+msgid "You will receive a reminder by email 30, 20 and 10 days before, to download the list of signatories."
+msgstr "Vous recevrez un rappel par e-mail 30, 20 et 10 jours avant, pour télécharger la liste des signataires."
+
+msgid "New date: {date}. Save to confirm it."
+msgstr "Nouvelle date : {date}. Enregistrez pour la confirmer."
+
+msgid "This is already the latest possible date."
+msgstr "C’est déjà la date la plus lointaine possible."
+
+msgid "Extend by 12 months"
+msgstr "Prolonger de 12 mois"
+
+msgid "Web address of the petition:"
+msgstr "Adresse web de la pétition :"
+
+msgid "Next: the text"
+msgstr "Suivant : le texte"
+
+msgid "Name the person or institution who can act, and what you ask of them."
+msgstr "Nommez la personne ou l’institution qui peut agir, et ce que vous lui demandez."
+
+msgid "Example: “Lyon city council: build a continuous cycle lane on cours Émile-Zola”."
+msgstr "Exemple : « Mairie de Lyon : créez une piste cyclable continue sur le cours Émile-Zola »."
+
+msgid "Avoid capitals and exclamation marks: a calm title inspires more trust."
+msgstr "Évitez les majuscules et les points d’exclamation : un titre posé inspire plus confiance."
+
+msgid "Next: publication"
+msgstr "Suivant : la publication"
+
+msgid "Back"
+msgstr "Retour"
+
+msgid "A clear text in four parts:"
+msgstr "Un texte clair en quatre parties :"
+
+msgid "To whom"
+msgstr "À qui"
+
+msgid "the person or institution who can decide."
+msgstr "la personne ou l’institution qui peut décider."
+
+msgid "What"
+msgstr "Quoi"
+
+msgid "one precise, achievable request."
+msgstr "une demande précise et réalisable."
+
+msgid "Why"
+msgstr "Pourquoi"
+
+msgid "facts and sources, without exaggeration."
+msgstr "des faits et des sources, sans exagération."
+
+msgid "Who you are"
+msgstr "Qui vous êtes"
+
+msgid "a sentence about the people behind the petition."
+msgstr "une phrase sur les personnes à l’origine de la pétition."
+
+msgid "What is not allowed"
+msgstr "Ce qui n’est pas permis"
+
+msgid "Hateful or discriminatory content, personal attacks against private individuals, advertising and false information are removed according to the moderation charter."
+msgstr "Les contenus haineux ou discriminatoires, les attaques contre des personnes privées, la publicité et les fausses informations sont retirés selon la charte de modération."
+
+msgid "Your petition"
+msgstr "Votre pétition"
+
+msgid "Next you can add an image, a goal of signatures and sharing options. You can change everything later."
+msgstr "Ensuite, vous pourrez ajouter une image, un objectif de signatures et des options de partage. Tout reste modifiable."
+
+msgid "Create and finish the settings"
+msgstr "Créer et terminer les réglages"
+
+msgid "Create and go to the dashboard"
+msgstr "Créer et aller au tableau de bord"
+
+msgid "A draft is only visible to you (and to your organization). Publish when the text is ready."
+msgstr "Un brouillon n’est visible que par vous (et votre organisation). Publiez quand le texte est prêt."
+
+msgid "Framapétitions shows no advertising and uses no tracker."
+msgstr "Framapétitions n’affiche aucune publicité et n’utilise aucun traceur."
+
+msgid "Signatories’ data is kept for a limited time, then deleted. You will be reminded before, to download the list."
+msgstr "Les données des signataires sont conservées pour une durée limitée, puis supprimées. Vous serez prévenu·e avant, pour télécharger la liste."
+
+msgid "Visibility"
+msgstr "Visibilité"
+
+msgid "Anyone with the link can read and sign it."
+msgstr "Toute personne qui a le lien peut la lire et la signer."
+
+msgid "Only you and your organization can see it. Publish it when the text is ready."
+msgstr "Seuls vous et votre organisation pouvez la voir. Publiez-la quand le texte est prêt."
+
+msgid "The petition and its signatories’ data will be deleted on <strong>%(date)s</strong>."
+msgstr "La pétition et les données de ses signataires seront supprimées le <strong>%(date)s</strong>."
+
+msgid "Extend"
+msgstr "Prolonger"
+
+msgid "Created on %(date)s."
+msgstr "Créée le %(date)s."
+
+msgid "Text and goal"
+msgstr "Texte et objectif"
+
+msgid "(unsaved)"
+msgstr "(non enregistré)"
+
+msgid "Sharing"
+msgstr "Partage"
+
+msgid "Emails"
+msgstr "E-mails"
+
+msgid "Preview"
+msgstr "Aperçu"
+
+msgid "Goal and signatures"
+msgstr "Objectif et signatures"
+
+msgid "Goal (number of signatures)"
+msgstr "Objectif (nombre de signatures)"
+
+msgid "Shown as a progress bar on the petition. A reachable goal motivates people to sign."
+msgstr "Affiché sous forme de barre de progression sur la pétition. Un objectif atteignable donne envie de signer."
+
+msgid "Also count paper signatures"
+msgstr "Compter aussi les signatures papier"
+
+msgid "Add the signatures you collected on paper to the counter."
+msgstr "Ajoute au compteur les signatures recueillies sur papier."
+
+msgid "Number of paper signatures"
+msgstr "Nombre de signatures papier"
+
+msgid "Publication and data"
+msgstr "Publication et données"
+
+msgid "Format: YYYY-MM-DD."
+msgstr "Format : AAAA-MM-JJ."
+
+msgid "Show the publication date on the petition"
+msgstr "Afficher la date de publication sur la pétition"
+
+msgid "Additional texts (optional)"
+msgstr "Textes complémentaires (facultatif)"
+
+msgid "Text next to the signature form"
+msgstr "Texte à côté du formulaire de signature"
+
+msgid "Text at the bottom of the petition"
+msgstr "Texte en bas de la pétition"
+
+msgid "Links at the bottom of the petition"
+msgstr "Liens en bas de la pétition"
+
+msgid "Note under the signature form"
+msgstr "Note sous le formulaire de signature"
+
+msgid "For example who collects the signatures and why."
+msgstr "Par exemple qui recueille les signatures et pourquoi."
+
+msgid "When the petition is shared"
+msgstr "Quand la pétition est partagée"
+
+msgid "The image and the description appear in the preview shown by social networks and messaging apps."
+msgstr "L’image et la description apparaissent dans l’aperçu affiché par les réseaux sociaux et les messageries."
+
+msgid "Current sharing image"
+msgstr "Image de partage actuelle"
+
+msgid "Remove the current image"
+msgstr "Retirer l’image actuelle"
+
+msgid "Sharing image"
+msgstr "Image de partage"
+
+msgid "JPEG or PNG, ideally 1200 × 630 pixels."
+msgstr "JPEG ou PNG, idéalement 1200 × 630 pixels."
+
+msgid "Sharing description"
+msgstr "Description de partage"
+
+msgid "One or two sentences, 200 characters maximum."
+msgstr "Une ou deux phrases, 200 caractères maximum."
+
+msgid "Twitter/X account to mention"
+msgstr "Compte Twitter/X à mentionner"
+
+msgid "Share buttons on the petition"
+msgstr "Boutons de partage sur la pétition"
+
+msgid "Web addresses"
+msgstr "Adresses web"
+
+msgid "A readable address is easier to share than a number. Example: <code>%(example_url)s</code>"
+msgstr "Une adresse lisible se partage plus facilement qu’un numéro. Exemple : <code>%(example_url)s</code>"
+
+msgid "Address"
+msgstr "Adresse"
+
+msgid "Add an address"
+msgstr "Ajouter une adresse"
+
+msgid "Add"
+msgstr "Ajouter"
+
+msgid "Reply-to address"
+msgstr "Adresse de réponse"
+
+msgid "Each signatory receives a confirmation email. If they reply to it, their message goes to this address. Leave empty if you do not want to receive replies."
+msgstr "Chaque signataire reçoit un e-mail de confirmation. S’il y répond, son message arrive à cette adresse. Laissez vide si vous ne voulez pas recevoir de réponses."
+
+msgid "The preview shows the saved version. Save your changes to see them here."
+msgstr "L’aperçu montre la version enregistrée. Enregistrez vos modifications pour les voir ici."
+
+msgid "Open in a new tab"
+msgstr "Ouvrir dans un nouvel onglet"
+
+msgid "Preview of the petition"
+msgstr "Aperçu de la pétition"
+
+msgid "Your changes have been saved."
+msgstr "Vos modifications ont été enregistrées."
+
+msgid "Filter"
+msgstr "Filtrer"
+
+msgid "Rows shown"
+msgstr "Lignes affichées"
+
+msgid "All"
+msgstr "Toutes"
+
+msgid "Apply"
+msgstr "Appliquer"
+
+msgid "Actions on the selected rows"
+msgstr "Actions sur les lignes sélectionnées"
+
+msgid "Delete the selected rows?"
+msgstr "Supprimer les lignes sélectionnées ?"
+
+msgid "Everything selected is deleted with its petitions and signatures. This cannot be undone. To only hide content, use the other actions."
+msgstr "Tout ce qui est sélectionné est supprimé avec ses pétitions et ses signatures. C’est irréversible. Pour seulement masquer un contenu, utilisez les autres actions."
+
+msgid "Start with the reports. Hiding a petition keeps it for the owner; deleting removes it with its signatures."
+msgstr "Commencez par les signalements. Masquer une pétition la conserve pour son propriétaire ; la supprimer l’efface avec ses signatures."
+
+msgid "Django administration"
+msgstr "Administration Django"
+
+msgid "Reports"
+msgstr "Signalements"
+
+msgid "Petitions under watch"
+msgstr "Pétitions surveillées"
+
+msgid "Hidden petitions"
+msgstr "Pétitions masquées"
+
+msgid "Accounts under watch"
+msgstr "Comptes surveillés"
+
+msgid "Hidden accounts"
+msgstr "Comptes masqués"
+
+msgid "How it works"
+msgstr "Fonctionnement"
+
+msgid "Moderate: the petition is hidden from the public, its owner still sees it. Spam: also reports it to Akismet."
+msgstr "Modérer : la pétition est masquée au public, son propriétaire la voit toujours. Spam : la signale aussi à Akismet."
+
+msgid "Select all visible rows"
+msgstr "Sélectionner toutes les lignes visibles"
+
+msgid "Select %(title)s"
+msgstr "Sélectionner %(title)s"
+
+msgid "Flagged automatically by the anti-spam checks. Ham: not spam, stop watching. Switch: check the signatures at each signature instead of periodically."
+msgstr "Repérées automatiquement par les contrôles anti-spam. Ham : pas du spam, ne plus surveiller. Basculer : vérifier les signatures à chaque signature plutôt que périodiquement."
+
+msgid "Priority"
+msgstr "Priorité"
+
+msgid "Today"
+msgstr "Aujourd’hui"
+
+msgid "Yesterday"
+msgstr "Hier"
+
+msgid "Unconfirmed (6 h)"
+msgstr "Non confirmées (6 h)"
+
+msgid "Checked at each signature"
+msgstr "Vérifiée à chaque signature"
+
+msgid "Hidden from the public by moderation. Demoderate to show a petition again."
+msgstr "Masquées au public par la modération. Démodérez pour afficher à nouveau une pétition."
+
+msgid "Flagged petitions"
+msgstr "Pétitions signalées"
+
+msgid "Select %(name)s"
+msgstr "Sélectionner %(name)s"
+
+msgid "Hidden members"
+msgstr "Membres masqués"
+
+msgid "Save the date"
+msgstr "Enregistrer la date"
+
+msgid "The petition and its signatures will be deleted on %(date)s."
+msgstr "La pétition et ses signatures seront supprimées le %(date)s."
