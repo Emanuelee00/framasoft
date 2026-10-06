@@ -30,8 +30,21 @@ db:
 migrate:
 	cd pytition && DJANGO_SETTINGS_MODULE=pytition.settings.local uv run --no-sync python manage.py migrate
 
+# Stops the standalone podman DB used by `run`, so its port 5432 is free
+# for the docker-compose stack's own `db` service used by `run-prod`.
+stop-db:
+	podman stop pytition-db >/dev/null 2>&1 || true
+
+# Runs the app behind nginx + uWSGI (multiple workers) instead of the
+# single-threaded Django dev server. This is the realistic target for
+# load/concurrency testing (e.g. the Gatling Dos simulation):
+# the dev server used by `run` serializes requests and will show load-test
+# failures that are really about itself, not about the app's real capacity.
+run-prod: stop-db
+	podman-compose -f docker-compose.yml -f nginx-uwsgi/docker-compose.yml up --build
+
 # Upgrades all dependencies (asks for confirmation, logs changes to upgraded.md)
 upgrade:
 	bash upgrade.sh
 
-.PHONY: run install db migrate upgrade
+.PHONY: run install db migrate stop-db run-prod upgrade
