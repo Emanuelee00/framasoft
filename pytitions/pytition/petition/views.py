@@ -54,9 +54,12 @@ from .helpers import send_confirmation_email, subscribe_to_newsletter, send_welc
 from .helpers import get_update_form, petition_detail_meta
 from .helpers import sanitize_html
 from .helpers import remove_user_moderated
+from .helpers import hash_ip
 from .spam_management.anti_bot_tests.check_signature_number import check_signature_number, check_signature_variation, check_unconfirmed_signatures, check_creation_signatures
 from .spam_management.anti_bot_tests.check_petition_number import check_petition_number_day, check_mon_petition_number, check_user_signature_number
 from .spam_management.detector import is_spam
+
+
 
 #------------------------------------ Views -----------------------------------
 
@@ -286,9 +289,10 @@ def create_signature(request, petition_id):
         if not form.is_valid():
             return render(request, 'petition/petition_detail.html', ctx)
 
-        ipaddr = make_password(
-                get_client_ip(request),
-                salt=petition.salt.encode('utf-8'))
+        ipaddr = hash_ip(
+            get_client_ip(request),
+            petition.salt,
+        )
         since = now() - timedelta(seconds=settings.SIGNATURE_THROTTLE_TIMING)
         signatures = Signature.objects.filter(
             petition=petition,

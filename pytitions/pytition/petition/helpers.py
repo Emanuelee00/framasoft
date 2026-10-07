@@ -6,6 +6,8 @@ It defines actions to help the developper across the project.
 
 import requests
 import lxml
+import hashlib
+import hmac
 from lxml.html.clean import Cleaner
 from django.http import Http404, HttpResponseForbidden
 from django.conf import settings
@@ -15,6 +17,15 @@ from django.utils.html import strip_tags
 from django.core.mail import get_connection, EmailMultiAlternatives, EmailMessage
 from django.utils.translation import gettext as _
 from django.contrib.auth.models import User
+
+# Light hash dedicated to IP hash
+def hash_ip(ip, salt):
+    return hmac.new(
+        salt.encode("utf-8"),
+        ip.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+
 
 # Remove all moderated instances of Petition
 def remove_user_moderated(petitions):
@@ -62,6 +73,9 @@ def check_user_in_orga(user, orga):
     if orga not in user.organizations.all():
         return HttpResponseForbidden(_("You are not part of this organization"))
     return None
+
+
+
 
 
 # Return a 404 if a petition does not exist
