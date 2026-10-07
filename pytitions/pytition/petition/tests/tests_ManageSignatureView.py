@@ -137,22 +137,3 @@ class ManageSignatureViewTest(TestCase):
         self.client.post(reverse('forgot_signature_link', args=[self.petition.id]), {'email': 'Alan@John.ORG'})
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].to, ['alan@john.org'])
-
-    def test_confirmation_email_context_has_manage_url(self):
-        from django.template.loader import render_to_string
-        data = {'first_name': 'Bob', 'last_name': 'Doe', 'email': 'bob@doe.org', 'subscribed_to_mailinglist': False,
-                'consent': 'on'}
-        with mock.patch('petition.helpers.render_to_string', wraps=render_to_string) as rts:
-            self.client.post(reverse('create_signature', args=[self.petition.id]), data)
-        signature = Signature.objects.get(email='bob@doe.org')
-        ctx = rts.call_args[0][1]
-        self.assertTrue(ctx['manage_url'].endswith(reverse('manage_signature', args=[make_manage_token(signature)])))
-        for key in ('firstname', 'url', 'petition_title', 'petition_url', 'creator_name', 'days'):
-            self.assertIn(key, ctx)
-
-    def test_privacy_notice(self):
-        from django.conf import settings
-        response = self.client.get(reverse('privacy_notice'))
-        self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'petition/privacy_notice.html')
-        self.assertContains(response, settings.PRIVACY_NOTICE_VERSION)

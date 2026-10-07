@@ -257,10 +257,6 @@ def confirm(request, petition_id, confirmation_hash):
                                                                              confirmed_at=timezone.now()):
             # Like Signature.save() on a confirmed signature: other signatures of the same address go away
             petition.signature_set.filter(email=signature.email).exclude(pk=signature.pk).delete()
-            state = "confirmed"
-        else:
-            state = "already_confirmed"
-        if state == "confirmed":
             # Newsletter subscription only once the signature is confirmed (GD-06)
             if petition.has_newsletter and signature.subscribed_to_mailinglist:
                 subscribe_to_newsletter(petition, signature.email)
@@ -269,6 +265,7 @@ def confirm(request, petition_id, confirmation_hash):
             messages.success(request, _("Thank you for confirming your signature!"))
             request.session['just_confirmed'] = True
             return redirect(petition.url)
+        state = "already_confirmed"
     if state == "already_confirmed":
         ctx['manage_url'] = build_manage_url(request, signature)
     ctx["confirm_state"] = state
@@ -1890,26 +1887,27 @@ def show_signatures_graph(request, petition_id):
 
         # matplotlib graph of number of signatures in each day
         graph, ax = plt.subplots()
-        try:
-            if len(xpoints) == 1:
-                ax.plot(xpoints, ypoints, "o", color="purple")
-            else:
-                ax.plot(xpoints, ypoints, color="purple")
+        if len(xpoints) == 1:
+            ax.plot(xpoints, ypoints, "o", color="purple")
+        elif len(xpoints) > 1:
+            ax.plot(xpoints, ypoints, color="purple")
+        else:
+            messages.error(request, _("This petition doesn't have any signatures"))
+            return redirect("show_signatures", petition_id)
 
-            # format the graph
-            ax.set_xticks(xpoints)
-            format = mdates.DateFormatter('%d\n%m')
-            ax.xaxis.set_major_formatter(format)
-            ax.set_xlabel('Day')
-            ax.set_ylabel('Number of signatures')
-            ax.set_title("Number of signatures per day")
+        # format the graph
+        ax.set_xticks(xpoints)
+        format = mdates.DateFormatter('%d\n%m')
+        ax.xaxis.set_major_formatter(format)
+        ax.set_xlabel('Day')
+        ax.set_ylabel('Number of signatures')
+        ax.set_title("Number of signatures per day")
 
-            # save the graph in a buffer
-            buf = io.BytesIO()
-            graph.savefig(buf, format='png', bbox_inches='tight')
-        finally:
-            # pyplot keeps every figure alive until it is closed
-            plt.close(graph)
+        # save the graph in a buffer
+        buf = io.BytesIO()
+        graph.savefig(buf, format='png', bbox_inches='tight')
+        # framapetitions: S15 - pyplot keeps every figure alive until it is closed
+        plt.close(graph)
         buf.seek(0)
 
         # encode the image in base64 to display in the html page

@@ -87,4 +87,6 @@ class ReportPetitionViewTest(TestCase):
         response = self.client.get(reverse("detail", args=[self.petition.id]))
         self.assertContains(response, 'href="{}"'.format(self.url))
         self.assertContains(response, '<dialog id="fp-report"')
+        self.assertContains(response, 'data-fp-dialog-open="fp-report"')
+        self.assertContains(response, 'data-fp-dialog-close')
         self.assertNotContains(response, 'id="report_modal"')

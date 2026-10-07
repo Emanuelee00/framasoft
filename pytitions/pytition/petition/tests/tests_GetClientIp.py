@@ -1,10 +1,6 @@
 from django.test import TestCase, RequestFactory, override_settings
-from django.urls import reverse
-
-from .utils import add_default_data
 
 from petition.helpers import get_client_ip
-from petition.models import Petition
 
 
 class GetClientIpTest(TestCase):
@@ -37,26 +33,3 @@ class GetClientIpTest(TestCase):
     def test_trusted_proxy_without_header(self):
         request = self.factory.get('/', REMOTE_ADDR='5.6.7.8')
         self.assertEqual(get_client_ip(request), '5.6.7.8')
-
-
-class ThrottleClientIpTest(TestCase):
-    """Changing X-Forwarded-For must not change the address used by the throttle"""
-
-    @classmethod
-    def setUpTestData(cls):
-        add_default_data()
-
-    @override_settings(SIGNATURE_THROTTLE=2)
-    def test_x_forwarded_for_does_not_bypass_throttle(self):
-        petition = Petition.objects.filter(published=True).first()
-        for i in range(4):
-            data = {
-                'first_name': 'Alan',
-                'last_name': 'John',
-                'email': 'alan%d@john.org' % i,
-                'phone': '',
-                'consent': 'on',
-            }
-            response = self.client.post(reverse('create_signature', args=[petition.id]), data,
-                                        HTTP_X_FORWARDED_FOR='10.0.0.%d' % i)
-        self.assertContains(response, 'Too many signatures from your IP address', status_code=response.status_code)

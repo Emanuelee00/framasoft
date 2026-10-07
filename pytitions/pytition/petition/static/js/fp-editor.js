@@ -2,7 +2,7 @@
  * Petition editor behaviours: creation wizard and petition settings (CRE-04, CRE-05).
  * Vanilla, loaded with defer, no inline script.
  *
- *   get_csrf_token(), set_mce_changed(ed)   globals called by the TinyMCE configuration (settings)
+ *   set_mce_changed(ed)                     global called by the TinyMCE setup (js/fp-tinymce.js)
  *   output[data-fp-slug-source=<input id>]  preview of the web address built from the title
  *   [data-fp-extend=<input id>]             extends a date field by data-fp-extend-months, never beyond
  *                                           the input max or data-fp-extend-limit-months from today
@@ -20,11 +20,7 @@
     Array.prototype.forEach.call(document.querySelectorAll(selector), fn);
   }
 
-  // TinyMCE hooks (images_upload_handler and setup in TINYMCE_DEFAULT_CONFIG)
-  window.get_csrf_token = function () {
-    var input = document.querySelector("[name=csrfmiddlewaretoken]");
-    return input ? input.value : "";
-  };
+  // TinyMCE hook (called by fpTinymceSetup, js/fp-tinymce.js)
   window.set_mce_changed = function (editor) {
     var form = editor && editor.formElement;
     if (form) { form.dispatchEvent(new Event("input", { bubbles: true })); }

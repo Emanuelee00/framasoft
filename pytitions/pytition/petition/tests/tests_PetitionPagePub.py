@@ -1,7 +1,7 @@
 import datetime
 
 from django.template.loader import render_to_string
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.urls import reverse
 from django.utils import translation
 
@@ -38,11 +38,6 @@ class PetitionPageDesignTest(TestCase):
         self.assertNotIn('msbConfig', html)
         self.assertNotIn('vendor/msb/js/mastodon.js', html)
         self.assertNotIn('data-toggle="modal"', html)
-
-    def test_report_link_opens_the_design_system_dialog(self):
-        html = self.get_html()
-        self.assertIn('data-fp-dialog-open="fp-report"', html)
-        self.assertIn('data-fp-dialog-close', html)
 
     def test_errors_put_the_form_first_on_small_screens(self):
         response = self.client.post(reverse('create_signature', args=[self.petition.id]), {'first_name': 'Alan'})

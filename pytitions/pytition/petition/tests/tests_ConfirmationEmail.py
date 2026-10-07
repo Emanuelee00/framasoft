@@ -6,6 +6,7 @@ from django.utils.html import strip_tags
 
 from .utils import add_default_data
 
+from petition.helpers import make_manage_token
 from petition.models import Petition
 
 
@@ -31,33 +32,24 @@ class ConfirmationEmailTest(TestCase):
         self.assertIn('Julia', text)
         self.assertIn('https://example.org/privacy', text)
 
-    def test_sent_email_with_current_context(self):
-        petition = Petition.objects.filter(published=True).first()
-        data = {'first_name': 'Alan', 'last_name': 'John', 'email': 'alan@john.org', 'consent': 'on'}
-        self.client.post(reverse('create_signature', args=[petition.id]), data)
-        self.assertEqual(len(mail.outbox), 1)
-        body = mail.outbox[0].body
-        self.assertIn('Hello Alan,', body)
-        signature = petition.signature_set.get()
-        self.assertIn(reverse('confirm', args=[petition.id, signature.confirmation_hash]), body)
-        self.assertIn(reverse('privacy_notice'), body)
-        self.assertNotIn('🤍', body)
-
     def test_text_version_is_a_real_text_template(self):
         petition = Petition.objects.filter(published=True).first()
         petition.title = '<b>Bees &amp; flowers</b>'
         petition.save()
         data = {'first_name': 'Alan', 'last_name': 'John', 'email': 'alan@john.org', 'consent': 'on'}
         self.client.post(reverse('create_signature', args=[petition.id]), data)
+        self.assertEqual(len(mail.outbox), 1)
         message = mail.outbox[0]
         signature = petition.signature_set.get()
         body = message.body
         self.assertEqual(message.subject, 'Confirm your signature: “Bees & flowers”')
+        self.assertIn('Hello Alan,', body)
+        self.assertNotIn('🤍', body)
         self.assertIn('“Bees & flowers”', body)
         self.assertNotIn('<', body)
         self.assertNotIn('&amp;', body)
         self.assertIn('http://testserver' + reverse('confirm', args=[petition.id, signature.confirmation_hash]), body)
-        self.assertIn('http://testserver/petition/signature/manage/', body)
+        self.assertIn('http://testserver' + reverse('manage_signature', args=[make_manage_token(signature)]), body)
         self.assertIn('http://testserver' + reverse('privacy_notice'), body)
         self.assertIn('within 7 days', body)
         self.assertIn(petition.owner_name, body)

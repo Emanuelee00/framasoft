@@ -141,7 +141,7 @@ class SecurityHeadersTest(TestCase):
 
     def test_secure_cookie_defaults(self):
         # Without environment overrides, cookies are Secure and HSTS lasts one year
-        if 'PYTITION_HTTPS' in os.environ or 'SESSION_COOKIE_SECURE' in os.environ:
+        if 'PYTITION_HTTPS' in os.environ:
             self.skipTest('overridden by the environment')
         self.assertTrue(settings.SESSION_COOKIE_SECURE)
         self.assertTrue(settings.CSRF_COOKIE_SECURE)

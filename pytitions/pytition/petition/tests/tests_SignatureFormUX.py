@@ -1,4 +1,4 @@
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.urls import reverse
 
 from .utils import add_default_data
@@ -49,10 +49,3 @@ class SignatureFormRenderingTest(TestCase):
         response = self.client.get(reverse('detail', args=[self.petition.id]))
         self.assertContains(response, 'Keep me informed')
         self.assertNotContains(response, 'checked')
-
-    @override_settings(SIGNATURE_COLLECT_PHONE=False)
-    def test_phone_can_be_disabled(self):
-        form = SignatureForm(petition=self.petition)
-        self.assertNotIn('phone', form.fields)
-        response = self.client.get(reverse('detail', args=[self.petition.id]))
-        self.assertNotContains(response, 'id="id_phone"')

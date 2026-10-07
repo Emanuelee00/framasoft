@@ -30,12 +30,6 @@ Confirmation p50 / p95 (ms)       390 / 558      202 / 337      131 / 204
 SQL queries per signature         11             7              7
 ================================ ============== ============== ===============
 
-Measured again with the GDPR and interface changes (consent checkbox, new petition page),
-in one session next to the "After" code: 171 signatures, 172 pages and 98 confirmations
-per second with the default settings (176, 168 and 98 for the "After" code), 347, 354 and
-135 with persistent connections (364, 449 and 144). The SQL queries are the same; the new
-petition page costs about 15% more CPU to render (more translated texts and blocks).
-
 The main gains come from:
 
 * hashing the signer IP address with HMAC-SHA256 instead of bcrypt: about 250 ms of CPU
@@ -195,12 +189,3 @@ they should be considered.
    ``PYTITION_TRUSTED_PROXY_COUNT`` set accordingly).
 5. **PostgreSQL read replica** for the pages that only read (petition lists, counters),
    using a Django database router. The signature itself always needs the primary.
-
-Reproducing the measurements
-============================
-
-The bench is made of a seed script (``bulk_create`` of the signatures of one petition), a
-load generator sending ``POST sign``, ``GET`` petition page and ``GET`` confirmation requests,
-and a settings module that keeps the throttle open (``SIGNATURE_THROTTLE`` very high, so that
-its query still runs) and sets ``DEBUG = False``. Run the same scenario before and after a
-change, on the same machine, several times, and compare the medians.

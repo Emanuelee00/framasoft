@@ -20,9 +20,9 @@ class SignatureThrottleTest(TestCase):
         cache.clear()
         self.petition = Petition.objects.filter(published=True).first()
 
-    def sign(self, i, ip='1.2.3.4'):
+    def sign(self, i, ip='1.2.3.4', **extra):
         data = {'first_name': 'Alan%d' % i, 'last_name': 'John', 'email': 'alan%d@john.org' % i, 'phone': '', 'consent': 'on'}
-        return self.client.post(reverse('create_signature', args=[self.petition.id]), data, REMOTE_ADDR=ip)
+        return self.client.post(reverse('create_signature', args=[self.petition.id]), data, REMOTE_ADDR=ip, **extra)
 
     def moderation_mails(self):
         return [m for m in mail.outbox if m.to == ['moderation@example.org']]
@@ -55,3 +55,7 @@ class SignatureThrottleTest(TestCase):
             self.sign(i)
         self.assertEqual(self.sign(10, ip='5.6.7.8').status_code, 302)
         self.assertEqual(Signature.objects.filter(petition=self.petition).count(), 4)
+
+    def test_x_forwarded_for_does_not_bypass_throttle(self):
+        statuses = [self.sign(i, HTTP_X_FORWARDED_FOR='10.0.0.%d' % i).status_code for i in range(4)]
+        self.assertEqual(statuses, [302, 302, 302, 429])

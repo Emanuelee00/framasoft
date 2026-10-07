@@ -188,8 +188,11 @@ TINYMCE_DEFAULT_CONFIG = {
     'automatic_uploads': True,
     'images_upload_url': '/petition/image_upload',
     'image_upload_credentials': True,
-    # images_upload_handler and setup: see the framapetitions S13 block below
+    # framapetitions: S13 - functions of static/js/fp-tinymce.js, referenced by name (no eval)
+    'images_upload_handler': 'fpTinymceUploadImage',
+    'setup': 'fpTinymceSetup',
 }
+TINYMCE_EXTRA_MEDIA = {'js': ['js/fp-tinymce.js']}
 TINYMCE_INCLUDE_JQUERY = True
 
 #:| The name of your Pytition instance.
@@ -332,8 +335,6 @@ MAINTENANCE_MODE_STATE_FILE_PATH = os.path.join(BASE_DIR, 'maintenance_mode_stat
 PHONENUMBER_DEFAULT_REGION = "FR"
 
 
-# --- framapetitions: scalability ---
-# (settings di questo filone)
 # framapetitions: BE-02
 #:| Number of trusted reverse proxies in front of Pytition that append the client address
 #:| to the ``X-Forwarded-For`` header.
@@ -375,25 +376,17 @@ def _env_bool(name, default):
 
 #:| ``True`` (default) when Pytition is served over HTTPS: cookies get the ``Secure`` flag and
 #:| HSTS is sent. Set the ``PYTITION_HTTPS`` environment variable to ``0`` only for a local
-#:| development server over plain http. Each value below can also be set on its own.
+#:| development server over plain http.
+# (HttpOnly session cookie, SameSite=Lax, Referrer-Policy same-origin and nosniff: Django defaults)
 PYTITION_HTTPS = _env_bool('PYTITION_HTTPS', True)
-SESSION_COOKIE_SECURE = _env_bool('SESSION_COOKIE_SECURE', PYTITION_HTTPS)
-CSRF_COOKIE_SECURE = _env_bool('CSRF_COOKIE_SECURE', PYTITION_HTTPS)
-LANGUAGE_COOKIE_SECURE = _env_bool('LANGUAGE_COOKIE_SECURE', PYTITION_HTTPS)
-SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE = LANGUAGE_COOKIE_SECURE = PYTITION_HTTPS
 # The CSRF token is read from the form field, never from the cookie
 CSRF_COOKIE_HTTPONLY = True
 LANGUAGE_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = os.environ.get('SESSION_COOKIE_SAMESITE', 'Lax')
-CSRF_COOKIE_SAMESITE = os.environ.get('CSRF_COOKIE_SAMESITE', 'Lax')
 LANGUAGE_COOKIE_SAMESITE = 'Lax'
 #:| HSTS, only sent on HTTPS requests (behind a proxy, Django must see them as secure:
 #:| ``uwsgi_param HTTPS on`` or ``SECURE_PROXY_SSL_HEADER``). One year by default.
 SECURE_HSTS_SECONDS = int(os.environ.get('SECURE_HSTS_SECONDS', 31536000 if PYTITION_HTTPS else 0))
-SECURE_HSTS_INCLUDE_SUBDOMAINS = _env_bool('SECURE_HSTS_INCLUDE_SUBDOMAINS', False)
-SECURE_HSTS_PRELOAD = _env_bool('SECURE_HSTS_PRELOAD', False)
-SECURE_REFERRER_POLICY = 'same-origin'
-SECURE_CONTENT_TYPE_NOSNIFF = True
 
 #:| Content-Security-Policy. ``{nonce}`` is replaced by the nonce of each request: inline
 #:| ``<script>`` elements must carry ``nonce="{{ request.csp_nonce }}"``.
@@ -419,19 +412,7 @@ CSP_DIRECTIVES = {
 }
 MIDDLEWARE.insert(MIDDLEWARE.index('django.middleware.security.SecurityMiddleware') + 1,
                   'petition.csp.ContentSecurityPolicyMiddleware')
-# TinyMCE callbacks are functions of static/js/fp-tinymce.js, referenced by name (no eval)
-TINYMCE_DEFAULT_CONFIG.update({
-    'images_upload_handler': 'fpTinymceUploadImage',
-    'setup': 'fpTinymceSetup',
-})
-TINYMCE_EXTRA_MEDIA = {'js': ['js/fp-tinymce.js']}
 
-
-
-
-
-# --- framapetitions: gdpr ---
-# (settings di questo filone)
 # framapetitions: GD-04 — retention in days for purge_personal_data (to be confirmed by Framasoft)
 UNCONFIRMED_SIGNATURE_RETENTION_DAYS = 7
 SIGNATURE_IP_HASH_RETENTION_DAYS = 7  # must stay longer than SIGNATURE_THROTTLE_TIMING (1 day)
@@ -466,14 +447,5 @@ PURGE_BATCH_SIZE = 10000
 # When empty, no expiry reminder is sent and expired petitions are NOT deleted.
 SITE_BASE_URL = os.environ.get("SITE_BASE_URL", "")
 
-
-
-
-
-# --- framapetitions: ux ---
-# (settings di questo filone)
 # framapetitions: FE-08 - one moderation report per (petition, client IP) during this delay, in seconds
 REPORT_THROTTLE_TIMING = 60 * 60
-
-
-

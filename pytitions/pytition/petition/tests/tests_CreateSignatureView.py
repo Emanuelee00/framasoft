@@ -123,7 +123,6 @@ class CreateSignatureViewTest(TestCase):
         self.assertEqual([m.to for m in mail.outbox], [['new@example.org'], ['dup@example.org']])
         self.assertIn(petition.title, mail.outbox[1].body)
         self.assertIn('/signature/manage/', mail.outbox[1].body)
-        self.assertIn('/signature/manage/', mail.outbox[1].body)
         # a second attempt within the throttle window does not send another email
         r_dup2 = self.client.post(url, dict(base, email='dup@example.org'), follow=True)
         self.assertEqual(len(mail.outbox), 2)

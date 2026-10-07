@@ -1,13 +1,29 @@
+import tempfile
 from datetime import timedelta
+from io import StringIO
 from unittest import mock
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core import mail
+from django.core.files.base import ContentFile
+from django.core.files.storage import FileSystemStorage
+from django.core.management import call_command
+from django.core.management.base import CommandError
 from django.db import connection
 from django.db.migrations.executor import MigrationExecutor
-from django.test import TestCase, TransactionTestCase, override_settings
+from django.test import RequestFactory, TestCase, TransactionTestCase, override_settings
+from django.test.utils import CaptureQueriesContext
+from django.urls import reverse
 from django.utils import timezone
+from django.utils.formats import date_format
 
-from petition.models import Petition
+from petition import helpers
+from petition.expiry import delete_unused_media
+from petition.forms import ExpiryForm, PetitionCreationStep3
+from petition.helpers import make_manage_token
+from petition.models import (Moderation, ModerationReason, Monitoring, Organization, Permission, Petition,
+                             PetitionTemplate, Signature, SlugModel)
 
 
 class ExpiryDataMigrationTest(TransactionTestCase):
@@ -82,7 +98,6 @@ class ExpiryModelTest(TestCase):
 class ExpiryFormTest(TestCase):
 
     def form(self, value, form_class=None):
-        from petition.forms import ExpiryForm
         return (form_class or ExpiryForm)(data={'expires_at': value})
 
     @override_settings(PETITION_MAX_LIFETIME_DAYS=730)
@@ -107,7 +122,6 @@ class ExpiryFormTest(TestCase):
         self.assertIn('max="%s"' % latest.isoformat(), html)
 
     def test_wizard_step_accepts_empty_date(self):
-        from petition.forms import PetitionCreationStep3
         self.assertTrue(PetitionCreationStep3(data={'expires_at': ''}).is_valid())
         self.assertFalse(PetitionCreationStep3(data={'expires_at': timezone.localdate().isoformat()}).is_valid())
 
@@ -116,7 +130,6 @@ class ExpiryViewsTest(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        from petition.models import Organization, Permission
         User = get_user_model()
         cls.julia = User.objects.create_user(username="julia", password="julia").pytitionuser
         cls.max = User.objects.create_user(username="max", password="max").pytitionuser
@@ -131,7 +144,6 @@ class ExpiryViewsTest(TestCase):
         self.client.defaults['HTTP_USER_AGENT'] = 'test'
 
     def edit(self, petition, value):
-        from django.urls import reverse
         return self.client.post(reverse('edit_petition', args=[petition.id]),
                                 {'expiry_form_submitted': 'yes', 'expires_at': value})
 
@@ -144,7 +156,6 @@ class ExpiryViewsTest(TestCase):
     # the spam detectors are out of scope here (and fail with the numpy of some environments)
     @mock.patch('petition.views.is_spam')
     def test_wizard_sets_chosen_or_default_date(self, is_spam):
-        from django.urls import reverse
         self.client.login(username="julia", password="julia")
         chosen = timezone.localdate() + timedelta(days=40)
         self.wizard(reverse('user_petition_wizard'), "Chosen", chosen.isoformat())
@@ -156,7 +167,6 @@ class ExpiryViewsTest(TestCase):
         self.assertEqual(Petition.objects.get(title="Org", org=self.org).expires_at, chosen)
 
     def test_wizard_refuses_out_of_range_date(self):
-        from django.urls import reverse
         self.client.login(username="julia", password="julia")
         response = self.wizard(reverse('user_petition_wizard'), "Late",
                                (timezone.localdate() + timedelta(days=731)).isoformat())
@@ -165,7 +175,6 @@ class ExpiryViewsTest(TestCase):
         self.assertFalse(Petition.objects.filter(title="Late").exists())
 
     def test_wizard_initial_date(self):
-        from django.urls import reverse
         self.client.login(username="julia", password="julia")
         url = reverse('user_petition_wizard')
         prefix = 'petition_creation_wizard-current_step'
@@ -186,7 +195,6 @@ class ExpiryViewsTest(TestCase):
         self.assertIsNone(petition.expiry_reminder_days)
 
     def test_edit_page_renders_the_expiry_form(self):
-        from django.urls import reverse
         petition = Petition.objects.create(title="P", user=self.julia)
         self.client.login(username="julia", password="julia")
         response = self.client.get(reverse('edit_petition', args=[petition.id]))
@@ -194,22 +202,15 @@ class ExpiryViewsTest(TestCase):
         self.assertContains(response, 'name="expiry_form_submitted"')
         self.assertContains(response, 'name="expires_at"')
         self.assertContains(response, 'max="{}"'.format(Petition.expiry_bounds()[1].isoformat()))
+        before = petition.expires_at
         response = self.edit(petition, (timezone.localdate() + timedelta(days=731)).isoformat())
         self.assertContains(response, 'class="fp-field-error" id="id_expires_at-error"')
-
-    def test_extension_out_of_range_is_refused(self):
-        petition = Petition.objects.create(title="P", user=self.julia)
-        before = petition.expires_at
-        self.client.login(username="julia", password="julia")
-        response = self.edit(petition, (timezone.localdate() + timedelta(days=731)).isoformat())
-        self.assertIn('expires_at', response.context['expiry_form'].errors)
         petition.refresh_from_db()
         self.assertEqual(petition.expires_at, before)
 
     def test_expired_petition_can_still_be_extended_before_purge(self):
         petition = Petition.objects.create(title="P", user=self.julia, expires_at=timezone.localdate())
         self.client.login(username="julia", password="julia")
-        from django.urls import reverse
         response = self.client.get(reverse('edit_petition', args=[petition.id]))
         self.assertFalse(response.context['expiry_form'].is_bound)
         self.edit(petition, (timezone.localdate() + timedelta(days=30)).isoformat())
@@ -235,7 +236,6 @@ class ExpiredPetitionTest(TestCase):
     """Between its deletion date and the purge, a petition no longer accepts signatures"""
 
     def setUp(self):
-        from petition.models import Signature
         owner = get_user_model().objects.create_user(username="owner", password="pass").pytitionuser
         self.petition = Petition.objects.create(title="P", user=owner, published=True,
                                                 expires_at=timezone.localdate())
@@ -243,7 +243,6 @@ class ExpiredPetitionTest(TestCase):
                                                 petition=self.petition)
 
     def test_page_shows_closed_state(self):
-        from django.urls import reverse
         for url in (reverse('detail', args=[self.petition.id]), self.petition.url):
             response = self.client.get(url)
             self.assertEqual(response.status_code, 200)
@@ -252,8 +251,6 @@ class ExpiredPetitionTest(TestCase):
             self.assertNotContains(response, 'name="first_name"')
 
     def test_sign_is_refused(self):
-        from django.urls import reverse
-        from petition.models import Signature
         data = {'first_name': 'Alan', 'last_name': 'John', 'email': 'alan@john.org', 'consent': 'on'}
         response = self.client.post(reverse('create_signature', args=[self.petition.id]), data)
         self.assertEqual(response.status_code, 410)
@@ -261,7 +258,6 @@ class ExpiredPetitionTest(TestCase):
         self.assertFalse(Signature.objects.filter(email='alan@john.org').exists())
 
     def test_confirm_is_refused(self):
-        from django.urls import reverse
         url = reverse('confirm', args=[self.petition.id, self.pending.confirmation_hash])
         response = self.client.get(url)
         self.assertEqual(response.context['confirm_state'], "closed")
@@ -272,7 +268,6 @@ class ExpiredPetitionTest(TestCase):
         self.assertFalse(self.pending.confirmed)
 
     def test_open_petition_unchanged(self):
-        from django.urls import reverse
         Petition.objects.filter(pk=self.petition.pk).update(expires_at=timezone.localdate() + timedelta(days=1))
         response = self.client.get(reverse('detail', args=[self.petition.id]))
         self.assertNotIn('sign_state', response.context)
@@ -284,25 +279,12 @@ class ExpiryContextTest(TestCase):
     """The deletion date is available where signatories are informed"""
 
     def setUp(self):
-        from petition.models import Signature
         owner = get_user_model().objects.create_user(username="owner", password="pass").pytitionuser
         self.petition = Petition.objects.create(title="P", user=owner, published=True)
         self.signature = Signature.objects.create(first_name="A", last_name="B", email="a@example.org",
                                                   petition=self.petition)
 
-    def test_confirmation_email_context(self):
-        from django.test import RequestFactory
-        from petition import helpers
-        with mock.patch.object(helpers, 'render_to_string', wraps=helpers.render_to_string) as render:
-            helpers.send_confirmation_email(RequestFactory().get('/'), self.signature)
-        for call in render.call_args_list:
-            self.assertEqual(call.args[1]['expires_at'], self.petition.expires_at)
-
     def test_confirmation_email_shows_the_date(self):
-        from django.core import mail
-        from django.test import RequestFactory
-        from django.utils.formats import date_format
-        from petition import helpers
         helpers.send_confirmation_email(RequestFactory().get('/'), self.signature)
         message = mail.outbox[-1]
         expected = "will be deleted on {}.".format(date_format(self.petition.expires_at))
@@ -310,8 +292,6 @@ class ExpiryContextTest(TestCase):
         self.assertIn(expected, message.alternatives[0][0])
 
     def test_pages_have_the_petition(self):
-        from django.urls import reverse
-        from petition.helpers import make_manage_token
         pages = [reverse('detail', args=[self.petition.id]),
                  reverse('confirm', args=[self.petition.id, self.signature.confirmation_hash]),
                  reverse('manage_signature', args=[make_manage_token(self.signature)])]
@@ -324,7 +304,6 @@ class ExpiryReminderTest(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        from petition.models import Organization, Permission
         User = get_user_model()
         cls.julia = User.objects.create_user(username="julia", password="julia", email="julia@example.org").pytitionuser
         cls.max = User.objects.create_user(username="max", password="max", email="max@example.org").pytitionuser
@@ -345,15 +324,11 @@ class ExpiryReminderTest(TestCase):
         return timezone.localdate() + timedelta(days=days)
 
     def run_command(self, *args):
-        from io import StringIO
-        from django.core.management import call_command
         out = StringIO()
         call_command('send_expiry_reminders', *args, stdout=out)
         return out.getvalue()
 
     def test_user_reminder_content_and_idempotence(self):
-        from django.core import mail
-        from petition.models import Signature
         petition = Petition.objects.create(title="Save <b>the</b> bees", user=self.julia, expires_at=self.in_days(30))
         Signature.objects.create(first_name="A", last_name="B", email="a@example.org", petition=petition,
                                  confirmed=True)
@@ -384,7 +359,6 @@ class ExpiryReminderTest(TestCase):
         self.assertEqual(len(mail.outbox), 3)
 
     def test_late_run_sends_only_the_latest_reminder(self):
-        from django.core import mail
         petition = Petition.objects.create(title="P", user=self.julia, expires_at=self.in_days(15))
         self.run_command()
         self.assertEqual(len(mail.outbox), 1)
@@ -392,7 +366,6 @@ class ExpiryReminderTest(TestCase):
         self.assertEqual(petition.expiry_reminder_days, 20)
 
     def test_out_of_window_and_binned_petitions(self):
-        from django.core import mail
         Petition.objects.create(title="Far", user=self.julia, expires_at=self.in_days(31))
         Petition.objects.create(title="Today", user=self.julia, expires_at=self.in_days(0))
         Petition.objects.create(title="Bin", user=self.julia, expires_at=self.in_days(10), in_bin_date=timezone.now())
@@ -400,7 +373,6 @@ class ExpiryReminderTest(TestCase):
         self.assertEqual(len(mail.outbox), 0)
 
     def test_extension_restarts_reminders(self):
-        from django.core import mail
         petition = Petition.objects.create(title="P", user=self.julia, expires_at=self.in_days(10))
         self.run_command()
         petition.refresh_from_db()
@@ -410,7 +382,6 @@ class ExpiryReminderTest(TestCase):
         self.assertEqual(len(mail.outbox), 2)
 
     def test_organization_recipients(self):
-        from django.core import mail
         Petition.objects.create(title="P", org=self.org, expires_at=self.in_days(30))
         self.run_command()
         # julia may extend, max may export; ann and bob may do neither; gone is inactive
@@ -419,7 +390,6 @@ class ExpiryReminderTest(TestCase):
         self.assertIn("manage the petitions of Org", mail.outbox[0].body)
 
     def test_dry_run(self):
-        from django.core import mail
         petition = Petition.objects.create(title="P", user=self.julia, expires_at=self.in_days(30))
         self.assertIn("expiry_reminders=1 (dry-run)", self.run_command('--dry-run'))
         self.assertEqual(len(mail.outbox), 0)
@@ -428,13 +398,11 @@ class ExpiryReminderTest(TestCase):
 
     @override_settings(SITE_BASE_URL="")
     def test_no_base_url(self):
-        from django.core.management.base import CommandError
         Petition.objects.create(title="P", user=self.julia, expires_at=self.in_days(30))
         with self.assertRaises(CommandError):
             self.run_command()
 
     def test_failed_send_is_retried(self):
-        from django.core import mail
         petition = Petition.objects.create(title="P", user=self.julia, expires_at=self.in_days(30))
         # (the logger is mocked: test_Commands disables logging for the whole test run)
         with mock.patch('petition.expiry.send_reminder', side_effect=OSError), \
@@ -448,7 +416,6 @@ class ExpiryReminderTest(TestCase):
 
     @override_settings(LANGUAGE_CODE='fr')
     def test_french(self):
-        from django.core import mail
         Petition.objects.create(title="P", user=self.julia, expires_at=self.in_days(30))
         self.run_command()
         self.assertIn("sera supprimée le", mail.outbox[0].subject)
@@ -459,7 +426,6 @@ class ExpiryReminderTest(TestCase):
 class ExpiredPurgeTest(TestCase):
 
     def setUp(self):
-        from petition.models import Signature, Moderation, Monitoring, ModerationReason, SlugModel
         self.owner = get_user_model().objects.create_user(username="owner", password="pass",
                                                           email="o@example.org").pytitionuser
         self.expired = Petition.objects.create(title="Expired", user=self.owner, published=True,
@@ -475,8 +441,6 @@ class ExpiredPurgeTest(TestCase):
         self.assertTrue(SlugModel.objects.filter(petition=self.expired).exists())
 
     def purge(self, *args):
-        from io import StringIO
-        from django.core.management import call_command
         out, err = StringIO(), StringIO()
         call_command('purge_personal_data', *args, stdout=out, stderr=err)
         return out.getvalue(), err.getvalue()
@@ -487,7 +451,6 @@ class ExpiredPurgeTest(TestCase):
         self.assertTrue(Petition.objects.filter(pk=self.expired.pk).exists())
 
     def test_expired_petition_and_related_rows_are_deleted(self):
-        from petition.models import Signature, Moderation, Monitoring, SlugModel
         expired_pk = self.expired.pk
         out, _ = self.purge('--batch-size', '2')
         self.assertIn("expired_petitions=1 expired_signatures=5", out)
@@ -502,8 +465,6 @@ class ExpiredPurgeTest(TestCase):
         self.assertIn("expired_petitions=0 expired_signatures=0", out)
 
     def test_signatures_are_deleted_in_batches(self):
-        from django.db import connection
-        from django.test.utils import CaptureQueriesContext
         with CaptureQueriesContext(connection) as ctx:
             self.purge('--batch-size', '2')
         deletes = [q['sql'] for q in ctx.captured_queries
@@ -512,9 +473,6 @@ class ExpiredPurgeTest(TestCase):
         self.assertEqual(len(deletes), 4)
 
     def test_ip_hashes_are_blanked_in_batches(self):
-        from django.db import connection
-        from django.test.utils import CaptureQueriesContext
-        from petition.models import Signature
         Signature.objects.filter(petition=self.alive).delete()
         for i in range(5):
             Signature.objects.create(first_name="A", last_name="B", email="ip%d@example.org" % i,
@@ -535,7 +493,6 @@ class ExpiredPurgeTest(TestCase):
         self.assertTrue(Petition.objects.filter(pk=self.expired.pk).exists())
 
     def test_reminders_are_sent_by_the_purge(self):
-        from django.core import mail
         Petition.objects.filter(pk=self.alive.pk).update(expires_at=timezone.localdate() + timedelta(days=10))
         out, _ = self.purge()
         self.assertIn("expiry_reminders=1", out)
@@ -549,10 +506,6 @@ class ExpiredPurgeTest(TestCase):
         self.assertTrue(Petition.objects.filter(pk=self.expired.pk).exists())
 
     def test_unused_media_files_are_deleted(self):
-        import tempfile
-        from django.core.files.base import ContentFile
-        from django.core.files.storage import FileSystemStorage
-        from petition.models import PetitionTemplate
         with tempfile.TemporaryDirectory() as root, override_settings(MEDIA_ROOT=root):
             storage = FileSystemStorage()
             own, shared, in_template = (storage.save("owner/%s.png" % n, ContentFile(b"x"))
@@ -569,8 +522,6 @@ class ExpiredPurgeTest(TestCase):
             self.assertTrue(storage.exists(in_template))
 
     def test_media_outside_media_root_is_never_deleted(self):
-        from petition.expiry import delete_unused_media
-        from django.conf import settings
         with mock.patch('petition.expiry.logger') as logger:
             self.assertEqual(delete_unused_media({settings.MEDIA_URL + "../../etc/passwd"}), 0)
         logger.warning.assert_called_once()
@@ -580,15 +531,14 @@ class PrivacyNoticeExpiryTest(TestCase):
 
     @override_settings(PETITION_DEFAULT_LIFETIME_DAYS=365, PETITION_MAX_LIFETIME_DAYS=730)
     def test_retention_of_petitions_is_explained(self):
-        from django.urls import reverse
         response = self.client.get(reverse('privacy_notice'))
+        self.assertContains(response, settings.PRIVACY_NOTICE_VERSION)
         self.assertContains(response, "by default 365 days after its creation")
         self.assertContains(response, "never more than 730 days ahead")
         self.assertContains(response, '<div class="fp-page-header">')
         self.assertContains(response, '<div class="fp-prose">')
 
     def test_french(self):
-        from django.urls import reverse
         response = self.client.get(reverse('privacy_notice'), HTTP_ACCEPT_LANGUAGE='fr')
         self.assertContains(response, "définitivement supprimées du site")
 
@@ -597,14 +547,12 @@ class ConfirmQueriesTest(TestCase):
     """confirm() reads the signature and its petition once"""
 
     def setUp(self):
-        from petition.models import Signature
         owner = get_user_model().objects.create_user(username="owner", password="pass").pytitionuser
         self.petition = Petition.objects.create(title="P", user=owner, published=True)
         self.signature = Signature.objects.create(first_name="A", last_name="B", email="a@example.org",
                                                   petition=self.petition)
 
     def url(self, confirmation_hash):
-        from django.urls import reverse
         return reverse('confirm', args=[self.petition.id, confirmation_hash])
 
     def test_get_is_one_query(self):
@@ -613,8 +561,6 @@ class ConfirmQueriesTest(TestCase):
         self.assertEqual(response.context['confirm_state'], "pending")
 
     def test_post_reads_signature_and_petition_once(self):
-        from django.db import connection
-        from django.test.utils import CaptureQueriesContext
         with CaptureQueriesContext(connection) as ctx:
             self.client.post(self.url(self.signature.confirmation_hash))
         selects = [q['sql'] for q in ctx.captured_queries]
@@ -627,5 +573,4 @@ class ConfirmQueriesTest(TestCase):
         response = self.client.get(self.url("unknown"))
         self.assertEqual(response.context['confirm_state'], "invalid_link")
         self.assertEqual(response.context['petition'], self.petition)
-        from django.urls import reverse
         self.assertEqual(self.client.get(reverse('confirm', args=[999999, "x"])).status_code, 404)
