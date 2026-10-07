@@ -379,7 +379,6 @@ def org_dashboard(request, orgslugname):
              'can_create_petition': can_create_petition,
              'displaying_dashboard': True})
 
-
 # /org/<slug:orgslugname>/bin
 # Bin page for an organization's deleted petitions
 @login_required
