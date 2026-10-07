@@ -1,3 +1,8 @@
+run:
+	docker compose up
+
+setup: install migrate
+
 migrate:
 	docker compose exec web pdm run python pytition/manage.py migrate
 
@@ -10,8 +15,6 @@ shell:
 test:
 	docker compose exec web pdm run python pytition/manage.py test
 
-run:
-	docker compose up
-
 install:
+	pip install -r requirements.txt
 	pip install -r requirements_dev.txt
