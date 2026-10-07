@@ -8,7 +8,7 @@ install:
 	pip install -r requirements_dev.txt
 
 run:
-	docker compose up 
+	docker compose up
 
 migrate:
 	docker compose exec web pdm run python pytition/manage.py migrate
