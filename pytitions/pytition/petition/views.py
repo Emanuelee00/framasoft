@@ -338,8 +338,10 @@ def create_signature(request, petition_id):
                 "If you cannot find the email in your Inbox, please have a look in your Spam box.")\
                 , signature.email))
 
-            if petition.has_newsletter and signature.subscribed_to_mailinglist:
-                subscribe_to_newsletter(petition, signature.email)
+        if petition.has_newsletter and signature.subscribed_to_mailinglist:
+            subscribe_to_newsletter(petition, signature.email)
+
+    return redirect(petition.url)
 
 
 # /org/<slug:orgslugname>/dashboard
