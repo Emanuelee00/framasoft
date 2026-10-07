@@ -273,63 +273,159 @@ def go_send_confirmation_email(request, signature_id):
 # <int:petition_id>/sign
 # Sign a petition
 def create_signature(request, petition_id):
+
     petition = petition_from_id(petition_id)
     check_petition_is_accessible(request, petition)
 
     if request.method == "POST":
-        form = SignatureForm(petition=petition, data=request.POST)
+
+        form = SignatureForm(
+            petition=petition,
+            data=request.POST,
+        )
+
         ctx = {
-            'petition': petition,
-            'form': form,
-            'meta': petition_detail_meta(request, petition_id),
-            'og_image_absolute_url': request.build_absolute_uri(petition.twitter_image)
+            "petition": petition,
+            "form": form,
+            "meta": petition_detail_meta(
+                request,
+                petition_id,
+            ),
+            "og_image_absolute_url": request.build_absolute_uri(
+                petition.twitter_image
+            ),
         }
+
         if not form.is_valid():
-            return render(request, 'petition/petition_detail.html', ctx)
+            return render(
+                request,
+                "petition/petition_detail.html",
+                ctx,
+            )
 
         ipaddr = hash_ip(
             get_client_ip(request),
             petition.salt,
         )
-        since = now() - timedelta(seconds=settings.SIGNATURE_THROTTLE_TIMING)
+
+        since = now() - timedelta(
+            seconds=settings.SIGNATURE_THROTTLE_TIMING
+        )
+
         signatures = Signature.objects.filter(
             petition=petition,
             ipaddress=ipaddr,
-            date__gt=since)
-            
-        # If there are too many signatures from the same IP address, an error message and an email to moderation are sent
-        if signatures.count() > settings.SIGNATURE_THROTTLE:
+            date__gt=since,
+        )
+
+        signature_count = signatures.count()
+
+        if signature_count > settings.SIGNATURE_THROTTLE:
+
             signature = form.save()
-            messages.error(request, _("Too many signatures from your IP address, please try again later."))
-            ModerationReason.msg = "Too many signatures from this IP adress."
-            send_mail_to_moderation(settings.MODERATION_EMAIL, signature.first_name, ModerationReason.msg, "user")
-            return render(request, 'petition/petition_detail.html', ctx)
+
+            messages.error(
+                request,
+                _(
+                    "Too many signatures from your IP address, "
+                    "please try again later."
+                ),
+            )
+
+            ModerationReason.msg = (
+                "Too many signatures from this IP adress."
+            )
+
+            send_mail_to_moderation(
+                settings.MODERATION_EMAIL,
+                signature.first_name,
+                ModerationReason.msg,
+                "user",
+            )
+
+            return render(
+                request,
+                "petition/petition_detail.html",
+                ctx,
+            )
+
+        if petition.check_signatures_at_each_signature:
+
+            if petition.cron_to_schedule:
+                Petition.objects.filter(
+                    pk=petition.pk,
+                    cron_to_schedule=True,
+                ).update(
+                    cron_to_schedule=False,
+                )
+
+                petition.cron_to_schedule = False
+
+            if (
+                check_signature_number(petition)
+                or check_signature_variation(
+                    petition,
+                    "yesterday",
+                )
+                or check_signature_variation(
+                    petition,
+                    "last week",
+                )
+                or check_unconfirmed_signatures(petition)
+                or check_creation_signatures(petition)
+            ):
+                return redirect("index")
+
         else:
-            # The owner chose to check the number of signatures at each signature. If the petition is moderated, redirect to index
-            if petition.check_signatures_at_each_signature:
-                if petition.cron_to_schedule:
-                    petition.cron_to_schedule = False
-                    petition.save()
-                if check_signature_number(petition) or check_signature_variation(petition, "yesterday") or check_signature_variation(petition, "last week") or check_unconfirmed_signatures(petition) or check_creation_signatures(petition):
-                    return redirect("index")
 
-            else:
-                petition.cron_to_schedule = True
-                petition.save()
+            Petition.objects.filter(
+                pk=petition.pk,
+                cron_to_schedule=False,
+            ).update(
+                cron_to_schedule=True,
+            )
 
-            signature = form.save()
-            signature.ipaddress = ipaddr
-            signature.save()
-            send_confirmation_email(request, signature)
-            messages.success(request,
-                format_html(_("Thank you for signing this petition, an email has just been sent to you at your address \'{}\'" \
-                " in order to confirm your signature.<br>" \
-                "You will need to click on the confirmation link in the email.<br>" \
-                "If you cannot find the email in your Inbox, please have a look in your Spam box.")\
-                , signature.email))
+            petition.cron_to_schedule = True
 
-        if petition.has_newsletter and signature.subscribed_to_mailinglist:
-            subscribe_to_newsletter(petition, signature.email)
+        signature = form.save(
+            commit=False,
+        )
+
+        signature.ipaddress = ipaddr
+
+        signature.save()
+
+        send_confirmation_email(
+            request,
+            signature,
+        )
+
+        messages.success(
+            request,
+            format_html(
+                _(
+                    "Thank you for signing this petition, "
+                    "an email has just been sent to you at your "
+                    "address '{}' in order to confirm your signature."
+                    "<br>"
+                    "You will need to click on the confirmation link "
+                    "in the email."
+                    "<br>"
+                    "If you cannot find the email in your Inbox, "
+                    "please have a look in your Spam box."
+                ),
+                signature.email,
+            ),
+        )
+
+        if (
+            petition.has_newsletter
+            and signature.subscribed_to_mailinglist
+        ):
+            subscribe_to_newsletter(
+                petition,
+                signature.email,
+            )
 
     return redirect(petition.url)
 
@@ -368,6 +464,7 @@ def org_dashboard(request, orgslugname):
             'petitions': petitions, 'petitions_bin': petitions_bin, 'user_permissions': permissions,
              'can_create_petition': can_create_petition,
              'displaying_dashboard': True})
+
 
 # /org/<slug:orgslugname>/bin
 # Bin page for an organization's deleted petitions
