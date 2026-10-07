@@ -19,10 +19,10 @@ services:
       # base image defaults to UWSGI_PROCESSES=16 / UWSGI_CHEAPER=2, which
       # override nginx-uwsgi/uwsgi.ini's "processes = 32" — pin both explicitly
       # so the ini setting is actually respected
-      UWSGI_PROCESSES: 32
+      UWSGI_PROCESSES: ${UWSGI_PROCESSES:-32}
       # cheaper = workers always running (must be < processes; 0 disables it).
       # The other workers (up to UWSGI_PROCESSES) start under load and stop when idle
-      UWSGI_CHEAPER: 4
+      UWSGI_CHEAPER: ${UWSGI_CHEAPER:-4}
       # size of the uWSGI socket backlog (base image default: 100). Capped by
       # the kernel's net.core.somaxconn
-      UWSGI_LISTEN: 1024
+      UWSGI_LISTEN: ${UWSGI_LISTEN:-1024}
