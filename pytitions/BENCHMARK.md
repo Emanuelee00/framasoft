@@ -15,7 +15,7 @@ not as absolute capacity figures. See [Limits of this benchmark](#limits-of-this
 | Machine | Intel Core i5-6500 (4 cores), 7.6 GiB RAM, Fedora, rootless podman 5.8.7 |
 | Load generator | Gatling `example.Dos` (Gatling-Performance-Test-starter), on the **same machine** |
 | Request | `GET /` only; counted as OK for status 200 or 304 |
-| Server | `make run-prod` stack: nginx + uWSGI (Python 3.11, Django 5.2.18) + PostgreSQL |
+| Server | `make run-prod` stack: nginx + uWSGI (Python 3.11, Django 4.2.30, installed from `requirements.txt` by `Dockerfile_uwsgi`) + PostgreSQL |
 | uWSGI | `UWSGI_PROCESSES` = 1 to 32, `UWSGI_CHEAPER=0` (all workers always running), `UWSGI_LISTEN` = 100 or 1024 |
 | Load | 30000 users ramped over 30 s, i.e. 1000 new requests per second for 30 s |
 | Between runs | whole stack removed and recreated, fresh database |
@@ -50,7 +50,7 @@ with `manage.py runserver` as `make run` does, against a fresh database. It has 
 
 | Setup | Load | OK | OK % | p50 (s) | p95 (s) | max (s) |
 |---|---|---:|---:|---:|---:|---:|
-| nginx + uWSGI, 32 workers, backlog 1024 (Django 5.2) | 1000 users in 1 s | 506 / 1000 | 50.6% | 3.1 | 4.5 | 4.8 |
+| nginx + uWSGI, 32 workers, backlog 1024 (Django 4.2.30) | 1000 users in 1 s | 506 / 1000 | 50.6% | 3.1 | 4.5 | 4.8 |
 | Django 4.2.13 `runserver` (no workers) | 1000 users in 1 s | 937 / 1000 | 93.7% | 6.6 | 54.2 | 56.9 |
 | Django 4.2.13 `runserver` (no workers) | 30000 users in 30 s | 345 / 30000 | 1.1% | 2.8 | 41.5 | 59.5 |
 
@@ -114,8 +114,9 @@ are the original ones. To repeat the series, set the two values above and rebuil
   hundred requests between neighbouring rows may be noise.
 - Gatling and the server share 4 cores and the network stack of one machine. Port 8000 is
   published through rootless podman's port forwarding, which can also be a limit (not measured).
-- The old and new setups differ in Django version (4.2.13 vs 5.2.18) **and** in server
-  (`runserver` vs nginx + uWSGI), so the comparison does not isolate the effect of Django.
+- The old and new setups differ mainly in the server (`runserver` vs nginx + uWSGI). Django is
+  4.2.13 (`pdm.lock`) vs 4.2.30 (`requirements.txt`, same minor series) and the other packages
+  differ too, so the comparison is not a pure server comparison either.
 - `UWSGI_CHEAPER=0` was used so that "N workers" means N running workers. The default of the stack
   is `UWSGI_CHEAPER=4`.
 - Only the home page was requested; pages that write to the database may behave differently.
