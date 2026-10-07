@@ -66,6 +66,7 @@ Notes:
 
 ## Load testing (`gatling-tests/`)
 
+
 `gatling-tests/` is a git **submodule**, not a regular folder — cloning this
 repo normally leaves it empty. To get its contents:
 
