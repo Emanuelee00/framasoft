@@ -298,8 +298,7 @@ def create_signature(request, petition_id):
         signatures = Signature.objects.filter(
             petition=petition,
             ipaddress=ipaddr,
-            date__gt=since
-        )
+            date__gt=since)
 
         # If there are too many signatures from the same IP address, an error message and an email to moderation are sent
         signature_count = signatures.count()
@@ -309,42 +308,42 @@ def create_signature(request, petition_id):
             ModerationReason.msg = "Too many signatures from this IP adress."
             send_mail_to_moderation(settings.MODERATION_EMAIL, signature.first_name, ModerationReason.msg, "user")
             return render(request, 'petition/petition_detail.html', ctx)
+        else:
+            # The owner chose to check the number of signatures at each signature. If the petition is moderated, redirect to index
+            if petition.check_signatures_at_each_signature:
+                if petition.cron_to_schedule:
+                    Petition.objects.filter(
+                        pk=petition.pk,
+                        cron_to_schedule=True,
+                    ).update(
+                        cron_to_schedule=False,
+                    )
+                    petition.cron_to_schedule = False
+                if check_signature_number(petition) or check_signature_variation(petition, "yesterday") or check_signature_variation(petition, "last week") or check_unconfirmed_signatures(petition) or check_creation_signatures(petition):
+                    return redirect("index")
 
-        # The owner chose to check the number of signatures at each signature. If the petition is moderated, redirect to index
-        if petition.check_signatures_at_each_signature:
-            if petition.cron_to_schedule:
+            else:
                 Petition.objects.filter(
                     pk=petition.pk,
-                    cron_to_schedule=True,
-                ).update(
                     cron_to_schedule=False,
+                ).update(
+                    cron_to_schedule=True,
                 )
-                petition.cron_to_schedule = False
-            if check_signature_number(petition) or check_signature_variation(petition, "yesterday") or check_signature_variation(petition, "last week") or check_unconfirmed_signatures(petition) or check_creation_signatures(petition):
-                return redirect("index")
+                petition.cron_to_schedule = True
 
-        else:
-            Petition.objects.filter(
-                pk=petition.pk,
-                cron_to_schedule=False,
-            ).update(
-                cron_to_schedule=True,
-            )
-            petition.cron_to_schedule = True
+            signature = form.save(commit=False)
+            signature.ipaddress = ipaddr
+            signature.save()
+            send_confirmation_email(request, signature)
+            messages.success(request,
+                format_html(_("Thank you for signing this petition, an email has just been sent to you at your address \'{}\'" \
+                " in order to confirm your signature.<br>" \
+                "You will need to click on the confirmation link in the email.<br>" \
+                "If you cannot find the email in your Inbox, please have a look in your Spam box.")\
+                , signature.email))
 
-        signature = form.save(commit=False)
-        signature.ipaddress = ipaddr
-        signature.save()
-        send_confirmation_email(request, signature)
-        messages.success(request,
-            format_html(_("Thank you for signing this petition, an email has just been sent to you at your address \'{}\'" \
-            " in order to confirm your signature.<br>" \
-            "You will need to click on the confirmation link in the email.<br>" \
-            "If you cannot find the email in your Inbox, please have a look in your Spam box.")\
-            , signature.email))
-
-        if petition.has_newsletter and signature.subscribed_to_mailinglist:
-            subscribe_to_newsletter(petition, signature.email)
+            if petition.has_newsletter and signature.subscribed_to_mailinglist:
+                subscribe_to_newsletter(petition, signature.email)
 
 
 # /org/<slug:orgslugname>/dashboard
