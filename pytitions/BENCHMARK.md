@@ -134,3 +134,61 @@ python3 analyze_results.py
 
 For the old setup use a virtualenv with the versions of `pdm.lock` (Django 4.2.13), then run
 `manage.py runserver 127.0.0.1:8000` and the same Gatling command.
+
+## Comparison with branch `modernized_plus_minimalist`
+
+The same tests were repeated on the branch `origin/modernized_plus_minimalist` (commit `cfe6805`),
+to see if its changes improve the results of this branch (`emanuele`). Same machine, same
+commands, same load; the 18 tests with nginx + uWSGI and the 2 with `runserver` were all repeated.
+The files of the stack (`nginx-uwsgi/`, `Dockerfile`, `requirements.txt`) are identical in both
+branches, so the images and the uWSGI settings are the same. The application code differs:
+
+- `create_signature`: the IP of the signer is hashed with HMAC-SHA256 (`hash_ip`) instead of
+  `make_password`, and `cron_to_schedule` is changed with one `UPDATE` instead of `petition.save()`;
+- `cron` command and `base.py` (`SIGNATURE_THROTTLE` raised to 5000000000) changed;
+- `docker-compose.yml` and a `Makefile` that runs `docker compose up`.
+
+### Workers and backlog (1000 requests/s for 30 s)
+
+| Workers | Backlog | OK emanuele | OK colleague | diff | p50 (s) emanuele / colleague | p95 (s) emanuele / colleague |
+|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 100 | 1463 | 1294 | -12% | 4.3 / 2.8 | 36.9 / 34.5 |
+| 1 | 1024 | 1946 | 1915 | -2% | 9.5 / 9.9 | 11.8 / 11.8 |
+| 2 | 100 | 1729 | 1954 | +13% | 3.1 / 3.0 | 10.9 / 11.0 |
+| 2 | 1024 | 2724 | 2893 | +6% | 6.0 / 6.0 | 7.7 / 6.9 |
+| 4 | 100 | 2147 | 2407 | +12% | 3.4 / 2.7 | 8.0 / 8.6 |
+| 4 | 1024 | 3365 | 3458 | +3% | 4.4 / 4.5 | 8.0 / 6.0 |
+| 8 | 100 | 2598 | 2898 | +12% | 3.8 / 3.2 | 13.9 / 9.7 |
+| 8 | 1024 | 3136 | 3532 | +13% | 4.5 / 4.8 | 7.6 / 5.6 |
+| 16 | 100 | 2978 | 3304 | +11% | 6.4 / 3.0 | 14.4 / 10.2 |
+| 16 | 1024 | 3640 | 3054 | -16% | 4.5 / 5.3 | 5.2 / 6.2 |
+| 32 | 100 | 5851 | 4858 | -17% | 16.1 / 17.2 | 55.2 / 57.1 |
+| 32 | 1024 | 3284 | 2656 | -19% | 4.7 / 4.6 | 6.3 / 14.5 |
+
+### Other series
+
+| Series | Workers | OK emanuele | OK colleague | diff | p50 (s) e / c | p95 (s) e / c |
+|---|---:|---:|---:|---:|---:|---:|
+| burst 1000 users in 1 s, backlog 1024 | 32 | 506 / 1000 | 486 / 1000 | -4% | 3.1 / 3.5 | 4.5 / 4.7 |
+| nginx raised, backlog 1024 | 1 | 3144 | 3263 | +4% | 31.4 / 35.2 | 48.3 / 53.3 |
+| nginx raised, backlog 1024 | 2 | 3917 | 3999 | +2% | 23.0 / 21.1 | 46.4 / 43.0 |
+| nginx raised, backlog 1024 | 4 | 3157 | 3492 | +11% | 18.1 / 17.3 | 20.3 / 21.8 |
+| nginx raised, backlog 1024 | 8 | 3858 | 3834 | -1% | 16.5 / 13.9 | 32.0 / 20.0 |
+| nginx raised, backlog 1024 | 16 | 4217 | 4220 | +0% | 14.2 / 13.4 | 24.3 / 20.9 |
+| nginx raised, backlog 1024 | 32 | 5348 | 4414 | -17% | 21.4 / 14.0 | 36.2 / 22.9 |
+| `runserver` Django 4.2.13, 1000 users in 1 s | - | 937 | 863 | -8% | 6.6 / 5.8 | 54.2 / 29.5 |
+| `runserver` Django 4.2.13, 30000 users in 30 s | - | 345 | 142 | -59% | 2.8 / 2.3 | 41.5 / 58.5 |
+
+### Result
+
+- **No measurable difference.** The change in successful requests over the 18 runs with nginx + uWSGI
+  has mean +0.1% and median +2.4%, from -19% to +13%, better in 11 runs and worse in 7. This is
+  the same size as the variation between neighbouring rows of a single series, so it is noise.
+- **This is expected.** The load only requests the home page (`GET /`), and none of the code
+  changed in the other branch is run by that request: it is on the path that creates a signature.
+  These tests cannot show its effect, neither for better nor for worse.
+- The `runserver` run with 30000 users (345 vs 142 successful requests) has a large relative
+  difference, but on very small numbers from a server that is saturated; it is not a reliable result.
+- To measure the changes of the other branch a Gatling simulation that signs petitions is needed
+  (a POST to `/petition/<id>/sign` with a valid form and, if enabled, the anti-spam checks).
+  There is none in `Gatling-Performance-Test-starter` and it was **not** done.
