@@ -291,18 +291,14 @@ def create_signature(request, petition_id):
             get_client_ip(request),
             petition.salt,
         )
-        since = now() - timedelta(
-            seconds=settings.SIGNATURE_THROTTLE_TIMING
-        )
-
+        since = now() - timedelta(seconds=settings.SIGNATURE_THROTTLE_TIMING)
         signatures = Signature.objects.filter(
             petition=petition,
             ipaddress=ipaddr,
             date__gt=since)
 
         # If there are too many signatures from the same IP address, an error message and an email to moderation are sent
-        signature_count = signatures.count()
-        if signature_count > settings.SIGNATURE_THROTTLE:
+        if signatures.count() > settings.SIGNATURE_THROTTLE:
             signature = form.save()
             messages.error(request, _("Too many signatures from your IP address, please try again later."))
             ModerationReason.msg = "Too many signatures from this IP adress."
