@@ -51,3 +51,11 @@
 - zipp: 3.20.2 / 3.23.1 -> -
 
 Rollback: `git checkout ea34cd7 -- uv.lock && uv sync --all-groups --no-install-package uwsgi`
+
+---
+
+## 2026-10-07 14:47:28 (starting from commit 47e949a)
+
+- tomli: 2.4.1 -> 2.5.0
+
+Rollback: `git checkout 47e949a -- uv.lock pyproject.toml && uv sync --all-groups --no-install-package uwsgi`
