@@ -1,44 +1,48 @@
 {% load i18n %}
-<section class="fp-dash-section" aria-labelledby="members-title" id="members">
-  <div class="fp-dash-section-head">
-    <h2 class="fp-dash-section-title" id="members-title">{% trans "Members" %}</h2>
-  </div>
-  <p class="fp-help">{% trans "Each member has their own permissions: who can publish, see the signatories or manage the other members." %}</p>
-  <ul class="fp-dash-list">
-    {% for member in org.members.all %}
-    <li class="fp-dash-list-item">
-      <span class="fp-dash-list-name">
-        {% firstof member.get_full_name member.username %}
-        {% if member == user %}<span class="fp-badge fp-badge-plain">{% trans "You" %}</span>{% endif %}
-      </span>
-      {% if user_permissions.can_modify_permissions or user_permissions.can_remove_members or member == user %}
-      <span class="fp-actions">
-        {% if user_permissions.can_modify_permissions %}
-        <a class="fp-btn fp-btn-tertiary fp-btn-sm" href="{% url "org_edit_user_perms" org.slugname member.username %}">{% trans "Permissions" %}<span class="fp-sr-only"> {% firstof member.get_full_name member.username %}</span></a>
-        {% endif %}
-        {% if user_permissions.can_remove_members or member == user %}
-        <button type="button" class="fp-btn fp-btn-tertiary fp-btn-sm fp-js-only" data-fp-dialog-open="member-remove-{{ forloop.counter }}">{% if member == user %}{% trans "Leave" %}{% else %}{% trans "Remove" %}<span class="fp-sr-only"> {% firstof member.get_full_name member.username %}</span>{% endif %}</button>
-        {% endif %}
-      </span>
-      <dialog class="fp-dialog" id="member-remove-{{ forloop.counter }}" aria-labelledby="member-remove-{{ forloop.counter }}-title">
-        {% if member == user %}
-        <h2 class="fp-dialog-title" id="member-remove-{{ forloop.counter }}-title">{% blocktrans with name=org.name %}Leave {{ name }}?{% endblocktrans %}</h2>
-        <p>{% trans "You will no longer see the petitions and signatories of this organization. A member will have to invite you again." %}</p>
-        {% else %}
-        <h2 class="fp-dialog-title" id="member-remove-{{ forloop.counter }}-title">{% blocktrans with name=member.username %}Remove {{ name }} from the organization?{% endblocktrans %}</h2>
-        <p>{% trans "This person will no longer see the petitions and signatories of this organization." %}</p>
-        {% endif %}
-        <form method="post" action="{% url "org_delete_member" org.slugname %}?member={{ member.username|urlencode }}" class="fp-dialog-actions" data-fp-async{% if member == user %} data-fp-redirect="{% url "user_dashboard" %}"{% endif %} data-fp-error="{% trans "This member could not be removed. The last administrator of an organization cannot leave it." %}">{% csrf_token %}
-          <button type="button" class="fp-btn fp-btn-tertiary" data-fp-dialog-close>{% trans "Cancel" %}</button>
-          <button type="submit" class="fp-btn fp-btn-danger">{% if member == user %}{% trans "Leave" %}{% else %}{% trans "Remove" %}{% endif %}</button>
-        </form>
-      </dialog>
-      {% endif %}
+<div class="dashboard-nav-item py-3">
+  <h4><span class="oi oi-people"></span>&nbsp;{% trans "Members" %}&nbsp;({{ org.members.all.count }})</h4>
+  <ul class="dashboard-org-list">
+  {% for member in org.members.all %}
+    <li class="d-flex align-items-center justify-content-between">
+      <a class="text-dark" href="{% url "user_profile" member.username %}">{% firstof member.get_full_name member.username %}</a>
+      <div data-member="{{ member.username }}">
+        <a href="{% url "org_edit_user_perms" org.slugname member.username %}"
+          {% if not user_permissions.can_modify_permissions %}
+              title="{% trans "You cannot edit this member's permissions, you don\'t have the correct permission" %}"
+              aria-disabled="true"
+              class="btn btn-link disabled btn-sm text-dark"
+          {% else %}
+              title="{% trans "Edit this member's permissions" %}"
+              class="btn btn-link btn-sm text-dark"
+          {% endif %}
+          data-action="edit-member-permissions" data-toggle="tooltip">
+            <span class="oi oi-wrench"></span></a>
+        <button class="btn btn-link btn-sm text-dark"
+            {% if not user_permissions.can_remove_members %}
+            disabled
+            title="{% trans "You cannot remove this member from the organization, you don\'t have the correct permission" %}"
+            aria-disabled="true"
+            {% else %}
+            title="{% trans "Remove this member from the organization." %}"
+            {% endif %}
+            data-action="delete-member" data-toggle="tooltip"><span class="oi oi-circle-x"></span></button>
+      </div>
     </li>
     {% endfor %}
   </ul>
+</div>
 
-  {% if user_permissions.can_add_members %}
-  {% include "petition/org_invite_user.html" %}
-  {% endif %}
-</section>
+<div class="modal fade" id="member_delete_error_modal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-body">
+        {% trans "Unable to remove this member from the organization." %}
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-info" data-dismiss="modal">OK</button>
+      </div>
+
+    </div>
+  </div>
+</div>

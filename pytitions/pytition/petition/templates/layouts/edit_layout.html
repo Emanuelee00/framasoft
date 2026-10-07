@@ -1,30 +1,21 @@
 {% extends base_template %}
 {% load i18n %}
 {% load static %}
-{% comment %}
-  Petition and template settings. Pages fill edit_content.
-  CSS: css/fp-editor.css; behaviours: js/fp-editor.js (tabs come from fp-ui.js, data-fp-tabs).
-{% endcomment %}
-
+{% load petition_extras %}
 {% block media %}
     {{ block.super }}
     {{ content_form.media }}
     {{ email_form.media }}
     {{ newsletter_form.media }}
+    {{ social_network_form.media }}
+    {{ style_form.media }}
 {% endblock %}
-
-{% block extracss %}
-  {{ block.super }}
-  <link href="{% static "css/fp-editor.css" %}" rel="stylesheet">
-{% endblock %}
-
-{% block dash_nav %}{% endblock dash_nav %}
 
 {% block content %}
-  {% block edit_content %}{% endblock edit_content %}
-{% endblock %}
-
-{% block extrajs %}
-  {{ block.super }}
-  <script src="{% static "js/fp-editor.js" %}" defer></script>
+  <h1 class="my-3">
+    {% block main_title %}
+    {% endblock main_title %}
+  </h1>
+  {% block edit_content %}
+  {% endblock edit_content %}
 {% endblock %}

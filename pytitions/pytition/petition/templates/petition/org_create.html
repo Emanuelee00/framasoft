@@ -1,21 +1,20 @@
 {% extends "petition/user_base.html" %}
 {% load i18n %}
 
-{% block title %}{% trans "New organization" %}{% endblock title %}
-
 {% block content %}
-<div class="fp-page-header fp-dash-head">
-  <div>
-    <h1 id="fp-page-title">{% trans "New organization" %}</h1>
-    <p class="fp-lead">{% trans "An organization lets several people create petitions together. You will be its administrator and can invite other members afterwards." %}</p>
-  </div>
-</div>
-<form method="POST" class="fp-form-narrow" novalidate>
-  {% csrf_token %}
-  {% include "petition/form_fields.html" with form=form %}
-  <div class="fp-actions">
-    <button class="fp-btn fp-btn-primary" type="submit">{% trans "Create the organization" %}</button>
-    <a class="fp-btn fp-btn-tertiary" href="{% url "account_settings" %}#a_org_form">{% trans "Cancel" %}</a>
-  </div>
-</form>
+    <div class="row">
+        <div class="col text-center">
+            <h2>{% trans "Create an organization" %}</h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col">
+            <form method="POST">
+            {%  csrf_token %}
+            {% include "petition/bs4_form.html" with form=form %}
+            <button class="btn btn-success" type="submit">{% trans "Create" %}</button>
+            </form>
+        </div>
+    </div>
 {% endblock content %}

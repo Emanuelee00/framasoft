@@ -328,7 +328,7 @@ Next time, just run ``$ docker-compose up --build``
 Cron commands
 =====================================================
 
-In both installation methods, you need to call four commands with cron: two for spam management, one for the expiration of bins and one for data retention.
+In both installation methods, you need to call three commands with cron: two for spam management and one for the expiration of bins.
 
 The first one filters the petitions that need to have their signature numbers checked periodically and calls anti-spam functions on them.
 
@@ -342,36 +342,9 @@ The second one removes permissions from moderated users in their organizations.
 
   $ python3 pytition/manage.py cron_permissions
 
-The third one deletes petitions permanently after 3 months in the bin.
+The last one deletes petitions permanently after 3 months in the bin.
 
 .. code-block:: bash
 
   $ python3 pytition/manage.py cron_delete_bin
-
-A fourth one (daily) deletes or blanks personal data past its retention period: unconfirmed signatures,
-signature IP hashes and the IP address/user agent of petition creators. Retention periods are set by
-``UNCONFIRMED_SIGNATURE_RETENTION_DAYS``, ``SIGNATURE_IP_HASH_RETENTION_DAYS`` and ``CREATOR_IP_RETENTION_DAYS``.
-Use ``--dry-run`` to only print the counters.
-
-.. code-block:: bash
-
-  $ python3 pytition/manage.py purge_personal_data
-
-The same command handles the expiry of petitions. Each petition has a deletion date (``expires_at``):
-by default the creation day plus ``PETITION_DEFAULT_LIFETIME_DAYS`` (365). Whenever the creator sets it
-(at creation or later, in the petition settings), it must be between tomorrow and that day plus
-``PETITION_MAX_LIFETIME_DAYS`` (730), so it can be extended at any time. From that date on, the petition
-no longer accepts signatures; the command then:
-
-* emails the creator (for an organization: the members allowed to modify petitions or to view signatures)
-  ``PETITION_EXPIRY_REMINDER_DAYS`` days before the date (default 30, 20 and 10), once per reminder, with
-  links to the CSV export and to the settings (``send_expiry_reminders`` does only this step);
-* permanently deletes the expired petitions with their signatures, slugs, moderation and monitoring
-  records, and the uploaded files no other petition or template uses.
-
-These links need ``SITE_BASE_URL`` (for example ``https://petitions.example.org``, also read from the
-environment): when it is empty, no reminder is sent and no expired petition is deleted. Rows are deleted
-or updated ``PURGE_BATCH_SIZE`` (10000) at a time, in short separate statements (``--batch-size`` to change it).
-Emails in the mail queue (``USE_MAIL_QUEUE``) are not linked to petitions: they are sent, then kept in the
-mail log until ``purge_mail_log`` removes them (``UWSGI_NB_DAYS_TO_KEEP`` days).
 

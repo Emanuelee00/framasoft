@@ -1,9 +1,0 @@
-{% load i18n %}{% comment %}
-  Deletion date of the petition and its signatures (PUB-03). Petition.expires_at comes from the GDPR
-  stream; nothing is shown while the field does not exist or is empty.
-  {% include "components/expiry_notice.html" with petition=petition %}
-{% endcomment %}{% if petition.expires_at %}
-<p class="fp-expiry">{% include "components/icon.html" with name="clock" %}<span>{% blocktrans trimmed with date=petition.expires_at|date:"DATE_FORMAT" %}
-  This petition and its signatures will be deleted on <strong>{{ date }}</strong>.
-{% endblocktrans %}</span></p>
-{% endif %}

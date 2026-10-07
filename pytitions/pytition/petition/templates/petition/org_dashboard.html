@@ -1,36 +1,9 @@
 {% extends 'petition/org_base.html' %}
 {% load i18n %}
 
-{% block title %}{{ org.name }}{% endblock title %}
-
 {% block content %}
-<div class="fp-page-header fp-dash-head">
-  <div>
-    <h1 id="fp-page-title">{% blocktrans with name=org.name %}Petitions of {{ name }}{% endblocktrans %}</h1>
-    <p class="fp-lead">{% trans "Petitions shared by the members of this organization, with the permissions each member has." %}</p>
-  </div>
-  {% if can_create_petition %}
-  <div class="fp-actions">
-    <a class="fp-btn fp-btn-primary" href="{% url "org_petition_wizard" org.slugname %}">{% include "components/icon.html" with name="plus" %}{% trans "New petition" %}</a>
-  </div>
-  {% endif %}
-</div>
-
-{% include "petition/user_invitations.html" %}
-
-{% include "petition/petition_list.html" with petitions=petitions.all can_create_petition=can_create_petition %}
-
-<div class="fp-grid fp-grid-2 fp-dash-secondary">
-  {% include "petition/org_member_list.html" %}
-  <section class="fp-dash-section" aria-labelledby="templates-title" id="templates">
-    <div class="fp-dash-section-head">
-      <h2 class="fp-dash-section-title" id="templates-title">{% trans "Petition templates" %}</h2>
-      {% if user_permissions.can_create_templates %}
-      <a class="fp-btn fp-btn-secondary" href="{% url "org_new_template" org.slugname %}">{% include "components/icon.html" with name="plus" %}{% trans "New template" %}</a>
-      {% endif %}
-    </div>
-    <p class="fp-help">{% trans "Reuse the same texts and settings in several petitions." %}</p>
-    {% include "petition/template_list.html" with templates=org.petitiontemplate_set.all owner=org %}
-  </section>
-</div>
+    {% blocktrans asvar list_title with org.name as orgname%}
+        Petitions of '{{ orgname }}'
+    {% endblocktrans %}
+    {% include "petition/petition_list.html" with can_create_petition=can_create_petition petitions=petitions.all title=list_title search=False %}
 {% endblock content %}

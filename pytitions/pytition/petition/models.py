@@ -16,7 +16,6 @@ from django.core.exceptions import ValidationError
 from django.db.models.signals import post_save, post_delete, pre_save
 from django.dispatch import receiver
 from django.conf import settings
-from django.core.cache import cache
 from django.contrib.auth.hashers import get_hasher
 from django.db import transaction
 from django.urls import reverse
@@ -31,10 +30,6 @@ from .helpers import sanitize_html, send_mail_to_moderation
 
 import html
 import uuid
-
-
-def default_expires_at():
-    return timezone.localdate() + timedelta(days=settings.PETITION_DEFAULT_LIFETIME_DAYS)
 
 
 # ----------------------------------- PytitionUser ----------------------------
@@ -318,28 +313,6 @@ class Petition(models.Model):
     # If a petition has been deleted (not permanently) and is in the bin, its in_bin_date is not None
     in_bin_date = models.DateTimeField(blank=True, null=True)
 
-    # Day on which the petition and its signatures are permanently deleted (see PETITION_*_LIFETIME_DAYS)
-    expires_at = models.DateField(default=default_expires_at, verbose_name=gettext_lazy("Deletion date"))
-    # Smallest PETITION_EXPIRY_REMINDER_DAYS value already notified for the current expires_at (None: none sent)
-    expiry_reminder_days = models.PositiveSmallIntegerField(null=True, blank=True)
-
-    @property
-    def is_expired(self):
-        # From its deletion date on, a petition no longer accepts signatures
-        return self.expires_at <= timezone.localdate()
-
-    @staticmethod
-    def expiry_bounds():
-        # (earliest, latest) deletion date that can be chosen today
-        today = timezone.localdate()
-        return today + timedelta(days=1), today + timedelta(days=settings.PETITION_MAX_LIFETIME_DAYS)
-
-    def set_expires_at(self, value):
-        # A new date restarts the reminders; the caller saves
-        if value != self.expires_at:
-            self.expires_at = value
-            self.expiry_reminder_days = None
-
     @property
     def is_moderated(self):
         return self.owner.moderated or self.moderated
@@ -523,19 +496,9 @@ class Petition(models.Model):
         else:
             return self.user
 
-    # Number of confirmed signatures for display: cached for SIGNATURE_COUNT_CACHE_TTL seconds
-    # (a COUNT on a big petition is costly and is done on each view of the petition and of each list)
     @property
     def signature_number(self):
-        ttl = settings.SIGNATURE_COUNT_CACHE_TTL
-        if ttl <= 0:
-            return self.get_signature_number(True)
-        key = "petition-signature-number:{}".format(self.pk)
-        number = cache.get(key)
-        if number is None:
-            number = self.get_signature_number(True)
-            cache.set(key, number, ttl)
-        return number
+        return self.get_signature_number(True)
 
     @property
     def raw_twitter_description(self):
@@ -631,19 +594,15 @@ class Signature(models.Model):
     petition = models.ForeignKey(Petition, on_delete=models.CASCADE, verbose_name=gettext_lazy("Petition"))
     subscribed_to_mailinglist = models.BooleanField(default=False, verbose_name=gettext_lazy("Subscribed to mailing list"))
     date = models.DateTimeField(blank=True, auto_now_add=True, verbose_name=gettext_lazy("Date"))
-    ipaddress = models.CharField(max_length=128, blank=True, null=True)
-    confirmed_at = models.DateTimeField(null=True, blank=True)
-    newsletter_consent_at = models.DateTimeField(null=True, blank=True)
-    notice_version = models.CharField(max_length=16, null=True, blank=True)
+    ipaddress = models.TextField(blank=True, null=True)
 
-    class Meta:
-        indexes = [
-            models.Index(fields=["confirmation_hash"], name="sig_conf_hash_idx"),
-            models.Index(fields=["petition", "confirmed", "email"], name="sig_pet_conf_email_idx"),
-            models.Index(fields=["petition", "date"], name="sig_pet_date_idx"),
-            models.Index(fields=["confirmed", "date"], name="sig_conf_date_idx"),
-            models.Index(fields=["petition", "ipaddress", "date"], name="sig_pet_ip_date_idx"),
-        ]
+    def clean(self):
+        if self.petition.already_signed(self.email):
+            if self.petition.signature_set.filter(email = self.email).get(confirmed = True).id != self.id:
+                ModerationReason.msg = "Too many signatures from this email adress."
+                moderation_email = "admin@test.fr"
+                send_mail_to_moderation(moderation_email, self.first_name, ModerationReason.msg, "user")
+                raise ValidationError(_("You already signed the petition"))
 
     def save(self, *args, **kwargs):
         self.clean()
@@ -656,8 +615,6 @@ class Signature(models.Model):
         super().save(*args, **kwargs)
 
     def confirm(self):
-        if not self.confirmed:
-            self.confirmed_at = timezone.now()
         self.confirmed = True
 
     def __str__(self):

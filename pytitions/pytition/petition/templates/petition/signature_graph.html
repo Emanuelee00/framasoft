@@ -1,21 +1,20 @@
 {% extends base_template %}
 {% load i18n %}
 
-{% block title %}{% trans "Signatures over time" %}{% endblock title %}
-
-{% block dash_nav %}{% endblock dash_nav %}
-
 {% block content %}
-<div class="fp-page-header fp-dash-head">
-  <div>
-    <h1 id="fp-page-title">{% trans "Signatures over time" %}</h1>
-    <p class="fp-lead">{{ petition.title|striptags }}</p>
-  </div>
-  <div class="fp-actions">
-    <a class="fp-btn fp-btn-tertiary" href="{% url "show_signatures" petition.id %}">{% include "components/icon.html" with name="arrow-left" %}{% trans "Back to the signatures" %}</a>
-  </div>
-</div>
-<figure class="fp-card fp-card-body">
-  <img class="fp-graph" src="data:image/png;base64,{{ image_base64 }}" alt="{% blocktrans count counter=signatures|length %}Cumulative number of signatures per day, {{ counter }} signature in total{% plural %}Cumulative number of signatures per day, {{ counter }} signatures in total{% endblocktrans %}">
-</figure>
+    <div class="row">
+        <div class="col d-flex justify-content-center">
+            <h2>{% trans "Signatures graph" %}</h2>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col d-flex justify-content-center">
+            <h4><i>{{ petition.title }}</i></h4>
+        </div>
+    </div>
+    <div>
+        <center>
+            <img src= "data:image/png;base64,{{image_base64}}" alt="Signature graph">
+        </center>
+    </div>
 {% endblock content %}

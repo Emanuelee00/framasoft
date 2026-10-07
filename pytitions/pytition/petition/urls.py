@@ -10,7 +10,7 @@ https://docs.djangoproject.com/en/5.1/topics/http/urls/
 from django.urls import include
 from django.urls import path
 
-from . import styleguide, views
+from . import views
 from .forms import PytitionUserCreationForm
 from .views import PetitionCreationWizard, PytitionUserCreateView
 from django.views.generic import RedirectView
@@ -28,11 +28,6 @@ urlpatterns = [
     path('<int:petition_id>/get_csv_confirmed_signature', views.get_csv_signature, {'only_confirmed': True}, name='get_csv_confirmed_signature'),
     path('resend/<int:signature_id>', views.go_send_confirmation_email, name='resend_confirmation_email'),
     path('<int:petition_id>/sign', views.create_signature, name='create_signature'),
-    path('signature/manage/<str:token>', views.manage_signature, name='manage_signature'),
-    path('signature/manage/<str:token>/data.json', views.manage_signature_export, name='manage_signature_export'),
-    path('<int:petition_id>/signature/forgot', views.forgot_signature_link, name='forgot_signature_link'),
-    path('privacy', views.privacy_notice, name='privacy_notice'),
-    path('styleguide', styleguide.styleguide, name='styleguide'),
     path('<int:petition_id>/show_signatures', views.show_signatures, name='show_signatures'),
     path('<int:petition_id>/show_signatures_graph', views.show_signatures_graph, name='show_signatures_graph'),
     path('<int:petition_id>/show_sympa_subscribe_bloc', views.show_sympa_subscribe_bloc, name='show_sympa_subscribe_bloc'),
@@ -44,7 +39,8 @@ urlpatterns = [
     path('<int:petition_id>/edit', views.edit_petition, name='edit_petition'),
     path('<int:petition_id>/add_new_slug', views.add_new_slug, name="add_new_slug"),
     path('<int:petition_id>/del_slug', views.del_slug, name="del_slug"),
-    path('<int:petition_id>/report', views.report_petition, name="report_petition"),
+    path('<int:petition_id>/report/<int:reason_id>', views.report_petition, name="report_petition"),
+    path('<int:petition_id>/report/', views.report_petition, name="report_petition"),
     path('all_petitions', RedirectView.as_view(pattern_name='index', permanent=False), name='all_petitions'),
     path('transfer_petition/<int:petition_id>', views.transfer_petition, name='transfer_petition'),
     # Organisation

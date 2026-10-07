@@ -1,5 +1,57 @@
 {% extends 'layouts/dashboard_layout.html' %}
+{% load i18n %}
+{% load static %}
 
-{% block nav %}{% include 'layouts/nav_dashboard.html' with username=org.name slug=org.slugname sitename=settings.SITE_NAME is_org="true" %}{% endblock nav %}
+{% block extracss  %}<link href="{% static "css/dashboard.css" %}" rel="stylesheet">{% endblock extracss %}
 
-{% block dash_nav %}{% include "petition/dash_nav.html" %}{% endblock dash_nav %}
+{% block nav %}{% include 'layouts/nav_dashboard.html' with username=org.name slug=org.slugname sitename=settings.SITE_NAME is_org="true" %}{% endblock nav%}
+
+{% block main_content %}
+  <div class="dashboard">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-xl-3 col-lg-4 col-md-5 col-sm-6 col-12 dashboard-nav">
+          <div class="dashboard-nav-item py-3">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+              <h4><span class="oi oi-clipboard"></span> <a href="{% url 'org_dashboard' org.slugname %}">{% trans 'Petitions' %}</a> ({{ petitions.count }})</h4>
+              <a class="btn btn-outline-primary btn-sm" href="{% url "org_petition_wizard" org.slugname %}">{% trans "New petition" %}</a>
+            </div>
+          </div>
+          <div class="dashboard-nav-item py-3">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+              <h4><span class="oi oi-trash"></span> <a href="{% url 'org_bin' org.slugname %}">{% trans 'Petitions bin' %}</a> ({{ petitions_bin.count }})</h4>
+            </div>
+          </div>
+     
+          {% include "petition/org_member_list.html" with org=org user_permissions=user_permissions %}
+          {% include "petition/org_invite_user.html" with org=org %}
+          {% include "petition/user_invitations.html" with user=user %}
+          <div class="dashboard-nav-item py-3">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+              <h4><span class="oi oi-layers"></span> {% trans "Petition templates" %} ({{ org.petitiontemplate_set.count }})</h4>
+              <a href="{% url "org_new_template" org.slugname %}" class="btn btn-outline-primary btn-sm"  data-toggle="tooltip" title="{% trans "Create a new petition template" %}">{% trans "New template" %}</a>
+            </div>
+            {% if org.petitiontemplate_set.all %}
+              {% include "petition/template_list.html" with templates=org.petitiontemplate_set.all owner=org %}
+            {% endif %}
+          </div>
+        </div>
+        <div class="col-xl-9 col-lg-8 col-md-7 col-sm-6 col-12 bg-light dashboard-content border-left">
+            {% if messages %}
+                {% include 'petition/dashboard_alert.html' %}
+            {% endif %}
+          {% block content %}
+          {% endblock content %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock main_content %}
+
+{% block extrajs %}
+{{ block.super }}
+<script>
+   {% include "petition/orga.js" %}
+</script>
+{% endblock extrajs %}

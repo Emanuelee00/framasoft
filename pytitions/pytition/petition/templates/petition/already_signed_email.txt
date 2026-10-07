@@ -1,5 +1,0 @@
-{% load i18n %}{% autoescape off %}{% blocktrans %}Hello, someone (maybe you) tried to sign the petition "{{ petition_title }}" again with this address. Your existing signature is still valid and has not been changed.{% endblocktrans %}
-{% if manage_url %}
-{% trans "To view or delete it:" %} {{ manage_url }}
-{% endif %}
-{% endautoescape %}

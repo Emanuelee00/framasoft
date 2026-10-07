@@ -8,17 +8,12 @@ https://docs.djangoproject.com/en/5.1/topics/http/views/
 """
 
 import csv
-import itertools
-import logging
-from datetime import datetime, timedelta, date, timezone as dt_timezone
+from datetime import datetime, timedelta, date
 from django.utils import timezone
 import os
 import urllib.parse
 import random
 from time import time
-import matplotlib
-# framapetitions: BE-11 - server-side rendering only, never a GUI backend
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import io
@@ -26,17 +21,17 @@ import base64
 from bs4 import BeautifulSoup
 
 from django.shortcuts import render, redirect
-from django.http import Http404, HttpResponse, HttpResponseForbidden, JsonResponse, StreamingHttpResponse
+from django.http import Http404, HttpResponse, HttpResponseForbidden, JsonResponse
 from django.conf import settings
-from django.core.exceptions import ValidationError, PermissionDenied
+from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
 from django.contrib import messages
 from django.contrib.messages import get_messages
 from django.utils.html import format_html
-from django.db.models import Q, Count
-from django.db.models.functions import TruncDate
+from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.db import transaction, IntegrityError
+from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import PasswordChangeForm
 from django.urls import reverse
@@ -44,23 +39,17 @@ from django.utils.decorators import method_decorator
 from django.utils.timezone import now
 from django.core.files.storage import FileSystemStorage
 from django.core.paginator import Paginator
-from django.core.cache import cache
-from django.core import signing
-from django.utils.html import strip_tags
-from django.views.decorators.cache import never_cache
-from django.views.decorators.http import require_http_methods
 from django.views.generic.edit import CreateView
 
 from formtools.wizard.views import SessionWizardView
 
 from .models import Petition, Signature, Organization, PytitionUser, PetitionTemplate, Permission
-from .models import SlugModel, ModerationReason, Moderation, MonitoringReason, Monitoring, default_expires_at
+from .models import SlugModel, ModerationReason, Moderation, MonitoringReason, Monitoring
 from .forms import SignatureForm, ContentFormPetition, EmailForm, NewsletterForm, SocialNetworkForm, ContentFormTemplate
 from .forms import StyleForm, PetitionCreationStep1, PetitionCreationStep2, PetitionCreationStep3, UpdateInfoForm
-from .forms import DeleteAccountForm, OrgCreationForm, SignatureLinkRequestForm, ReportForm, ExpiryForm
-from .helpers import get_client_ip, get_session_user, petition_from_id, signature_ip_hash
+from .forms import DeleteAccountForm, OrgCreationForm
+from .helpers import get_client_ip, get_session_user, petition_from_id
 from .helpers import check_petition_is_accessible
-from .helpers import send_already_signed_email, send_manage_link_email, build_manage_url, MANAGE_SALT
 from .helpers import send_confirmation_email, subscribe_to_newsletter, send_welcome_mail, send_moderation_mail, send_mail_to_moderation, send_mail_to_moderation_monitor, send_monitoring_mail, send_mail_to_moderation_info
 from .helpers import get_update_form, petition_detail_meta
 from .helpers import sanitize_html
@@ -159,8 +148,8 @@ def search(request):
     q = request.GET.get('q', '')
     if q != "":
         petitions = Petition.objects.filter(Q(title__icontains=q) | Q(text__icontains=q)).filter(published=True,
-                                                                                                 moderated=False)
-        petitions = remove_user_moderated(petitions)[:15]
+                                                                                                 moderated=False)[:15]
+        petitions = remove_user_moderated(petitions)
         orgs = Organization.objects.filter(name__icontains=q)
     else:
         petitions = Petition.objects.filter(published=True, moderated=False).order_by('-id')
@@ -178,24 +167,16 @@ def search(request):
         }
     )
 
-SIGN_STATES = ("pending_email", "confirmed", "closed")
-
-# Pick the state shown instead of the sign form from the messages' extra_tags.
-# Untagged SUCCESS messages are still understood (signature sent, or just confirmed).
 def hide_sign_form_if_user_just_signed(request, ctx):
     storage = get_messages(request)
     for message in storage:
-        tags = (message.extra_tags or "").split()
-        state = next((tag for tag in SIGN_STATES if tag in tags), None)
-        if state is None and message.level == messages.SUCCESS:
-            state = "pending_email"
-        if state == "pending_email" and request.session.get('just_confirmed', False):
-            state = "confirmed"
-        if state:
-            if state == "confirmed":
+        if message.level == messages.SUCCESS:
+            just_confirmed = request.session.get('just_confirmed', False)
+            if just_confirmed:
+                ctx.update({'signature_is_confirmed': True})
                 request.session['just_confirmed'] = False
-            ctx.update({'sign_state': state})
-
+            else:
+                ctx.update({'petition_is_signed': True})
 
 # /<int:petition_id>/
 # Show information on a petition
@@ -207,17 +188,15 @@ def detail(request, petition_id):
     except:
         pytitionuser = None
 
+    reasons = ModerationReason.objects.all()
     sign_form = SignatureForm(petition=petition)
     ctx = {"user": pytitionuser, 'petition': petition, 'form': sign_form,
            'meta': petition_detail_meta(request, petition_id),
-           'report_form': ReportForm(),
+           'moderation_reasons': reasons,
            'og_image_absolute_url': request.build_absolute_uri(petition.twitter_image)}
 
     # If we've just signed successfully the petition, do not show the sign form
     hide_sign_form_if_user_just_signed(request, ctx)
-    if petition.is_expired:
-        # past its deletion date, waiting for the purge: no sign form
-        ctx['sign_state'] = "closed"
 
     if "application/json" in request.META.get('HTTP_ACCEPT', []):
         response = JsonResponse(petition.to_json)
@@ -229,70 +208,22 @@ def detail(request, petition_id):
 
 
 # /<int:petition_id>/confirm/<confirmation_hash>
-# Two steps: GET only shows the page with a button (mail link scanners open links), POST confirms
-# and redirects to the petition; the other states are shown on the confirmation page
-@never_cache
-@require_http_methods(["GET", "POST"])
+# Confirm signature to a petition
 def confirm(request, petition_id, confirmation_hash):
-    # one query for the signature, its petition and the petition's owner (used by petition.url)
-    signature = Signature.objects.select_related('petition__org', 'petition__user__user')\
-        .filter(petition_id=petition_id, confirmation_hash=confirmation_hash).first()
-    petition = signature.petition if signature else petition_from_id(petition_id)
+    petition = petition_from_id(petition_id)
     check_petition_is_accessible(request, petition)
-    retention = settings.UNCONFIRMED_SIGNATURE_RETENTION_DAYS
-    ctx = {'petition': petition, 'confirmation_hash': confirmation_hash}
-    if signature is None:
-        state = "invalid_link"
-    elif signature.confirmed:
-        state = "already_confirmed"
-    elif petition.is_expired:
-        state = "closed"
-    elif retention is not None and signature.date < timezone.now() - timedelta(days=retention):
-        state = "expired"
-    elif request.method != "POST":
-        state = "pending"
-    else:
-        # Conditional update: two concurrent POSTs confirm (and subscribe) only once
-        if Signature.objects.filter(pk=signature.pk, confirmed=False).update(confirmed=True,
-                                                                             confirmed_at=timezone.now()):
-            # Like Signature.save() on a confirmed signature: other signatures of the same address go away
-            petition.signature_set.filter(email=signature.email).exclude(pk=signature.pk).delete()
-            state = "confirmed"
+    try:
+        successmsg = petition.confirm_signature(confirmation_hash)
+        if successmsg is None:
+            messages.error(request, _("Error: This confirmation code is invalid. Maybe you\'ve already confirmed?"))
         else:
-            state = "already_confirmed"
-        if state == "confirmed":
-            # Newsletter subscription only once the signature is confirmed (GD-06)
-            if petition.has_newsletter and signature.subscribed_to_mailinglist:
-                subscribe_to_newsletter(petition, signature.email)
-                Signature.objects.filter(pk=signature.pk).update(newsletter_consent_at=timezone.now())
-            # Back to the petition, which shows the confirmed state and the share buttons
-            messages.success(request, _("Thank you for confirming your signature!"))
+            messages.success(request, successmsg)
             request.session['just_confirmed'] = True
-            return redirect(petition.url)
-    if state == "already_confirmed":
-        ctx['manage_url'] = build_manage_url(request, signature)
-    ctx["confirm_state"] = state
-    return _private(render(request, 'petition/confirm.html', ctx))
-
-
-audit_logger = logging.getLogger("petition.audit")
-
-# framapetitions: BE-11 - signatures listed per page in the signatures area
-SIGNATURES_PER_PAGE = 100
-
-
-class _Echo:
-    # pseudo-buffer for csv.writer: returns the line instead of storing it
-    def write(self, value):
-        return value
-
-
-def _csv_cell(column, value):
-    text = "" if value is None else str(value)
-    # neutralize spreadsheet formulas (phone numbers in E.164 always start with "+")
-    if column != "phone" and text[:1] in ("=", "+", "-", "@", "\t", "\r"):
-        return "'" + text
-    return text
+    except ValidationError as e:
+        messages.error(request, _(e.message))
+    except Signature.DoesNotExist:
+        messages.error(request, _("Error: This confirmation code is invalid."))
+    return redirect(petition.url)
 
 
 # <int:petition_id>/get_csv_signature
@@ -312,18 +243,19 @@ def get_csv_signature(request, petition_id, only_confirmed):
             return JsonResponse({}, status=403)
 
     filename = '{}.csv'.format(petition)
-    # only confirmed signatures are exported, whatever the route (only_confirmed is kept for URL compatibility)
-    signatures = Signature.objects.filter(petition=petition, confirmed=True)
-    attrs = ['first_name', 'last_name', 'email', 'subscribed_to_mailinglist', 'confirmed']
-    if getattr(settings, 'SIGNATURE_COLLECT_PHONE', True):
-        attrs.insert(2, 'phone')
-    audit_logger.info("csv_export petition=%s user=%s count=%d", petition.pk, user.pk, signatures.count())
-    rows = signatures.order_by('pk').values_list(*attrs).iterator(chunk_size=2000)
-    writer = csv.writer(_Echo())
-    response = StreamingHttpResponse(
-        (writer.writerow([_csv_cell(c, v) for c, v in zip(attrs, row)]) for row in itertools.chain([attrs], rows)),
-        content_type='text/csv')
+    signatures = Signature.objects.filter(petition = petition)
+    if only_confirmed:
+        signatures = signatures.filter(confirmed = True)
+    else:
+        signatures = signatures.all()
+    response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment;filename={}'.format(filename).replace('\r\n', '').replace(' ', '%20')
+    writer = csv.writer(response)
+    attrs = ['first_name', 'last_name', 'phone', 'email', 'subscribed_to_mailinglist', 'confirmed']
+    writer.writerow(attrs)
+    for signature in signatures:
+        values = [getattr(signature, field) for field in attrs]
+        writer.writerow(values)
     return response
 
 
@@ -331,8 +263,6 @@ def get_csv_signature(request, petition_id, only_confirmed):
 # resend the signature confirmation email
 @login_required
 def go_send_confirmation_email(request, signature_id):
-    if not request.user.is_staff:  # only used from the Django admin
-        raise PermissionDenied
     app_label = Signature._meta.app_label
     signature = Signature.objects.filter(pk=signature_id).get()
     send_confirmation_email(request, signature)
@@ -353,66 +283,39 @@ def create_signature(request, petition_id):
             'meta': petition_detail_meta(request, petition_id),
             'og_image_absolute_url': request.build_absolute_uri(petition.twitter_image)
         }
-        if petition.is_expired:
-            messages.error(request, _("This petition has reached its deletion date and no longer accepts "
-                                      "signatures."), extra_tags="closed")
-            ctx['sign_state'] = "closed"
-            return render(request, 'petition/petition_detail.html', ctx, status=410)
         if not form.is_valid():
             return render(request, 'petition/petition_detail.html', ctx)
-        # version of the privacy notice and consent text accepted with this signature
-        form.instance.notice_version = settings.PRIVACY_NOTICE_VERSION
 
-        ipaddr = signature_ip_hash(petition, get_client_ip(request))
-
-        # Same response whether or not this address already signed
-        email = form.cleaned_data['email']
-        if petition.already_signed(email):
-            existing = petition.signature_set.filter(email=email, confirmed=True).first()
-            # at most one notification per signature and per throttle window
-            if cache.add("already-signed:{}".format(existing.pk), 1, settings.SIGNATURE_THROTTLE_TIMING):
-                send_already_signed_email(request, existing)
-            messages.success(request,
-                format_html(_("Thank you for signing this petition, an email has just been sent to you at your address \'{}\'" \
-                " in order to confirm your signature.<br>" \
-                "You will need to click on the confirmation link in the email.<br>" \
-                "If you cannot find the email in your Inbox, please have a look in your Spam box.")\
-                , email))
-            return redirect(petition.url)
-
+        ipaddr = make_password(
+                get_client_ip(request),
+                salt=petition.salt.encode('utf-8'))
         since = now() - timedelta(seconds=settings.SIGNATURE_THROTTLE_TIMING)
         signatures = Signature.objects.filter(
             petition=petition,
             ipaddress=ipaddr,
             date__gt=since)
             
-        # If there are too many signatures from the same IP address, the signature is refused (429)
-        # and the moderation is informed once per petition and address during the throttle period
+        # If there are too many signatures from the same IP address, an error message and an email to moderation are sent
         if signatures.count() > settings.SIGNATURE_THROTTLE:
-            if cache.add("signature-throttle:{}:{}".format(petition.pk, ipaddr), True, settings.SIGNATURE_THROTTLE_TIMING):
-                send_mail_to_moderation_info(settings.MODERATION_EMAIL,
-                    _("Too many signatures from the same IP address on the petition \"{title}\" (id {id}): further signatures from this address are refused.")\
-                    .format(title=petition.title, id=petition.pk))
-            messages.error(request, _("Too many signatures from your IP address, please try again later."), extra_tags="throttled")
-            response = render(request, 'petition/petition_detail.html', ctx, status=429)
-            response['Retry-After'] = str(settings.SIGNATURE_THROTTLE_TIMING)
-            return response
+            signature = form.save()
+            messages.error(request, _("Too many signatures from your IP address, please try again later."))
+            ModerationReason.msg = "Too many signatures from this IP adress."
+            send_mail_to_moderation(settings.MODERATION_EMAIL, signature.first_name, ModerationReason.msg, "user")
+            return render(request, 'petition/petition_detail.html', ctx)
         else:
             # The owner chose to check the number of signatures at each signature. If the petition is moderated, redirect to index
-            # cron_to_schedule is updated alone: saving the whole petition here would rewrite
-            # all its fields (and last_modification_date) at each signature
             if petition.check_signatures_at_each_signature:
                 if petition.cron_to_schedule:
-                    Petition.objects.filter(pk=petition.pk, cron_to_schedule=True).update(cron_to_schedule=False)
                     petition.cron_to_schedule = False
+                    petition.save()
                 if check_signature_number(petition) or check_signature_variation(petition, "yesterday") or check_signature_variation(petition, "last week") or check_unconfirmed_signatures(petition) or check_creation_signatures(petition):
                     return redirect("index")
 
-            elif not petition.cron_to_schedule:
-                Petition.objects.filter(pk=petition.pk, cron_to_schedule=False).update(cron_to_schedule=True)
+            else:
                 petition.cron_to_schedule = True
+                petition.save()
 
-            signature = form.save(commit=False)
+            signature = form.save()
             signature.ipaddress = ipaddr
             signature.save()
             send_confirmation_email(request, signature)
@@ -423,105 +326,10 @@ def create_signature(request, petition_id):
                 "If you cannot find the email in your Inbox, please have a look in your Spam box.")\
                 , signature.email))
 
+        if petition.has_newsletter and signature.subscribed_to_mailinglist:
+            subscribe_to_newsletter(petition, signature.email)
+
     return redirect(petition.url)
-
-
-def _signature_from_manage_token(token):
-    try:
-        data = signing.loads(token, salt=MANAGE_SALT)
-    except signing.BadSignature:
-        raise Http404(_("Signature not found"))
-    try:
-        return Signature.objects.get(pk=data["s"], petition_id=data["p"])
-    except Signature.DoesNotExist:
-        raise Http404(_("Signature not found"))
-
-
-def _private(response):
-    # same-origin, not no-referrer: with no-referrer browsers send "Origin: null" on the page's own
-    # forms (confirm, delete) and the CSRF check refuses them; other sites still get no Referer.
-    response["Referrer-Policy"] = "same-origin"
-    response["X-Robots-Tag"] = "noindex"
-    return response
-
-
-# signature/manage/<str:token>
-# Let a signatory view, export or delete their own signature
-# (no accessibility check: these rights also apply to moderated or unpublished petitions)
-@never_cache
-def manage_signature(request, token):
-    signature = _signature_from_manage_token(token)
-    petition = signature.petition
-    delete_error = False
-    if request.method == "POST" and request.POST.get("action") == "delete":
-        # The confirmation checkbox is checked here too, not only by the browser
-        if request.POST.get("confirm"):
-            signature.delete()
-            return _private(render(request, "petition/signature_deleted.html", {"petition": petition}))
-        delete_error = True
-    if request.method == "POST" and request.POST.get("action") == "newsletter-off":
-        # Withdrawal of the newsletter consent: no subscription at confirmation, "no" in later exports
-        Signature.objects.filter(pk=signature.pk).update(subscribed_to_mailinglist=False, newsletter_consent_at=None)
-        messages.info(request, _("Your newsletter subscription has been withdrawn on this site. If you already "
-                                 "receive messages from the author, use the unsubscribe link in them."))
-        return redirect("manage_signature", token)
-    return _private(render(request, "petition/manage_signature.html",
-                           {"signature": signature, "petition": petition, "token": token,
-                            "creator_name": petition.owner_name, "delete_error": delete_error},
-                           status=400 if delete_error else 200))
-
-
-# signature/manage/<str:token>/data.json
-# Export the signatory's own data
-@never_cache
-def manage_signature_export(request, token):
-    s = _signature_from_manage_token(token)
-
-    def iso(value):
-        return value.isoformat() if value else None
-
-    data = {"petition": {"title": strip_tags(s.petition.title),
-                         "url": request.build_absolute_uri(s.petition.url)},
-            "first_name": s.first_name, "last_name": s.last_name, "email": s.email,
-            "phone": str(s.phone) if s.phone else "", "date": iso(s.date),
-            "confirmed": s.confirmed, "confirmed_at": iso(s.confirmed_at),
-            "subscribed_to_mailinglist": s.subscribed_to_mailinglist,
-            "newsletter_consent_at": iso(s.newsletter_consent_at),
-            "notice_version": s.notice_version}
-    response = JsonResponse(data, json_dumps_params={"ensure_ascii": False, "indent": 2})
-    response["Content-Disposition"] = 'attachment; filename="signature.json"'
-    return _private(response)
-
-
-# <int:petition_id>/signature/forgot
-# Send a new "manage my signature" link; same answer whether or not the address signed
-def forgot_signature_link(request, petition_id):
-    petition = petition_from_id(petition_id)
-    form = SignatureLinkRequestForm(request.POST or None)
-    if request.method == "POST" and form.is_valid():
-        # confirmed signature first, then the latest unconfirmed one: one lookup per value of
-        # "confirmed" so that each uses the (petition, confirmed) prefix of the email index;
-        # the address is compared case-insensitively
-        signatures = petition.signature_set.filter(email__iexact=form.cleaned_data["email"]).order_by("-date")
-        sig = signatures.filter(confirmed=True).first() or signatures.filter(confirmed=False).first()
-        if sig and cache.add("manage-link:{}".format(sig.pk), 1, settings.SIGNATURE_THROTTLE_TIMING):
-            send_manage_link_email(request, sig)
-        messages.info(request, _("If a signature is associated with this address, an email has just been sent to you."))
-        return redirect("forgot_signature_link", petition.id)
-    return _private(render(request, "petition/forgot_signature_link.html", {"petition": petition, "form": form}))
-
-
-# privacy
-# Full privacy notice for signatories
-def privacy_notice(request):
-    return render(request, "petition/privacy_notice.html", {
-        'version': settings.PRIVACY_NOTICE_VERSION,
-        'unconfirmed_days': settings.UNCONFIRMED_SIGNATURE_RETENTION_DAYS,
-        'ip_days': settings.SIGNATURE_IP_HASH_RETENTION_DAYS,
-        'creator_ip_days': settings.CREATOR_IP_RETENTION_DAYS,
-        'petition_lifetime_days': settings.PETITION_DEFAULT_LIFETIME_DAYS,
-        'petition_max_lifetime_days': settings.PETITION_MAX_LIFETIME_DAYS,
-    })
 
 
 # /org/<slug:orgslugname>/dashboard
@@ -577,12 +385,11 @@ def org_bin(request, orgslugname):
     else:
         petitions = org.petition_set.all().filter(in_bin_date__isnull=True)
         petitions_bin = org.petition_set.all().filter(in_bin_date__isnull=False)
-        permissions = Permission.objects.filter(organization=org, user=user).first()
         return render(
             request,
             'petition/org_bin.html',
             {'org': org, 'petitions': petitions, 'petitions_bin': petitions_bin,
-            'user_permissions': permissions, 'displaying_dashboard': True}
+            'displaying_dashboard': True}
         )
 
 # /user/dashboard
@@ -634,8 +441,7 @@ def user_profile(request, user_name):
     return render(
         request,
         'petition/user_profile.html',
-        # not "user": that name belongs to the visitor (header account menu)
-        {'profile_user': user, 'petitions': petitions, 'sort': sort }
+        {'user': user, 'petitions': petitions, 'sort': sort }
     )
 
 
@@ -1296,9 +1102,9 @@ class PetitionCreationWizard(SessionWizardView):
 
         if step == "step3":
             if template is not None:
-                return {'use_template': True, 'template_id': template.id, 'expires_at': default_expires_at()}
+                return {'use_template': True, 'template_id': template.id}
             else:
-                return {'use_template': False, 'template_id': 0, 'expires_at': default_expires_at()}
+                return {'use_template': False, 'template_id': 0}
 
         return self.initial_dict.get(step, {})
 
@@ -1322,7 +1128,6 @@ class PetitionCreationWizard(SessionWizardView):
         publish = self.get_cleaned_data_for_step("step3")["publish"]
         template_id = self.get_cleaned_data_for_step("step3")["template_id"]
         use_template = self.get_cleaned_data_for_step("step3")["use_template"]
-        expires_at = self.get_cleaned_data_for_step("step3")["expires_at"] or default_expires_at()
         pytitionuser = get_session_user(self.request)
         _redirect = self.request.POST.get('redirect', '')
 
@@ -1349,7 +1154,7 @@ class PetitionCreationWizard(SessionWizardView):
                 check_user_signature_number(pytitionuser, org, self.request)
 
                 #FIXME I think new here is better than create
-                petition = Petition.objects.create(title=title, text=message, org=org, expires_at=expires_at, ipaddr=get_client_ip(self.request), user_agent=self.request.META.get('HTTP_USER_AGENT', '')[:512])
+                petition = Petition.objects.create(title=title, text=message, org=org, ipaddr=get_client_ip(self.request), user_agent=self.request.META['HTTP_USER_AGENT'])
                 
                 # is_spam function from detector launches all the other detectors to detect if a petition is spam
                 # it does moderation actions
@@ -1381,7 +1186,7 @@ class PetitionCreationWizard(SessionWizardView):
             check_mon_petition_number(pytitionuser, None, self.request)
             check_user_signature_number(pytitionuser, None, self.request)
             
-            petition = Petition.objects.create(title=title, text=message, user=pytitionuser, expires_at=expires_at, ipaddr=get_client_ip(self.request), user_agent=self.request.META.get('HTTP_USER_AGENT', '')[:512])
+            petition = Petition.objects.create(title=title, text=message, user=pytitionuser, ipaddr=get_client_ip(self.request), user_agent=self.request.META['HTTP_USER_AGENT'])
 
             # is_spam function from detector launches all the other detectors to detect if a petition is spam
             # it does moderation actions
@@ -1567,7 +1372,6 @@ def edit_petition(request, petition_id):
         'social_network_form_submitted': False,
         'newsletter_form_submitted': False,
         'style_form_submitted': False,
-        'expiry_form_submitted': False,
     }
 
     if request.method == "POST":
@@ -1674,15 +1478,6 @@ def edit_petition(request, petition_id):
                 petition.save()
         else:
             style_form = StyleForm({f: getattr(petition, f) for f in StyleForm.base_fields})
-
-        if 'expiry_form_submitted' in request.POST:
-            submitted_ctx['expiry_form_submitted'] = True
-            expiry_form = ExpiryForm(request.POST)
-            if expiry_form.is_valid():
-                petition.set_expires_at(expiry_form.cleaned_data['expires_at'])
-                petition.save()
-        else:
-            expiry_form = ExpiryForm(initial={'expires_at': petition.expires_at})
     else:
         data = {'twitter_description': petition.twitter_description,
                 'org_twitter_handle': petition.org_twitter_handle,
@@ -1699,8 +1494,6 @@ def edit_petition(request, petition_id):
         style_form = StyleForm({f: getattr(petition, f) for f in StyleForm.base_fields})
         email_form = EmailForm({f: getattr(petition, f) for f in EmailForm.base_fields})
         newsletter_form = NewsletterForm({f: getattr(petition, f) for f in NewsletterForm.base_fields})
-        # unbound: a petition past its date (deleted at the next purge) shows the date without an error
-        expiry_form = ExpiryForm(initial={'expires_at': petition.expires_at})
 
     ctx = {'user': pytitionuser,
         'content_form': content_form,
@@ -1708,7 +1501,6 @@ def edit_petition(request, petition_id):
         'email_form': email_form,
         'social_network_form': social_network_form,
         'newsletter_form': newsletter_form,
-        'expiry_form': expiry_form,
         'petition': petition,
         'is_template': False}
     url_prefix = request.scheme + "://" + request.get_host()
@@ -1779,7 +1571,7 @@ def show_signatures(request, petition_id):
         selected_signature_ids = request.POST.getlist('signature_id', '')
         failed = False
         if selected_signature_ids and action:
-            selected_signatures = Signature.objects.filter(pk__in=selected_signature_ids, petition=petition)
+            selected_signatures = Signature.objects.filter(pk__in=selected_signature_ids)
             if action == "delete":
                 for s in selected_signatures:
                     pet = s.petition
@@ -1820,14 +1612,11 @@ def show_signatures(request, petition_id):
             return redirect("show_signatures_graph", petition_id)
         return redirect("show_signatures", petition_id)
 
-    # framapetitions: BE-11 - one page of signatures at a time
-    signatures = petition.signature_set.order_by('date', 'pk')
-    page_obj = Paginator(signatures, SIGNATURES_PER_PAGE).get_page(request.GET.get('page'))
+    signatures = petition.signature_set.all()
 
     ctx.update({'petition': petition, 'user': pytitionuser,
                 'base_template': base_template,
-                'signatures': page_obj.object_list,
-                'page_obj': page_obj})
+                'signatures': signatures})
 
     return render(request, "petition/signature_data.html", ctx)
 
@@ -1865,37 +1654,60 @@ def show_signatures_graph(request, petition_id):
 
     signatures = petition.signature_set.all()
 
-    # framapetitions: BE-11 - number of signatures per day (UTC), computed by the database
-    per_day = signatures.annotate(day=TruncDate('date', tzinfo=dt_timezone.utc))\
-        .values('day').annotate(count=Count('pk')).order_by('day')
+    # order the signatures by date of creation
+    signatures = signatures.filter(
+    petition=petition).order_by('date')
 
-    if per_day:
-        xpoints = [row['day'] for row in per_day]
-        # cumulated number of signatures at the end of each day
-        ypoints = list(itertools.accumulate(row['count'] for row in per_day))
+    # initialize a 2D array with an index, the interval (number of days since the creation) and the signature
+    columns = 3
+    rows = signatures.count()
+    data_graph = [[0 for _ in range(columns)] for _ in range(rows)]
+    
+    if signatures:
+        for i in range(0, rows):
+            data_graph[i][0] = i
+            data_graph[i][1] = signatures[i].date.date()
+            data_graph[i][2] = signatures[i]
+
+        # save clean data in a dict: date, number of signatures
+        data_graph_clean = {}
+
+        if rows != 0:
+            for i in range(0, rows):
+                if data_graph[i][1] in data_graph_clean:
+                    data_graph_clean[data_graph[i][1]] += 1
+                else:
+                    data_graph_clean[data_graph[i][1]] = 1
+        
+        # turn the dict into arrays to plot the graph
+        xpoints = list(data_graph_clean.keys())
+        ypoints = list(data_graph_clean.values())
+
+        # get the total number of signatures for each day
+        for i in range(1, len(ypoints)):
+            ypoints[i] = ypoints[i-1] + ypoints[i]
 
         # matplotlib graph of number of signatures in each day
         graph, ax = plt.subplots()
-        try:
-            if len(xpoints) == 1:
-                ax.plot(xpoints, ypoints, "o", color="purple")
-            else:
-                ax.plot(xpoints, ypoints, color="purple")
+        if len(xpoints) == 1:
+            ax.plot(xpoints, ypoints, "o", color="purple")
+        elif len(xpoints) > 1:
+            ax.plot(xpoints, ypoints, color="purple")
+        else:
+            messages.error(request, _("This petition doesn't have any signatures"))
+            return redirect("show_signatures", petition_id)
 
-            # format the graph
-            ax.set_xticks(xpoints)
-            format = mdates.DateFormatter('%d\n%m')
-            ax.xaxis.set_major_formatter(format)
-            ax.set_xlabel('Day')
-            ax.set_ylabel('Number of signatures')
-            ax.set_title("Number of signatures per day")
+        # format the graph
+        ax.set_xticks(xpoints)
+        format = mdates.DateFormatter('%d\n%m')
+        ax.xaxis.set_major_formatter(format)
+        ax.set_xlabel('Day')
+        ax.set_ylabel('Number of signatures')
+        ax.set_title("Number of signatures per day")
 
-            # save the graph in a buffer
-            buf = io.BytesIO()
-            graph.savefig(buf, format='png', bbox_inches='tight')
-        finally:
-            # pyplot keeps every figure alive until it is closed
-            plt.close(graph)
+        # save the graph in a buffer
+        buf = io.BytesIO()
+        graph.savefig(buf, format='png', bbox_inches='tight')
         buf.seek(0)
 
         # encode the image in base64 to display in the html page
@@ -2042,16 +1854,14 @@ def slug_show_petition(request, orgslugname=None, username=None, petitionname=No
     check_petition_is_accessible(request, petition)
     sign_form = SignatureForm(petition=petition)
 
+    reasons = ModerationReason.objects.all()
     ctx = {"user": pytitionuser, "petition": petition, "form": sign_form,
            'meta': petition_detail_meta(request, petition.id),
-           'report_form': ReportForm(),
+           'moderation_reasons': reasons,
            'og_image_absolute_url': request.build_absolute_uri(petition.twitter_image)}
 
     # If we've just signed successfully the petition, do not show the sign form
     hide_sign_form_if_user_just_signed(request, ctx)
-    if petition.is_expired:
-        # past its deletion date, waiting for the purge: no sign form
-        ctx['sign_state'] = "closed"
 
     if "application/json" in request.META.get('HTTP_ACCEPT', []):
         response = JsonResponse(petition.to_json)
@@ -2265,20 +2075,18 @@ class PytitionUserCreateView(CreateView):
         form.send_success_email()
         return super().form_valid(form)
 
-# /<int:petition_id>/report
-# Report a petition to moderation (GET shows the form, POST records the report)
-@require_http_methods(["GET", "POST"])
-def report_petition(request, petition_id):
+# /<int:petition_id>/report/<int:reason_id>
+# Report a petition to moderation
+def report_petition(request, petition_id, reason_id=None):
     petition = petition_from_id(petition_id)
-    check_petition_is_accessible(request, petition)
-    form = ReportForm(request.POST or None)
-    if request.method == "POST" and form.is_valid():
-        # One report per (petition, client) per REPORT_THROTTLE_TIMING; the answer is the same either way
-        key = "report:{}:{}".format(petition.pk, get_client_ip(request))
-        if cache.add(key, 1, settings.REPORT_THROTTLE_TIMING):
-            Moderation.objects.create(petition=petition, reason=form.cleaned_data["reason"])
-        messages.info(request, _("Thank you, your report has been sent to the moderation team."), extra_tags="reported")
-        return redirect(petition.url)
-    response = render(request, "petition/report.html", {"petition": petition, "report_form": form})
-    response["X-Robots-Tag"] = "noindex"
-    return response
+    if reason_id:
+        try:
+            reason = ModerationReason.objects.get(pk=reason_id)
+        except:
+            return HttpResponse(status=500)
+
+    if reason_id:
+        Moderation.objects.create(petition=petition, reason=reason)
+    else:
+        Moderation.objects.create(petition=petition)
+    return HttpResponse(status=200)

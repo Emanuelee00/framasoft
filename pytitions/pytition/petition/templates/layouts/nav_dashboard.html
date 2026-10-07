@@ -1,15 +1,45 @@
 {% load i18n %}
-{% include 'layouts/nav.html' with fluid=True %}
-<div class="fp-subnav">
-  <div class="fp-container fp-container-fluid fp-subnav-bar">
-    <p class="fp-subnav-title">
-      {% if is_org %}{% blocktrans trimmed with name=username %}Organization {{ name }}{% endblocktrans %}{% else %}{% trans "Your dashboard" %}{% endif %}
-    </p>
+{% block navbar %}
+<nav class="navbar navbar-dark bg-dark navbar-expand-sm flex-sm-row">
+  <div class="container-fluid">
+    {% block brand %}
+      <a class="navbar-brand" href="{% url 'index' %}">{{ sitename }}</a>
     {% if displaying_dashboard is None %}
-    <a class="fp-btn fp-btn-tertiary fp-btn-sm" href="{% if is_org %}{% url 'org_dashboard' slug %}{% else %}{% url 'user_dashboard' %}{% endif %}">
-      {% include "components/icon.html" with name="arrow-left" %}
-      {% trans "Back to dashboard" %}
-    </a>
+    {% if is_org %}
+    <a class="btn btn-outline-primary" href="{% url 'org_dashboard' slug %}" aria-label="{% trans "Back to dashboard" %}"><span class="oi oi-dashboard"> {% trans "Back to dashboard" %}</span></a>
+    {% else %}
+    <a class="btn btn-outline-primary" href="{% url 'user_dashboard' %}" aria-label="{% trans "Back to dashboard" %}"><span class="oi oi-dashboard"> {% trans "Back to dashboard" %}</span></a>
     {% endif %}
+    {% endif %}
+    {% endblock brand %}
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+        Menu <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+      <form class="form-inline my-2 my-lg-0 ml-auto" action="{% url 'set_language' %}" method="post">
+        {% csrf_token %}
+        <input name="next" type="hidden" value="{{ redirect_to }}">
+        <select class="custom-select custom-select-sm" name="language" onchange='if(this.value !=  "{{ LANGUAGE_CODE }}") { this.form.submit(); }'>
+          {% get_current_language as LANGUAGE_CODE %}
+          {% get_available_languages as LANGUAGES %}
+          {% get_language_info_list for LANGUAGES as languages %}
+          {% for language in languages %}
+            <option value="{{ language.code }}" {% if language.code == LANGUAGE_CODE %}selected{% endif %}>
+              {{ language.code }}
+            </option>
+          {% endfor %}
+        </select>
+      </form>
+      <form class="form-inline my-2 my-lg-0 ml-0 ml-sm-3" action="{% url 'search' %}" method="GET">
+        <div class="input-group input-group-sm">
+          <input type="text" class="form-control" placeholder="{% trans "Search for petition" %}" name="q" value="{{ q }}">
+          <div class="input-group-append">
+            <button type="submit" class="btn btn-outline-secondary">{% trans "Search" %}</button>
+          </div>
+        </div>
+      </form>
+      {% include 'layouts/nav-useractions.html' %}
+    </div>
   </div>
-</div>
+</nav>
+{% endblock %}

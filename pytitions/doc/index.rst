@@ -20,7 +20,6 @@ Demo: https://demo.pytition.org/
    multi-domain-install
    configuration
    update
-   scaling
 
 
 Indices and tables

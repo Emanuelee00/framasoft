@@ -1,51 +1,43 @@
 {% extends "layouts/layout.html" %}
 {% load i18n %}
-{% load static %}
-
-{% block title %}{% trans "Log in" %}{% endblock title %}
-
-{% block extracss %}
-<link href="{% static "css/fp-auth.css" %}" rel="stylesheet">
-{% endblock %}
 
 {% block main_content %}
-<div class="fp-container fp-auth">
-  <div class="fp-page-header">
-    <h1>{% trans "Log in" %}</h1>
-    <p class="fp-lead">{% trans "To create and manage your petitions. No account is needed to sign a petition." %}</p>
-  </div>
-
-  {% if next and user.is_authenticated %}
-  <div class="fp-alert fp-alert-warning" role="status">
-    {% include "components/alert_icon.html" with kind="warning" %}
-    <p>{% trans "Your account doesn't have access to this page. To proceed, please log in with an account that has access." %}</p>
-  </div>
-  {% endif %}
-
-  <div class="fp-auth-card">
-    {% if form.errors %}
-    <div class="fp-error-summary" role="alert" tabindex="-1" id="form-errors" data-autofocus>
-      <h2 class="fp-error-summary-title">{% trans "Login failed" %}</h2>
-      <p>{% trans "Your username and password didn't match. Please try again." %}</p>
-    </div>
-    {% endif %}
-    <form method="post" action="{% url 'login' %}">
-      {% csrf_token %}
-      {% include "components/field.html" with field=form.username %}
-      {% include "components/field.html" with field=form.password %}
-      <input type="hidden" name="next" value="{{ next }}">
-      <button type="submit" class="fp-btn fp-btn-primary fp-btn-block">{% trans "Log in" %}</button>
-    </form>
-    <ul class="fp-auth-links">
-      <li><a href="{% url "password_reset" %}">{% trans "I forgot my password" %}</a></li>
-      {% if settings.ALLOW_REGISTER %}
-      <li>{% trans "No account?" %} <a href="{% url "register" %}">{% trans "Create an account" %}</a></li>
+<div class="container">
+  <div class="row">
+    <div class="col-12 offset-sm-1 col-sm-10 offset-md-2 col-md-8 text-center">
+      <h1 class="h3 mb-5 font-weight-normal">{% trans 'Please sign in' %}</h1>
+      {% if form.errors %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          <p>{% trans "Your username and password didn't match. Please try again." %}</p>
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
       {% endif %}
-    </ul>
+
+      {% if next %}
+        {% if user.is_authenticated %}
+          <p>Your account doesn't have access to this page. To proceed,
+        please login with an account that has access.</p>
+        {% endif %}
+      {% endif %}
+
+      <div class="row">
+        <div class="col-12 offset-sm-3 col-sm-6">
+      <form method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+        <input type="text" name="username" id="{{ form.username.auto_id }}" class="form-control" placeholder="Username" required autofocus>
+        <input type="password" name="password" id="{{form.password.auto_id}}" class="form-control" placeholder="Password" required>
+        <button type="submit" class="btn btn-primary btn-block">{% trans "Login" %}</button>
+        <input type="hidden" name="next" value="{{ next }}" />
+      </form>
+      {% if settings.ALLOW_REGISTER %}
+      <div class="mt-3"> {% trans "No account?" %} <a href="{% url "register" %}">{% trans "Register!" %}</a></div>
+      {% endif %}
+        <div class="mt-3"><a href="{% url "password_reset" %}">{% trans "I forgot my password!" %}</a></div>
+      </div>
+        </div>
+    </div>
   </div>
 </div>
 {% endblock main_content %}
-
-{% block extrajs %}
-<script src="{% static "js/sign.js" %}" defer></script>
-{% endblock %}

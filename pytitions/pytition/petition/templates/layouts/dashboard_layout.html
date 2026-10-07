@@ -1,26 +1,26 @@
 {% extends 'layouts/base.html' %}
-{% load static %}
 {% load i18n %}
-{% comment %}
-  Creator area (user and organization dashboards, settings, wizard, petition settings).
-  Blocks: dash_nav (section links, empty on focused pages), content.
-  Page CSS: css/fp-dashboard.css. Behaviours: js/fp-dashboard.js (no inline script).
-{% endcomment %}
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
 
-{% block extracss %}<link href="{% static "css/fp-dashboard.css" %}" rel="stylesheet">{% endblock extracss %}
+{% block extracss  %}<link href="{% static "css/dashboard.css" %}" rel="stylesheet">{% endblock extracss %}
 
-{% block body_class %}fp-area{% endblock body_class %}
+{% block nav %}
+{% endblock nav %}
 
 {% block main_content %}
-<div class="fp-container-wide fp-dash">
-  {% block dash_nav %}{% endblock dash_nav %}
-  <div class="fp-dash-messages" id="fp-dash-messages" data-fp-error="{% trans "This action could not be done. Reload the page and try again." %}">
-    {% include "components/alerts.html" %}
+<div class="dashboard flex-fill">
+  <div class="container-fluid">
+    <div class="row">
+      {% block sidebar %}
+      {% endblock sidebar %}
+      <div class="col-xl-9 col-lg-8 col-md-7 col-sm-6 col-12 bg-light dashboard-content border-left">
+        {% if messages %}
+          {% include 'petition/dashboard_alert.html' %}
+        {% endif %}
+        {% block content %}{% endblock %}
+      </div>
+    </div>
   </div>
-  {% block content %}{% endblock content %}
 </div>
-{% endblock main_content %}
-
-{% block extrajs %}
-<script src="{% static "js/fp-dashboard.js" %}" defer></script>
-{% endblock extrajs %}
+{% endblock %}

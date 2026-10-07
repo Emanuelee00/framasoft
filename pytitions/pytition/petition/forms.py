@@ -9,86 +9,55 @@ https://docs.djangoproject.com/en/5.1/topics/forms/modelforms/
 
 from django.forms import ModelForm, ValidationError
 from django import forms
-from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.forms import UserCreationForm, UsernameField
 from django.contrib.auth import get_user_model
 from django.utils.text import slugify
 from django.utils.html import mark_safe, strip_tags
-from django.utils.formats import date_format
 
 from .models import Signature, PetitionTemplate, Petition, Organization, PytitionUser, SlugModel
-from .models import ModerationReason
-from .widgets import SwitchField, ColorWidget
+from .widgets import SwitchField
 from .helpers import send_welcome_mail
 
 import html
 from tinymce.widgets import TinyMCE
+from colorfield.fields import ColorWidget
 
 
 class SignatureForm(ModelForm):
     subscribed_to_mailinglist = forms.BooleanField(
-                                    widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+                                    widget=forms.CheckboxInput(
+                                        attrs={'class': 'form-check-input', 'group_class': 'form-check'}
+                                    ),
                                     label_suffix="",
                                     required=False)
-    consent = forms.BooleanField(
-                                    widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-                                    label_suffix="",
-                                    required=True)
     class Meta:
         model = Signature
         fields = ['first_name', 'last_name', 'phone', 'email', 'subscribed_to_mailinglist']
         widgets = {
-            'first_name': forms.TextInput(attrs={'class': 'form-control', 'autocomplete': 'given-name'}),
-            'last_name': forms.TextInput(attrs={'class': 'form-control', 'autocomplete': 'family-name'}),
-            'phone': forms.TextInput(attrs={'class': 'form-control', 'autocomplete': 'tel', 'inputmode': 'tel'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control', 'autocomplete': 'email'}),
+            'first_name': forms.TextInput(attrs={'placeholder': _('First name *'), 'class': 'form-control has-feedback eaFullWidthContent',
+                                                 'group_class': 'form-group has-feedback'}),
+            'last_name': forms.TextInput(attrs={'placeholder': _('Last name *'), 'class': 'form-control has-feedback eaFullWidthContent',
+                                                'group_class': 'form-group has-feedback'}),
+            'phone': forms.TextInput(attrs={'placeholder': _('Phone number'), 'class': 'form-control has-feedback eaFullWidthContent',
+                                            'group_class': 'form-group has-feedback'}),
+            'email': forms.EmailInput(attrs={'placeholder': _('Email address *'), 'class': 'form-control has-feedback eaFullWidthContent',
+                                             'group_class': 'form-group has-feedback'}),
         }
 
-        labels = {
-            'first_name': _('First name'),
-            'last_name': _('Last name'),
-            'phone': _('Phone number (optional)'),
-            'email': _('Email address'),
-        }
+        labels = { f : '' for f in  ['first_name', 'last_name', 'phone', 'email'] }
 
     def __init__(self, petition=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.instance.petition = petition
-        self.fields['consent'].label = _(
-            "I agree that my data will be used to count my signature and send it to {creator}, knowing that "
-            "it may reveal my opinions. I can withdraw my signature at any time.").format(creator=petition.owner_name)
-        if not getattr(settings, 'SIGNATURE_COLLECT_PHONE', True):
-            del self.fields['phone']
         if not petition.has_newsletter:
             del self.fields['subscribed_to_mailinglist']
         else:
             self.fields['subscribed_to_mailinglist'].label = self.instance.petition.newsletter_text
-            self.fields['subscribed_to_mailinglist'].help_text = _(
-                "By ticking this box, your email address will be sent to {creator} so that you receive their news, "
-                "once your signature is confirmed. {site} does not manage this list: to unsubscribe, use the link "
-                "in their messages.").format(creator=petition.owner_name, site=settings.SITE_NAME)
-
-class SignatureLinkRequestForm(forms.Form):
-    email = forms.EmailField(label=_("Email address"))
-
-
-class ReportForm(forms.Form):
-    reason = forms.ModelChoiceField(
-        queryset=ModerationReason.objects.filter(visible=True),
-        widget=forms.RadioSelect,
-        required=False,
-        empty_label=None,
-        label=_("Why do you want to report this petition?"))
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['reason'].label_from_instance = lambda reason: reason.text
 
 class PetitionCreationStep1(forms.Form):
     ### Ask for title ###
-    title = forms.CharField(max_length=80, label=_("Title of the petition"),
-                            help_text=_("80 characters maximum. Say what you ask, and to whom. You can change it later."))
+    title = forms.CharField(max_length=200)
 
     def clean_title(self):
         title = self.cleaned_data.get('title')
@@ -120,60 +89,16 @@ class PetitionCreationStep1(forms.Form):
 
 class PetitionCreationStep2(forms.Form):
     ### Ask for content ###
-    message = forms.CharField(widget=TinyMCE, label=_("Text of the petition"))
+    message = forms.CharField(widget=TinyMCE)
 
 
-class ExpiryFieldMixin:
-    ### Deletion date of a petition: between tomorrow and today + PETITION_MAX_LIFETIME_DAYS ###
-    def setup_expires_at(self):
-        earliest, latest = Petition.expiry_bounds()
-        field = self.fields['expires_at']
-        field.widget.attrs.update({'min': earliest.isoformat(), 'max': latest.isoformat()})
-        field.help_text = _("On this day, the petition and all its signatures are permanently deleted. "
-                            "You can choose a date up to %(date)s and change it at any time.") % {
-            'date': date_format(latest)}
-
-    def clean_expires_at(self):
-        value = self.cleaned_data.get('expires_at')
-        if value is None:
-            return value
-        earliest, latest = Petition.expiry_bounds()
-        if value < earliest:
-            raise ValidationError(_("The deletion date must be tomorrow or later."), code="min_value")
-        if value > latest:
-            raise ValidationError(_("The deletion date cannot be later than %(date)s."), code="max_value",
-                                  params={'date': date_format(latest)})
-        return value
-
-
-def expires_at_field(required):
-    return forms.DateField(required=required, label=_("Deletion date"),
-                           widget=forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'))
-
-
-class PetitionCreationStep3(ExpiryFieldMixin, forms.Form):
+class PetitionCreationStep3(forms.Form):
     ### Ask for publication ###
-    publish = forms.BooleanField(required=False, label=_("Publish the petition now"),
-                                 help_text=_("If you leave it unticked, the petition is saved as a draft that only you and your organization can see. You can publish it later from your dashboard."))
-    # empty: default lifetime (PETITION_DEFAULT_LIFETIME_DAYS)
-    expires_at = expires_at_field(required=False)
+    publish = forms.BooleanField(required=False, label=_("Publish the petition now?"))
     configure = forms.BooleanField(required=False, label=_("Save & Configure"))
     ### Hidden fields ###
     use_template = forms.BooleanField(widget=forms.HiddenInput, required=False, label=_("Use template"))
     template_id = forms.IntegerField(widget=forms.HiddenInput, required=False, label=_("Template id"))
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.setup_expires_at()
-
-
-class ExpiryForm(ExpiryFieldMixin, forms.Form):
-    ### Deletion date, in the petition settings (submitted with "expiry_form_submitted") ###
-    expires_at = expires_at_field(required=True)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.setup_expires_at()
 
 
 class ContentFormGeneric(forms.Form):

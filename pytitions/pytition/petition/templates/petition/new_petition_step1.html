@@ -1,25 +1,57 @@
-{% extends 'layouts/wizard_layout.html' %}
+{% extends 'layouts/wizard_layout.html'%}
 {% load i18n %}
+{% load widget_tweaks %}
+{% load petition_extras %}
+{% load static %}
 
 {% block wizard_content %}
-<form method="POST" novalidate class="fp-wizard-form">{% csrf_token %}
-  {{ wizard.management_form }}
-  {% include "petition/form_fields.html" with form=form %}
-  {% if org %}{% url "slug_show_petition" orgslugname=org.slugname petitionname="petition" as slug_example %}{% else %}{% url "slug_show_petition" username=user.username petitionname="petition" as slug_example %}{% endif %}
-  <p class="fp-help fp-js-only fp-slug-preview">{% trans "Web address of the petition:" %}
-    <output class="fp-slug" data-fp-slug-source="{{ form.title.auto_id }}" data-fp-slug-example="{{ request.scheme }}://{{ request.get_host }}{{ slug_example }}"></output>
-  </p>
-  {% if form.expires_at %}{% include "petition/expiry_field.html" with field=form.expires_at %}{% endif %}
-  <div class="fp-actions fp-wizard-actions">
-    <button type="submit" class="fp-btn fp-btn-primary">{% trans "Next: the text" %}{% include "components/icon.html" with name="arrow-right" %}</button>
+  <div id="step-1" class="d-flex align-items-center justify-content-auto px-3 pt-3">
+    <form method="POST" class="flex-fill">{% csrf_token %}
+      {{ wizard.management_form }}
+      <div class="form-group">
+      {% with form.title as field %}
+        {% trans "Title" %}
+
+        {% if form.is_bound %}
+          {% if field.errors %}
+            {% render_field field|bootstrap class="is-invalid" %}
+            {% for error in field.errors %}
+              <div class="invalid-feedback">
+                {{ error }}
+              </div>
+            {% endfor %}
+          {% else %}
+            {% render_field field|bootstrap class="is-valid" %}
+          {% endif %}
+        {% else %}
+          {% render_field field|bootstrap %}
+        {% endif %}
+
+        {% if field.help_text %}
+          <small class="form-text text-muted">{{ field.help_text }}</small>
+        {% endif %}
+      {% endwith %}
+      </div>
+      <button type="submit" class="btn btn-primary">{% trans "Next" %}</button>
+    </form>
   </div>
-</form>
 {% endblock %}
 
-{% block wizard_help %}
-<ul class="fp-wizard-tips">
-  <li>{% trans "Name the person or institution who can act, and what you ask of them." %}</li>
-  <li>{% trans "Example: “Lyon city council: build a continuous cycle lane on cours Émile-Zola”." %}</li>
-  <li>{% trans "Avoid capitals and exclamation marks: a calm title inspires more trust." %}</li>
-</ul>
+{% block extrajs %}
+    {{ block.super }}
+    <script type="text/javascript" src="{%  static 'vendor/smartwizard/dist/js/jquery.smartWizard.min.js' %}"></script>
+    <script type="text/javascript">
+    $(document).ready(function(){
+      $('#smartwizard').smartWizard({
+                                    theme: 'arrows',
+                                    toolbarSettings: {
+                                        showNextButton: false,
+                                        showPreviousButton: false,
+                                    },
+                                    });
+    });
+
+    document.location.hash = "step-1";
+    $('html, body').scrollTop('0px');
+    </script>
 {% endblock %}

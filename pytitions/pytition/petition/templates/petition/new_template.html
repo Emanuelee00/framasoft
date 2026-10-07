@@ -1,25 +1,43 @@
 {% extends base_template %}
 {% load i18n %}
 
-{% block title %}{% trans "New template" %}{% endblock title %}
-
 {% block content %}
-<div class="fp-page-header fp-dash-head">
-  <div>
-    <h1 id="fp-page-title">{% trans "New petition template" %}</h1>
-    <p class="fp-lead">{% trans "A template is not a petition: it holds default texts and settings that you can reuse, for example the same reply-to address for several petitions." %}</p>
-  </div>
-</div>
-<form method="POST" class="fp-form-narrow">
-  {% csrf_token %}
-  <div class="fp-field">
-    <label class="fp-label" for="template_name">{% trans "Template name" %}</label>
-    <p class="fp-help" id="template_name_help">{% trans "Each template must have a different name." %}</p>
-    <input type="text" class="fp-input" id="template_name" name="template_name" aria-describedby="template_name_help" maxlength="50" required>
-  </div>
-  <div class="fp-actions">
-    <button class="fp-btn fp-btn-primary" type="submit">{% trans "Create and configure" %}</button>
-    <a class="fp-btn fp-btn-tertiary" href="{% if org %}{% url "org_dashboard" org.slugname %}{% else %}{% url "user_dashboard" %}{% endif %}#templates">{% trans "Cancel" %}</a>
-  </div>
-</form>
+    <div class="row">
+        <div class="col d-flex justify-content-center">
+            <h2>{% trans "Create a petition template" %}</h2>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <div class="alert alert-info alert-dismissible show fade" role="alert">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <div class="row">
+                    <div class="col-1 alert-icon-col">
+                        <span class="oi oi-warning"></span>
+                    </div>
+                    <div class="col">
+                      <h4 class="alert-heading">{% trans "Beware, you are creating a template, not a petition!" %}</h4>
+                      {% blocktrans %}
+                          <p class="mb-0">A petition template allows you to put default values for future petitions.<br/>
+                          For instance you might want to re-use the same e-mail SMTP account accross several petitions.</p>
+                      {% endblocktrans %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <form method="POST">
+                {% csrf_token %}
+                <div class="form-group">
+                   <label for="template_name">{% trans "Template name" %}</label>
+                    <input type="text" class="form-control" id="template_name" name="template_name"
+                           placeholder="{% trans "My template name" %}" required>
+                    <small id="template_name_help" class="form-text text-muted">{% trans "Each template must have a different name" %}</small>
+                </div>
+                <input class="btn btn-primary" type="submit" value="{% trans "Create" %}">
+            </form>
+        </div>
+    </div>
 {% endblock content %}

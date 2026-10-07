@@ -301,19 +301,3 @@ class PetitionViewTest(TestCase):
             if msg.level == constants.ERROR:
                 ThereIsAnyError = True
         self.assertEquals(ThereIsAnyError, False)
-
-    def test_show_signatures_post_actions_limited_to_petition(self):
-        from django.core import mail
-        julia = self.login("julia")
-        own = julia.petition_set.first()
-        other = PytitionUser.objects.get(user__username="max").petition_set.first()
-        sig = Signature.objects.create(
-            first_name="Me",
-            last_name="You",
-            email="you@example.org",
-            petition=other)
-        mail.outbox = []
-        for action in ("delete", "re-send"):
-            self.client.post(reverse("show_signatures", args=[own.id]), {'action': action, 'signature_id': [sig.id]})
-        self.assertTrue(Signature.objects.filter(pk=sig.pk).exists())
-        self.assertEqual(len(mail.outbox), 0)

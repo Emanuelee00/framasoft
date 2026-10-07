@@ -30,15 +30,12 @@ from django.db.models import Q
 from django.contrib import messages
 
 from tinymce.widgets import TinyMCE
-from colorfield.fields import ColorField
 
 from akismet import Akismet
-from .spam_management.detectors.akismet_detector import akismet_kwargs
 from bs4 import BeautifulSoup
 
 from .models import Signature, Petition, Organization, PytitionUser, PetitionTemplate, Permission, SlugModel, ModeratedElement, ModerationReason, Moderation
 from .views import send_confirmation_email
-from .widgets import ColorWidget
 from .helpers import send_moderation_mail, send_mail_to_moderation, send_mail_to_moderation_info
 
 ### Akismet ###
@@ -57,10 +54,12 @@ def submit_ham(modeladmin, request, queryset):
                 text_msg = soup.get_text(separator = " ")
                 clean_text_msg = ' '.join(text_msg.split())
 
-                email = petition.user.user.email if petition.user else None
-                akismet.submit_ham(petition.ipaddr, petition.user_agent,
-                                    **akismet_kwargs(petition.owner_username, email,
-                                                     petition.title + " " + clean_text_msg))
+                akismet.submit_ham(petition.ipaddr, petition.user_agent, 
+                                    comment_type = "blog-post",
+                                    comment_author = petition.user.username,
+                                    comment_author_email = petition.user.user.email,
+                                    comment_content = petition.title + " " + clean_text_msg,
+                                    is_test = 1) #is_test to change in production
 
                 if petition.moderated:
                     petition.moderate(False)
@@ -84,10 +83,12 @@ def submit_spam(modeladmin, request, queryset):
                 text_msg = soup.get_text(separator = " ")
                 clean_text_msg = ' '.join(text_msg.split())
                 
-                email = petition.user.user.email if petition.user else None
-                akismet.submit_spam(petition.ipaddr, petition.user_agent,
-                                    **akismet_kwargs(petition.owner_username, email,
-                                                     petition.title + " " + clean_text_msg))
+                akismet.submit_spam(petition.ipaddr, petition.user_agent, 
+                                    comment_type = "blog-post",
+                                    comment_author = petition.user.username,
+                                    comment_author_email = petition.user.user.email,
+                                    comment_content = petition.title + " " + clean_text_msg,
+                                    is_test = 1) #is_test to change in production
 
                 petition.moderate(True)
                 moderation_reason = ModerationReason.objects.create(msg="This petition is inappropriate.", visible=True)
@@ -415,27 +416,17 @@ class OrganizationAdmin(admin.ModelAdmin):
 
 @admin.register(Signature)
 class SignatureAdmin(admin.ModelAdmin):
-    list_display = ('first_name', 'last_name', 'email', 'confirmed', 'subscribed_to_mailinglist', 'petition', 'date')
+    list_display = ('first_name', 'last_name', 'phone', 'email', 'confirmed', 'subscribed_to_mailinglist', 'petition', 'date')
     list_filter = ('petition', 'confirmed')
     actions = [confirm, resend_confirmation_mail]
 
     # fields to search threw when searching by keyword in admin panel
-    search_fields = ('first_name', 'last_name', 'email')
+    search_fields = ('first_name', 'last_name', 'phone', 'email')
     change_form_template = 'petition/signature_change_form.html'
 
 
 #class SlugInlineAdmin(admin.TabularInline):
     #Petition.slugs.through
-
-
-# framapetitions: S13 - ColorField always builds the colorfield widget, whose options jscolor
-# evaluates (blocked by the Content-Security-Policy): use the JSON variant instead.
-class JSONColorWidgetMixin:
-    def formfield_for_dbfield(self, db_field, request, **kwargs):
-        formfield = super().formfield_for_dbfield(db_field, request, **kwargs)
-        if isinstance(db_field, ColorField):
-            formfield.widget = ColorWidget(attrs=formfield.widget.attrs)
-        return formfield
 
 
 # Petition Form used in the `Petitions` section of the admin page
@@ -523,7 +514,7 @@ class PetitionAdminForm(ModelForm):
 
 
 @admin.register(Petition)
-class PetitionAdmin(JSONColorWidgetMixin, admin.ModelAdmin):
+class PetitionAdmin(admin.ModelAdmin):
 
     """
     Overload queryset
@@ -758,7 +749,7 @@ class PetitionTemplateForm(ModelForm):
 
 
 @admin.register(PetitionTemplate)
-class PetitionTemplateAdmin(JSONColorWidgetMixin, admin.ModelAdmin):
+class PetitionTemplateAdmin(admin.ModelAdmin):
     #change_form_template = 'petition/petition_change_form.html'
     form = PetitionTemplateForm
     fieldsets = (

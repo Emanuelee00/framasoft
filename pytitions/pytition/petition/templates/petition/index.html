@@ -2,84 +2,86 @@
 {% load static %}
 {% load i18n %}
 
-{% block title %}{% trans "Petitions that respect you" %}{% endblock title %}
+{% block login_next %}{% url "user_dashboard" %}{% endblock login_next %}
+
+{% block media %}
+<link rel="preload" as="image" href="{% static "img/pytitions.jpg" %}">
+{% endblock media %}
 
 {% block extrameta %}
-{% trans "A petition service that respects you" as tagline %}
-<meta name="description" content="{{ tagline }}">
-<meta property="og:title" content="{{ settings.SITE_NAME }}">
-<meta property="og:description" content="{{ tagline }}">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="{{ settings.SITE_NAME }}">
-<meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{% static "img/pytitions.jpg" %}">
+<meta name="description" content="Un service de pétitions qui vous respecte">
+<meta property="og:title" content="Framapetitions"/>
+<meta property="og:description" content="Un service de pétitions qui vous respecte"/>
+<meta property="og:type" content="website"/>
+<meta property="og:site_name" content="Framapetitions" />
+<meta property="og:image" content="https://test.framapetitions.org{% static "img/pytitions.jpg" %}" />
 {% endblock extrameta %}
 
 {% block extracss %}
-<link href="{% static "css/fp-lists.css" %}" rel="stylesheet">
-{% endblock extracss %}
-
+<link href="{% static "css/home.css" %}" rel="stylesheet">{% endblock extracss %}
 {% block main_content %}
-{% if not petitions.has_previous %}
-<section class="fp-section fp-section-tinted fp-hero" aria-labelledby="hero-title">
-  <div class="fp-container">
-    <p class="fp-kicker">{% trans "Free and ethical" %}</p>
-    <h1 id="hero-title">{% trans "Petitions that respect you and the people who sign them" %}</h1>
-    <p class="fp-lead">{% blocktrans trimmed %}
-      Start a petition in a few minutes and gather support without advertising or trackers.
-      Signatories' data is only used to count their signature, and they stay in control of it.
-    {% endblocktrans %}</p>
-    <div class="fp-actions fp-hero-actions">
-      {% if user.is_authenticated or settings.ALLOW_REGISTER %}
-      <a class="fp-btn fp-btn-primary fp-btn-lg" href="{% url 'user_petition_wizard' %}">{% include "components/icon.html" with name="plus" %}{% trans "Create a petition" %}</a>
-      {% endif %}
-      <a class="fp-btn fp-btn-secondary fp-btn-lg" href="#petitions">{% trans "Browse petitions" %}</a>
+<section id="intro" class="main-row">
+  <div class="px-md-0 container">
+    <div class="row">
+      <div class="col-md-7 col-lg-6">
+        <h1>Framapetitions</h1>
+        <h2>Un service de pétitions qui vous respecte</h2>
+        <ul class="row buttons">
+          {% if user.is_authenticated or settings.ALLOW_REGISTER %}
+          <li class="pl-0 pb-2 pb-md-3 col-md-8"><a href="{% url 'user_petition_wizard' %}"
+              target="_self" class="btn btn-primary h-100 btn-lg btn-block"><span>{% trans "Create a petition" %}</span></a></li>
+          {% endif %}
+          <!-- <li class="pl-0 pb-2 pb-md-3 col-md-8"><a href="https://docs.framasoft.org/fr/wisemapping/"
+                class="btn btn-lg btn-outline-warning"><i class="fas fa-circle-play"></i>
+              <span>Visite guidée</span></a></li> -->
+        </ul>
+      </div>
     </div>
   </div>
 </section>
-
-<section class="fp-section fp-values" aria-labelledby="values-title">
-  <div class="fp-container">
-    <h2 id="values-title">{% trans "Our commitments" %}</h2>
-    <ul class="fp-grid fp-grid-3 fp-values-list">
-      <li class="fp-value">
-        <span class="fp-value-icon">{% include "components/icon.html" with name="eye" %}</span>
-        <h3 class="fp-value-title">{% trans "No ads, no trackers" %}</h3>
-        <p>{% trans "No advertising, no audience measurement by third parties, no resale of data. The list of signatories is never published: only their number." %}</p>
-      </li>
-      <li class="fp-value">
-        <span class="fp-value-icon">{% include "components/icon.html" with name="person" %}</span>
-        <h3 class="fp-value-title">{% trans "Your signature, your data" %}</h3>
-        <p>{% trans "Each signatory receives a personal link to view, download or delete their signature at any time. Unconfirmed signatures are deleted automatically." %}</p>
-      </li>
-      <li class="fp-value">
-        <span class="fp-value-icon">{% include "components/icon.html" with name="code" %}</span>
-        <h3 class="fp-value-title">{% trans "Free software, run by an association" %}</h3>
-        <p>{% trans "The service is based on free software and is hosted in France by Framasoft, a not-for-profit association funded by donations." %}</p>
-      </li>
-    </ul>
-    <p class="fp-values-rules fp-muted">
-      {% url 'privacy_notice' as privacy_url %}
-      {% blocktrans trimmed %}
-        Use of the service is subject to the <a href="https://framasoft.org/cgu/">terms of use</a>, and petitions may be moderated according to the <a href="https://framasoft.org/moderation/">moderation charter</a>.
-        Read our <a href="{{ privacy_url }}">privacy notice</a>.
-      {% endblocktrans %}
-    </p>
-  </div>
-</section>
-{% endif %}
-
-<section class="fp-section fp-list-section" id="petitions" aria-labelledby="petitions-title">
-  <div class="fp-container">
-    <div class="fp-list-head">
-      {% if petitions.has_previous %}
-      <h1 id="petitions-title" class="fp-list-title">{% blocktrans trimmed with number=petitions.number %}Published petitions, page {{ number }}{% endblocktrans %}</h1>
-      {% else %}
-      <h2 id="petitions-title" class="fp-list-title">{% trans "Latest published petitions" %}</h2>
-      {% endif %}
-      {% if petitions %}{% include "components/sort_links.html" with sort=sort anchor="petitions" %}{% endif %}
+<section id="limit">
+  <i class="fas fa-triangle-exclamation"></i>
+  <div class="px-md-0 container">
+    <div class="row">
+      <div class="col-md-8">
+        <div>
+          <h2 id="limitations">Limitations</h2>
+          <p>Framapetitions est proposé sous réserve d’acceptation de nos conditions générales
+  d’utilisation, et peut être modéré selon notre charte de modération.</p>
+        </div>
+        <ul class="list-unstyled row">
+          <li class="col-6 col-lg-4">
+            <a href="https://framasoft.org/cgu" class="btn btn-sm btn-outline-secondary btn-block">
+              <i class="fas fa-file-contract fa-fw"></i>
+              <span>
+                <abbr title="Conditions Générales d’Utilisation">CGU</abbr>
+              </span>
+            </a>
+          </li>
+          <li class="col-6 col-lg-4">
+            <a href="https://framasoft.org/moderation" class="btn btn-sm btn-outline-secondary btn-block">
+              <i class="fas fa-scale-balanced fa-fw"></i>
+              <span>Charte de modération</span>
+            </a>
+          </li>
+        </ul>
+      </div>
     </div>
-    {% trans "No petition has been published yet" as empty_title %}
-    {% include 'petition/generic_petition_list.html' with petitions=petitions sort=sort empty_title=empty_title %}
   </div>
 </section>
+<section id="petition-list-id" class="petition-list container">
+  <div class="text-center container">
+    <h2>Dernières pétitions publiées</h2>
+    <div class="d-flex justify-content-end">
+      <div class="btn-group" role="group" aria-label="sort-buttons">
+        <a class="btn {% if sort == 'desc' %} btn-secondary {% else %} btn-outline-secondary {% endif %}"
+        href="{% url "index" %}?sort=desc#petition-list-id" role="button">{% trans "Last Created" %}</a>
+        <a class="btn {% if sort == 'asc' %} btn-secondary {% else %} btn-outline-secondary {% endif %}"
+        href="{% url "index" %}?sort=asc#petition-list-id" role="button">{% trans "First Created" %}</a>
+      </div>
+    </div>
+    {% include 'petition/generic_petition_list.html' with petitions=petitions sort=sort %}
+  </div>
+</section>
+
 {% endblock main_content %}

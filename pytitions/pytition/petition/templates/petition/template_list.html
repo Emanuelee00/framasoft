@@ -1,49 +1,46 @@
 {% load i18n %}
-{% comment %}
-  Petition templates of a user or an organization.
-  {% include "petition/template_list.html" with templates=owner.petitiontemplate_set.all owner=owner %}
-{% endcomment %}
-{% if templates %}
-<ul class="fp-dash-list">
-  {% for template in templates %}
-  <li class="fp-dash-list-item">
-    <span class="fp-dash-list-name">
-      {{ template.name }}
-      {% if owner.default_template == template %}<span class="fp-badge fp-badge-primary">{% trans "Default" %}</span>{% endif %}
-    </span>
-    <span class="fp-actions">
-      <a class="fp-btn fp-btn-tertiary fp-btn-sm" href="{% if owner.kind == "org" %}{% url "org_petition_wizard_from_template" org.slugname template.id %}{% else %}{% url "user_petition_wizard_from_template" template.id %}{% endif %}">{% trans "Use" %}<span class="fp-sr-only"> {{ template.name }}</span></a>
-      <details class="fp-menu">
-        <summary class="fp-btn fp-btn-tertiary fp-btn-sm">{% trans "More" %}<span class="fp-sr-only"> {% blocktrans with name=template.name %}actions for {{ name }}{% endblocktrans %}</span></summary>
-        <div class="fp-menu-panel">
-          <ul class="fp-menu-list">
-            {% if owner.kind != "org" or user_permissions.can_modify_templates %}
-            <li><a class="fp-menu-item" href="{% url "edit_template" template.id %}">{% include "components/icon.html" with name="pencil" %}{% trans "Edit template" %}</a></li>
-            {% endif %}
-            <li>
-              <form method="post" action="{% url 'template_fav_toggle' template.id %}" data-fp-async>{% csrf_token %}
-                <button type="submit" class="fp-menu-item">{% include "components/icon.html" with name="star" %}{% if owner.default_template == template %}{% trans "Stop using as default" %}{% else %}{% trans "Use as default for new petitions" %}{% endif %}</button>
-              </form>
-            </li>
-            {% if owner.kind != "org" or user_permissions.can_delete_templates %}
-            <li class="fp-menu-sep" role="presentation"></li>
-            <li><button type="button" class="fp-menu-item fp-js-only" data-fp-dialog-open="template-delete-{{ template.id }}">{% include "components/icon.html" with name="trash" %}{% trans "Delete template" %}</button></li>
-            {% endif %}
-          </ul>
-        </div>
-      </details>
-    </span>
-    <dialog class="fp-dialog" id="template-delete-{{ template.id }}" aria-labelledby="template-delete-{{ template.id }}-title">
-      <h2 class="fp-dialog-title" id="template-delete-{{ template.id }}-title">{% trans "Delete this template?" %}</h2>
-      <p>{% blocktrans with name=template.name %}The template “{{ name }}” will be deleted. Petitions created from it are not affected.{% endblocktrans %}</p>
-      <form method="post" action="{% url 'template_delete' template.id %}" class="fp-dialog-actions" data-fp-async>{% csrf_token %}
-        <button type="button" class="fp-btn fp-btn-tertiary" data-fp-dialog-close>{% trans "Cancel" %}</button>
-        <button type="submit" class="fp-btn fp-btn-danger">{% trans "Delete template" %}</button>
-      </form>
-    </dialog>
+{% load static %}
+<ul class="dashboard-org-list">
+{% for template in templates %}
+  <li class="d-flex align-items-center justify-content-between" data-template-fav="{% url 'template_fav_toggle' template.id %}">
+    <span>{{ template.name }}</span>
+    <div class="flex-wrap">
+        {% if owner.default_template == template %}
+        <button class="btn btn-link text-warning" data-fav-toggle="true" data-toggle="tooltip" title="{% trans "This is the default template. Click here to unmark it as default" %}"><span class="oi oi-star"></span></button>
+        {% else %}
+        <button class="btn btn-link text-dark" data-fav-toggle="true" data-toggle="tooltip" title="{% trans "Mark this template as default" %}"><span class="oi oi-star"></span></button>
+        {% endif %}
+        <a class="btn btn-link text-dark" data-action="template-edit" data-toggle="tooltip" title="{% trans "Edit template" %}"
+         href="{% url "edit_template" template.id %}"><span class="oi oi-pencil"></span></a>
+        <a
+          {% if owner.kind == "org" %}
+          href="{% url "org_petition_wizard_from_template" org.slugname template.id %}"
+          {% else %}
+          href="{% url "user_petition_wizard_from_template" template.id %}"
+          {% endif %}
+          class="btn btn-link text-dark" data-action="template-instanciate" data-toggle="tooltip" title="{% trans "Create a new petition using this template" %}"><span class="oi oi-clipboard"></span></a>
+        <span data-toggle="modal" data-target="#template_delete_modal_{{ template.id }}"><button class="btn btn-link text-dark" data-toggle="tooltip" title="{% trans "Delete template" %}"><span class="oi oi-circle-x"></span></button></span>
+    </div>
   </li>
-  {% endfor %}
+<div class="modal fade" id="template_delete_modal_{{ template.id }}" tabindex="-1" role="dialog" aria-hidden="true" aria-labelledby="template_delete_modal_label_{{ template.id }}">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="template_delete_modal_label_{{ template.id }}">{% trans "Delete this template?" %}</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        {% trans "You are about to delete the following petition template:" %}'{{ template.name }}'.<br />
+        {% trans "Do you really want to do this?" %}
+      </div>
+      <div class="modal-footer" data-template-delete="{% url 'template_delete' template.id %}">
+        <button type="button" class="btn btn-primary" data-dismiss="modal">{% trans "Close" %}</button>
+        <button type="button" class="btn btn-danger" data-action="template-delete">{% trans "Delete" %}</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %}
 </ul>
-{% else %}
-<p class="fp-muted">{% trans "No template yet." %}</p>
-{% endif %}

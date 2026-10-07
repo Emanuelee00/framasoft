@@ -1,37 +1,19 @@
 {% extends "layouts/layout.html" %}
 {% load i18n %}
-{% load static %}
-
-{% block title %}{% trans "Create an account" %}{% endblock title %}
 
 {% block extracss %}
-<link href="{% static "css/fp-auth.css" %}" rel="stylesheet">
+    <style>
+        .invalid-feedback {
+            display: block;
+        }
+    </style>
 {% endblock extracss %}
 
 {% block main_content %}
-<div class="fp-container fp-auth fp-auth-wide">
-  <div class="fp-page-header">
-    <h1>{% trans "Create an account" %}</h1>
-    <p class="fp-lead">{% trans "An account lets you create petitions and follow their signatures. No account is needed to sign a petition." %}</p>
-  </div>
-
-  <div class="fp-auth-card">
-    {% include "components/form_errors.html" with form=form %}
-    <form action="" method="post" novalidate>
-      {% csrf_token %}
-      {% for hidden_field in form.hidden_fields %}{{ hidden_field }}{% endfor %}
-      {% for field in form.visible_fields %}
-      {% include "components/field.html" with field=field %}
-      {% endfor %}
-      <button class="fp-btn fp-btn-primary fp-btn-block" type="submit">{% trans "Create my account" %}</button>
+<div class="container">
+    <form action="" method="POST" novalidate="novalidate">{% csrf_token %}
+        {% include "petition/bs4_form.html" with form=form %}
+        <button class="btn btn-primary" type="submit">{% trans "Register" %}</button>
     </form>
-    <ul class="fp-auth-links">
-      <li>{% trans "Already have an account?" %} <a href="{% url "login" %}">{% trans "Log in" %}</a></li>
-    </ul>
-  </div>
 </div>
 {% endblock main_content %}
-
-{% block extrajs %}
-<script src="{% static "js/sign.js" %}" defer></script>
-{% endblock %}

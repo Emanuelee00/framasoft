@@ -4,59 +4,25 @@
 It defines actions to help the developper across the project.
 """
 
-import hashlib
-import html
-import ipaddress
-import logging
 import requests
 import lxml
 from lxml.html.clean import Cleaner
 from django.http import Http404, HttpResponseForbidden
 from django.conf import settings
-from django.core.cache import cache
 from django.urls import reverse
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
-from django.utils.crypto import salted_hmac
 from django.core.mail import get_connection, EmailMultiAlternatives, EmailMessage
-from django.core import signing
 from django.utils.translation import gettext as _
 from django.contrib.auth.models import User
 
-logger = logging.getLogger(__name__)
-
-# Timeouts (in seconds) of the calls made to the newsletter of a petition during a signature
-NEWSLETTER_HTTP_TIMEOUT = 5
-NEWSLETTER_SMTP_TIMEOUT = 10
-
-# Remove the petitions whose owner is moderated (petitions is a queryset, filtered in SQL).
-# Owners and slugs are loaded with the petitions, as lists display them.
+# Remove all moderated instances of Petition
 def remove_user_moderated(petitions):
-    return petitions.exclude(org__moderated=True).exclude(user__moderated=True)\
-        .select_related('org', 'user__user').prefetch_related('slugmodel_set')
+    petitions = [p for p in petitions if not p.is_moderated]
+    return petitions
 
-# Remove all javascripts from HTML code.
-# framapetitions: BE-15 - the result only depends on the input, so it is kept in the cache under
-# a hash of the input: an edited text gets a new key, nothing has to be invalidated.
-# Increase the version whenever _sanitize_html changes, so that a shared cache (memcached, redis)
-# does not keep results of the previous rules.
-SANITIZE_HTML_CACHE_VERSION = 1
-
-
+# Remove all javascripts from HTML code
 def sanitize_html(unsecure_html_content):
-    ttl = getattr(settings, 'SANITIZE_HTML_CACHE_TTL', 0)
-    if not ttl or not isinstance(unsecure_html_content, str):
-        return _sanitize_html(unsecure_html_content)
-    digest = hashlib.sha256(unsecure_html_content.encode('utf-8', 'surrogatepass')).hexdigest()
-    key = 'sanitize_html:%d:%s' % (SANITIZE_HTML_CACHE_VERSION, digest)
-    secure_html_content = cache.get(key)
-    if secure_html_content is None:
-        secure_html_content = _sanitize_html(unsecure_html_content)
-        cache.set(key, secure_html_content, ttl)
-    return secure_html_content
-
-
-def _sanitize_html(unsecure_html_content):
     cleaner = Cleaner(inline_style=False, scripts=True, javascript=True,
                       safe_attrs=lxml.html.defs.safe_attrs | set(['style', 'controls']),
                       frames=False, embedded=False,
@@ -72,36 +38,14 @@ def _sanitize_html(unsecure_html_content):
         secure_html_content = b''
     return secure_html_content.decode()
 
-# Get the client IP address, considering only the trusted reverse proxies
-# (settings.PYTITION_TRUSTED_PROXY_COUNT): each of them appends to X-Forwarded-For,
-# so the client address is the n-th element starting from the right.
+# Get the client IP address, considering proxies and RP
 def get_client_ip(request):
-    trusted_proxies = getattr(settings, 'PYTITION_TRUSTED_PROXY_COUNT', 0)
-    if trusted_proxies > 0:
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR', '')
-        chain = [ip.strip() for ip in x_forwarded_for.split(',') if ip.strip()]
-        if len(chain) >= trusted_proxies:
-            return chain[-trusted_proxies]
-    return request.META.get('REMOTE_ADDR')
-
-# Normalize an IP address for hashing: IPv6 addresses are reduced to their /64 network
-# (a single host usually owns a whole /64), IPv4 addresses are kept. Invalid value -> ''
-def normalize_ip(ip):
-    try:
-        addr = ipaddress.ip_address((ip or '').strip())
-    except ValueError:
-        return ''
-    if addr.version == 6:
-        return str(ipaddress.ip_network('{}/64'.format(addr), strict=False).network_address)
-    return str(addr)
-
-
-# Pseudonymised IP address of a signer, specific to the petition (HMAC-SHA256)
-def signature_ip_hash(petition, ip):
-    value = '{}:{}'.format(petition.pk, normalize_ip(ip))
-    secret = settings.SIGNATURE_IP_HMAC_KEY or settings.SECRET_KEY
-    return salted_hmac('petition.signature.ip', value, secret=secret, algorithm='sha256').hexdigest()
-
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
 
 # Get the user of the current session
 def get_session_user(request):
@@ -157,53 +101,18 @@ def footer_content_processor(request):
         footer_content = render_to_string(settings.FOOTER_TEMPLATE)
     return {'footer_content': footer_content}
 
-# Signed token giving access to the "manage my signature" page (no database field needed)
-MANAGE_SALT = "petition.signature.manage"
-
-def make_manage_token(signature):
-    return signing.dumps({"s": signature.pk, "p": signature.petition_id}, salt=MANAGE_SALT)
-
-def build_manage_url(request, signature):
-    return request.build_absolute_uri(reverse("manage_signature", args=[make_manage_token(signature)]))
-
 # Send Confirmation email
 def send_confirmation_email(request, signature):
     petition = signature.petition
     url = request.build_absolute_uri(reverse("confirm", args=[petition.id, signature.confirmation_hash]))
-    # Plain title: the text version is not escaped, the HTML version escapes it again
-    title = " ".join(html.unescape(strip_tags(petition.title)).split())
-    ctx = {'firstname': signature.first_name, 'url': url,
-           'petition_title': title,
-           'petition_url': request.build_absolute_uri(petition.url),
-           'creator_name': petition.owner_name,
-           'manage_url': build_manage_url(request, signature),
-           'days': settings.UNCONFIRMED_SIGNATURE_RETENTION_DAYS,
-           'expires_at': petition.expires_at,
-           'privacy_url': request.build_absolute_uri(reverse("privacy_notice"))}
-    html_message = render_to_string("petition/confirmation_email.html", ctx)
-    message = render_to_string("petition/confirmation_email.txt", ctx)
-    subject = _("Confirm your signature: “%(title)s”") % {'title': title}
+    html_message = render_to_string("petition/confirmation_email.html", {'firstname': signature.first_name, 'url': url})
+    message = strip_tags(html_message)
     with get_connection() as connection:
-        msg = EmailMultiAlternatives(subject, message, to=[signature.email], connection=connection,
-                                     reply_to=[petition.confirmation_email_reply])
+        msg = EmailMultiAlternatives(_("Confirm your signature to our petition"),
+                           message, to=[signature.email], connection=connection,
+                           reply_to=[petition.confirmation_email_reply])
         msg.attach_alternative(html_message, "text/html")
         msg.send(fail_silently=False)
-
-# Tell an existing signatory that someone tried to sign again with their address
-def send_already_signed_email(request, signature):
-    _send_signature_link_email(request, signature, "petition/already_signed_email.txt")
-
-# Send a new link to the "manage my signature" page
-def send_manage_link_email(request, signature):
-    _send_signature_link_email(request, signature, "petition/manage_link_email.txt")
-
-def _send_signature_link_email(request, signature, template):
-    petition = signature.petition
-    ctx = {'petition_title': strip_tags(petition.title), 'manage_url': build_manage_url(request, signature)}
-    body = render_to_string(template, ctx)
-    with get_connection() as connection:
-        EmailMessage(_("Your signature on the petition"), body, to=[signature.email],
-                     reply_to=[settings.DEFAULT_NOREPLY_MAIL], connection=connection).send(fail_silently=False)
 
 # Send welcome mail on account creation
 def send_welcome_mail(user_infos):
@@ -295,20 +204,12 @@ def subscribe_to_newsletter(petition, email):
             data = json.loads(data)
         if petition.newsletter_subscribe_http_mailfield != '':
             data[petition.newsletter_subscribe_http_mailfield] = email
-    # the newsletter is an external service: it must never break or block the signature
-    try:
-        if petition.newsletter_subscribe_method == "POST":
-            requests.post(petition.newsletter_subscribe_http_url, data, timeout=NEWSLETTER_HTTP_TIMEOUT)
-        elif petition.newsletter_subscribe_method == "GET":
-            requests.get(petition.newsletter_subscribe_http_url, data, timeout=NEWSLETTER_HTTP_TIMEOUT)
-    except requests.RequestException as e:
-        logger.warning("Newsletter subscription failed for petition %s: %s", petition.pk, type(e).__name__)
-    if petition.newsletter_subscribe_method == "MAIL":
-        # explicit SMTP backend: the mail queue backend (USE_MAIL_QUEUE) would ignore the
-        # SMTP server of the petition
-        with get_connection(backend="django.core.mail.backends.smtp.EmailBackend", fail_silently=True,
-                            timeout=NEWSLETTER_SMTP_TIMEOUT,
-                            host=petition.newsletter_subscribe_mail_smtp_host,
+    if petition.newsletter_subscribe_method == "POST":
+        requests.post(petition.newsletter_subscribe_http_url, data)
+    elif petition.newsletter_subscribe_method == "GET":
+        requests.get(petition.newsletter_subscribe_http_url, data)
+    elif petition.newsletter_subscribe_method == "MAIL":
+        with get_connection(host=petition.newsletter_subscribe_mail_smtp_host,
                             port=petition.newsletter_subscribe_mail_smtp_port,
                             username=petition.newsletter_subscribe_mail_smtp_user,
                             password=petition.newsletter_subscribe_mail_smtp_password,

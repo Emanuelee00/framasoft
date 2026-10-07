@@ -1,34 +1,98 @@
 {% load i18n %}
 {% load static %}
-{% with current=request.resolver_match.url_name %}
-<header class="fp-header">
-  <div class="fp-container{% if fluid %} fp-container-fluid{% endif %} fp-header-bar">
-    <a class="fp-brand" href="{% url 'index' %}">
-      <img alt="" height="40" width="40" src="{% static "img/framapetitions.png" %}">
-      <span><span class="fp-brand-frama">Frama</span><span class="fp-brand-product">petitions</span></span>
+{% block navbar %}
+<nav class="navbar navbar-light navbar-expand-sm flex-sm-row">
+  <div class="container">
+    {% block brand %}
+    <a class="navbar-brand" href="{% url 'index' %}" aria-label="{{ settings.SITE_NAME }}">
+      <img alt="" height="64" width="64" src="{% static "img/framapetitions.png" %}">
+      <span>
+        <b class="violet">Frama</b><b class="orange">petitions</b>
+        <span class="nav-brand-test-warn">Test ⚠️</span>
+      </span>
     </a>
-    <button type="button" class="fp-nav-link fp-header-toggle" data-fp-menu-toggle aria-expanded="false" aria-controls="fp-header-menu">
-      {% include "components/icon.html" with name="menu" %}
-      {% trans "Menu" %}
+    {% endblock brand %}
+    <button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+        Menu <span class="navbar-toggler-icon"></span>
     </button>
-    <div class="fp-header-menu" id="fp-header-menu">
-      <nav aria-label="{% trans "Main navigation" %}">
-        <ul class="fp-nav-list">
-          <li><a class="fp-nav-link" href="{% url 'index' %}"{% if current == "index" %} aria-current="page"{% endif %}>{% trans "Petitions" %}</a></li>
-        </ul>
-      </nav>
-      <form class="fp-header-search" role="search" action="{% url 'search' %}" method="GET">
-        <label for="fp-search" class="sr-only">{% trans "Search for petition" %}</label>
-        <div class="fp-input-group">
-          <input type="search" id="fp-search" class="fp-input" placeholder="{% trans "Search for petition" %}" name="q" value="{{ q }}">
-          <button type="submit" class="fp-btn fp-btn-secondary fp-btn-icon">
-            {% include "components/icon.html" with name="magnifying-glass" %}
-            <span class="fp-sr-only">{% trans "Search" %}</span>
-          </button>
+    <div class="collapse navbar-collapse" id="navbarResponsive">
+    <ul class="navbar-nav ml-auto">
+    {% if petition %}
+        <li class="nav-item">
+            <button class="btn btn-outline-warning btn-sm" data-toggle="modal" data-target="#report_modal">
+                {% trans "Report to moderation" %}
+            </button>
+        </li>
+    {% endif %}
+    <li class="nav-item">
+        <form class="form-inline ml-2 my-lg-0" action="{% url 'set_language' %}" method="post">
+        {% csrf_token %}
+        <input name="next" type="hidden" value="{{ redirect_to }}">
+        <select class="custom-select custom-select-sm" name="language" onchange='if(this.value !=  "{{ LANGUAGE_CODE }}") { this.form.submit(); }'>
+          {% get_current_language as LANGUAGE_CODE %}
+          {% get_available_languages as LANGUAGES %}
+          {% get_language_info_list for LANGUAGES as languages %}
+          {% for language in languages %}
+            <option value="{{ language.code }}" {% if language.code == LANGUAGE_CODE %}selected{% endif %}>
+              {{ language.code }}
+            </option>
+          {% endfor %}
+        </select>
+        </form>
+    </li>
+    <li class="nav-item">
+      <form class="form-inline my-2 my-lg-0 ml-0 ml-sm-3" action="{% url 'search' %}" method="GET">
+        <div class="input-group input-group-sm">
+          <input type="text" class="form-control" placeholder="{% trans "Search for petition" %}" name="q" value="{{ q }}">
+          <div class="input-group-append">
+            <button type="submit" class="btn btn-outline-secondary">{% trans "Search" %}</button>
+          </div>
         </div>
       </form>
+    </li>
+    </ul>
       {% include 'layouts/nav-useractions.html' %}
     </div>
   </div>
-</header>
-{% endwith %}
+</nav>
+
+{% if petition %}
+  <div class="modal fade" id="report_modal"
+    data-report-success="{% trans "Thank you for your reporting!" %}"
+    data-report-failure="{% trans "Reporting failed, please retry later." %}">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 class="modal-title">{% trans "Report this petition to moderation" %}</h4>
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+
+        <div class="modal-body">
+        {% if moderation_reasons %}
+          {% trans "Why do you want to report this petition?" %}
+            <select id="reason_selector" class="custom-select">
+            {% for reason in moderation_reasons %}
+              {% if reason.visible %}
+                <option value="{% url "report_petition" petition.id reason.id %}">{{ reason.text }}</option>
+              {% endif %}
+            {% endfor %}
+            </select>
+        {% else %}
+            <!-- this is a Hack to keep the JS code simple !-->
+            <select id="reason_selector" class="d-none">
+                <option value="{%  url "report_petition" petition.id %}"></option>
+            </select>
+            {% trans "You are about to report this petition to moderation." %}
+        {% endif %}
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" data-action="petition-report" data-dismiss="modal">{% trans "Report" %}</button>
+          <button type="button" class="btn btn-info" data-dismiss="modal">{% trans "Cancel" %}</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

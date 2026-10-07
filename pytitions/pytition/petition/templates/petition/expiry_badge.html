@@ -1,4 +1,0 @@
-{% load i18n %}{% load fp_dashboard %}{% comment %}
-  "Expires in N days" badge, only when Petition.expires_at is 30 days away or less.
-  {% include "petition/expiry_badge.html" with petition=petition %}
-{% endcomment %}{% if petition.expires_at and petition.expires_at|fp_expires_soon %}{% with days=petition.expires_at|fp_days_left %}<span class="fp-badge fp-badge-warning">{% if days <= 0 %}{% trans "Expires today" %}{% else %}{% blocktrans trimmed count days=days %}Expires in {{ days }} day{% plural %}Expires in {{ days }} days{% endblocktrans %}{% endif %}</span>{% endwith %}{% endif %}

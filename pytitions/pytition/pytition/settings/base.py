@@ -188,7 +188,37 @@ TINYMCE_DEFAULT_CONFIG = {
     'automatic_uploads': True,
     'images_upload_url': '/petition/image_upload',
     'image_upload_credentials': True,
-    # images_upload_handler and setup: see the framapetitions S13 block below
+    'images_upload_handler': """function(blobInfo, success, failure) {
+        let xhr = new XMLHttpRequest();
+        xhr.open('POST', get_image_upload_url());
+        xhr.setRequestHeader('X-CSRFTOKEN', get_csrf_token()); // manually set header
+
+        xhr.onload = function() {
+            if (xhr.status !== 200) {
+                failure('HTTP Error: ' + xhr.status);
+                return;
+            }
+
+            let json = JSON.parse(xhr.responseText);
+
+            if (!json || typeof json.location !== 'string') {
+                failure('Invalid JSON: ' + xhr.responseText);
+                return;
+            }
+
+            success(json.location);
+        };
+
+        let formData = new FormData();
+        formData.append('file', blobInfo.blob(), blobInfo.filename());
+
+        xhr.send(formData);
+        }
+    """,
+    'setup': """function(ed) {
+       ed.on('change', function(e) {
+            set_mce_changed(ed);
+       });}""",
 }
 TINYMCE_INCLUDE_JQUERY = True
 
@@ -270,7 +300,7 @@ SIGNATURES_TOTAL_STRONG = 100000 # if a user or an organization has more than 10
 SIGNATURES_TOTAL_AVERAGE = 10000 # if a user or an organization has more than 10000 signatures in all their petitions, they are monitored with an average priority.
 SIGNATURES_TOTAL_LOW = 1000 # if a user or an organization has more than 1000 signatures in all their petitions, they are monitored with a low priority.
 
-MODERATION_EMAIL = os.environ.get("ADMIN_MODERATION_EMAIL", "root@localhost") # moderation email (framapetitions: GD-02)
+MODERATION_EMAIL = "admin@test.fr" # moderation email
 
 REASONS = {
     "owner_petition_number": gettext_lazy("This owner has created too many petitions in one day."),
@@ -330,150 +360,3 @@ MAINTENANCE_MODE_STATE_FILE_PATH = os.path.join(BASE_DIR, 'maintenance_mode_stat
 # The +33 prefix for France is therefore optional, but it might be mandatory to add a prefix for 
 # other countries. This does not change anything for translations.
 PHONENUMBER_DEFAULT_REGION = "FR"
-
-
-# --- framapetitions: scalability ---
-# (settings di questo filone)
-# framapetitions: BE-02
-#:| Number of trusted reverse proxies in front of Pytition that append the client address
-#:| to the ``X-Forwarded-For`` header.
-#:| With ``0`` (default) the header is ignored and ``REMOTE_ADDR`` is used, which is the right
-#:| value when nginx talks to uwsgi directly (``uwsgi_pass``). Set it to ``1`` if a single proxy
-#:| sets ``X-Forwarded-For`` (e.g. nginx with ``proxy_pass``), ``2`` if there is also a CDN, etc.
-PYTITION_TRUSTED_PROXY_COUNT = 0
-# framapetitions: BE-01
-#:| Secret key used to pseudonymise the IP address of signers (HMAC-SHA256, used by the
-#:| per-IP signature throttle). Read from the ``SIGNATURE_IP_HMAC_KEY`` environment variable;
-#:| when empty, ``SECRET_KEY`` is used. Never store it in the database.
-#:| Changing it only resets the throttle counters (at most ``SIGNATURE_THROTTLE_TIMING``).
-SIGNATURE_IP_HMAC_KEY = os.environ.get("SIGNATURE_IP_HMAC_KEY", "")
-# framapetitions: BE-07
-#:| Number of seconds during which the number of signatures displayed on petition pages
-#:| and lists is cached. ``0`` disables the cache (exact number, one COUNT per display).
-SIGNATURE_COUNT_CACHE_TTL = 30
-# framapetitions: BE-09
-#:| Lifetime in seconds of the database connections (Django ``CONN_MAX_AGE``), read from the
-#:| ``DATABASE_CONN_MAX_AGE`` environment variable. ``0`` (default, unchanged behaviour) opens
-#:| a new connection for each request; ``60`` is recommended with uwsgi (see :doc:`scaling`).
-#:| Keep ``0`` behind PgBouncer in transaction mode.
-#:| It is applied to the Docker image database; with your own ``DATABASES`` in ``config.py``,
-#:| add ``'CONN_MAX_AGE': DATABASE_CONN_MAX_AGE`` and ``'CONN_HEALTH_CHECKS': True`` to it.
-DATABASE_CONN_MAX_AGE = int(os.environ.get("DATABASE_CONN_MAX_AGE", "0"))
-if os.environ.get('USE_POSTGRESQL'):
-    DATABASES['default'].update(CONN_MAX_AGE=DATABASE_CONN_MAX_AGE, CONN_HEALTH_CHECKS=True)
-# framapetitions: BE-15
-#:| Number of seconds during which the sanitized HTML of petition texts is kept in the cache,
-#:| keyed by a hash of the text (an edited text is never served stale). ``0`` disables it.
-SANITIZE_HTML_CACHE_TTL = 24 * 60 * 60
-
-# framapetitions: S13/GD-15 - security headers and cookies
-def _env_bool(name, default):
-    value = os.environ.get(name, '').strip().lower()
-    if not value:
-        return default
-    return value in ('1', 'true', 'yes', 'on')
-
-#:| ``True`` (default) when Pytition is served over HTTPS: cookies get the ``Secure`` flag and
-#:| HSTS is sent. Set the ``PYTITION_HTTPS`` environment variable to ``0`` only for a local
-#:| development server over plain http. Each value below can also be set on its own.
-PYTITION_HTTPS = _env_bool('PYTITION_HTTPS', True)
-SESSION_COOKIE_SECURE = _env_bool('SESSION_COOKIE_SECURE', PYTITION_HTTPS)
-CSRF_COOKIE_SECURE = _env_bool('CSRF_COOKIE_SECURE', PYTITION_HTTPS)
-LANGUAGE_COOKIE_SECURE = _env_bool('LANGUAGE_COOKIE_SECURE', PYTITION_HTTPS)
-SESSION_COOKIE_HTTPONLY = True
-# The CSRF token is read from the form field, never from the cookie
-CSRF_COOKIE_HTTPONLY = True
-LANGUAGE_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = os.environ.get('SESSION_COOKIE_SAMESITE', 'Lax')
-CSRF_COOKIE_SAMESITE = os.environ.get('CSRF_COOKIE_SAMESITE', 'Lax')
-LANGUAGE_COOKIE_SAMESITE = 'Lax'
-#:| HSTS, only sent on HTTPS requests (behind a proxy, Django must see them as secure:
-#:| ``uwsgi_param HTTPS on`` or ``SECURE_PROXY_SSL_HEADER``). One year by default.
-SECURE_HSTS_SECONDS = int(os.environ.get('SECURE_HSTS_SECONDS', 31536000 if PYTITION_HTTPS else 0))
-SECURE_HSTS_INCLUDE_SUBDOMAINS = _env_bool('SECURE_HSTS_INCLUDE_SUBDOMAINS', False)
-SECURE_HSTS_PRELOAD = _env_bool('SECURE_HSTS_PRELOAD', False)
-SECURE_REFERRER_POLICY = 'same-origin'
-SECURE_CONTENT_TYPE_NOSNIFF = True
-
-#:| Content-Security-Policy. ``{nonce}`` is replaced by the nonce of each request: inline
-#:| ``<script>`` elements must carry ``nonce="{{ request.csp_nonce }}"``.
-#:| Petition texts may show images, videos and frames from other HTTPS sites, so those
-#:| directives allow ``https:``; scripts only come from this site and the Framasoft menu.
-#:| Set the ``CSP_REPORT_ONLY`` environment variable to ``1`` to report violations in the
-#:| browser console without blocking anything (e.g. while testing a new template or plugin).
-#:| Add ``'report-uri': ['https://...']`` to collect the reports. ``None`` disables the header.
-CSP_REPORT_ONLY = _env_bool('CSP_REPORT_ONLY', False)
-CSP_DIRECTIVES = {
-    'default-src': ["'self'"],
-    'script-src': ["'self'", "{nonce}", "https://framasoft.org"],
-    'style-src': ["'self'", "'unsafe-inline'", "https://framasoft.org"],
-    'img-src': ["'self'", "data:", "blob:", "https:"],
-    'font-src': ["'self'", "data:", "https://framasoft.org"],
-    'connect-src': ["'self'", "https://framasoft.org"],
-    'media-src': ["'self'", "https:"],
-    'frame-src': ["'self'", "https:"],
-    'object-src': ["'none'"],
-    'base-uri': ["'self'"],
-    'form-action': ["'self'"],
-    'frame-ancestors': ["'self'"],
-}
-MIDDLEWARE.insert(MIDDLEWARE.index('django.middleware.security.SecurityMiddleware') + 1,
-                  'petition.csp.ContentSecurityPolicyMiddleware')
-# TinyMCE callbacks are functions of static/js/fp-tinymce.js, referenced by name (no eval)
-TINYMCE_DEFAULT_CONFIG.update({
-    'images_upload_handler': 'fpTinymceUploadImage',
-    'setup': 'fpTinymceSetup',
-})
-TINYMCE_EXTRA_MEDIA = {'js': ['js/fp-tinymce.js']}
-
-
-
-
-
-# --- framapetitions: gdpr ---
-# (settings di questo filone)
-# framapetitions: GD-04 — retention in days for purge_personal_data (to be confirmed by Framasoft)
-UNCONFIRMED_SIGNATURE_RETENTION_DAYS = 7
-SIGNATURE_IP_HASH_RETENTION_DAYS = 7  # must stay longer than SIGNATURE_THROTTLE_TIMING (1 day)
-CREATOR_IP_RETENTION_DAYS = 30
-# framapetitions: GD-03 — to be bumped whenever the privacy notice or the consent text changes
-PRIVACY_NOTICE_VERSION = "2026-10"
-# framapetitions: GD-10 — collect the (optional) phone number of signatories.
-# Kept enabled until Framasoft decides; False is recommended (data minimisation, GDPR art. 5.1.c / 25.2).
-SIGNATURE_COLLECT_PHONE = True
-# framapetitions: GD-09 — Akismet (only used when AKISMET_KEY is set). Current behaviour kept until Framasoft decides;
-# recommended: AKISMET_SEND_EMAIL = False (the creator's email is optional for Akismet), AKISMET_IS_TEST = False in production.
-AKISMET_IS_TEST = True
-AKISMET_SEND_EMAIL = True
-# framapetitions: GD-08 — audit log of signature exports (IDs and counters only, no personal data)
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "handlers": {"console": {"class": "logging.StreamHandler"}},
-    "loggers": {"petition.audit": {"handlers": ["console"], "level": "INFO", "propagate": False}},
-}
-# framapetitions: EXP — petition expiry. ``Petition.expires_at`` is the day the petition, its signatures and
-# related data are permanently deleted (by ``purge_personal_data``). It defaults to the creation day plus
-# PETITION_DEFAULT_LIFETIME_DAYS. Whenever the date is set (creation or later change), it must be between
-# tomorrow and that day plus PETITION_MAX_LIFETIME_DAYS: the creator can extend it at any time.
-PETITION_DEFAULT_LIFETIME_DAYS = 365
-PETITION_MAX_LIFETIME_DAYS = 730
-# Reminder emails to the creator, this many days before the deletion date (each one sent once)
-PETITION_EXPIRY_REMINDER_DAYS = [30, 20, 10]
-# Rows updated or deleted per statement by purge_personal_data (short transactions, no long locks)
-PURGE_BATCH_SIZE = 10000
-# Absolute base URL used in emails sent by commands, which have no request (e.g. "https://framapetitions.org").
-# When empty, no expiry reminder is sent and expired petitions are NOT deleted.
-SITE_BASE_URL = os.environ.get("SITE_BASE_URL", "")
-
-
-
-
-
-# --- framapetitions: ux ---
-# (settings di questo filone)
-# framapetitions: FE-08 - one moderation report per (petition, client IP) during this delay, in seconds
-REPORT_THROTTLE_TIMING = 60 * 60
-
-
-

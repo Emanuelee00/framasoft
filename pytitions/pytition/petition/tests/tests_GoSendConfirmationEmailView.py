@@ -29,7 +29,6 @@ class GoSendConfirmationEmailViewTest(TestCase):
             'last_name': 'John',
             'email': 'alan@john.org',
             'subscribed_to_mailinglist': False,
-            'consent': 'on',
         }
         petition = Petition.objects.filter(published=True).first()
         response = self.client.post(reverse('create_signature', args=[petition.id]), data, follow=True)
@@ -46,7 +45,6 @@ class GoSendConfirmationEmailViewTest(TestCase):
             'last_name': 'John',
             'email': 'alan@john.org',
             'subscribed_to_mailinglist': False,
-            'consent': 'on',
         }
         app_label = Signature._meta.app_label
         petition = Petition.objects.filter(published=True).first()
@@ -55,14 +53,3 @@ class GoSendConfirmationEmailViewTest(TestCase):
         signature = Signature.objects.filter(petition=petition).first()
         response = self.client.get(reverse('resend_confirmation_email', args=[signature.id]), follow=True)
         self.assertRedirects(response, reverse('admin:{}_signature_change'.format(app_label), args=[signature.id]))
-
-    def test_GoSendConfirmationEmailViewRequiresStaff(self):
-        from django.core import mail
-        petition = Petition.objects.filter(published=True).first()
-        signature = Signature.objects.create(first_name='Alan', last_name='John', email='alan@john.org',
-                                             petition=petition)
-        mail.outbox = []
-        self.login('julia')
-        response = self.client.get(reverse('resend_confirmation_email', args=[signature.id]))
-        self.assertEqual(response.status_code, 403)
-        self.assertEqual(len(mail.outbox), 0)

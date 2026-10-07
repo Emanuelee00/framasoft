@@ -19,10 +19,9 @@ Four types of monitoring are defined:
 def check_signature_number(petition):
     moderation_reason, created = ModerationReason.objects.get_or_create(msg="signature_number")
     monitoring_reason, created = MonitoringReason.objects.get_or_create(msg="signature_number")
-    signature_number = petition.get_signature_number()  # counted once
 
     # check if the number of signatures requires critical monitoring
-    if signature_number > settings.SIGNATURE_NUMBER_CRITICAL and settings.SIGNATURE_NUMBER_CRITICAL > 0:
+    if petition.get_signature_number() > settings.SIGNATURE_NUMBER_CRITICAL and settings.SIGNATURE_NUMBER_CRITICAL > 0:
         if petition.moderated:
             pass
         else:
@@ -42,7 +41,7 @@ def check_signature_number(petition):
         return True
 
     # check if the number of signatures requires strong monitoring
-    elif signature_number > settings.SIGNATURE_NUMBER_STRONG and settings.SIGNATURE_NUMBER_STRONG > 0:
+    elif petition.get_signature_number() > settings.SIGNATURE_NUMBER_STRONG and settings.SIGNATURE_NUMBER_STRONG > 0:
         if petition.moderated or (petition.monitored and petition.monitoring.last().priority == "strong"):
             pass
         else:
@@ -61,7 +60,7 @@ def check_signature_number(petition):
         return False
 
     # check if the number of signatures requires average monitoring
-    elif signature_number > settings.SIGNATURE_NUMBER_AVERAGE and settings.SIGNATURE_NUMBER_AVERAGE > 0:
+    elif petition.get_signature_number() > settings.SIGNATURE_NUMBER_AVERAGE and settings.SIGNATURE_NUMBER_AVERAGE > 0:
         if (petition.monitored and (petition.monitoring.last().priority == "strong" or petition.monitoring.last().priority == "average")) or petition.moderated:
                 return False
         else:
@@ -70,7 +69,7 @@ def check_signature_number(petition):
             return False
 
     # check if the number of signatures requires low monitoring
-    elif signature_number > settings.SIGNATURE_NUMBER_LOW and settings.SIGNATURE_NUMBER_LOW > 0:
+    elif petition.get_signature_number() > settings.SIGNATURE_NUMBER_LOW and settings.SIGNATURE_NUMBER_LOW > 0:
         if petition.monitored or petition.moderated:
                 return False
         else:
@@ -93,10 +92,9 @@ def check_signature_variation(petition, interval):
         number_to_compare =  petition.get_week_signature_number()
     else: 
         return
-    day_signature_number = petition.get_day_signature_number()  # counted once
 
     # check if the variation requires critical monitoring
-    if day_signature_number > settings.SIGNATURE_VARIATION_CRITICAL*number_to_compare and number_to_compare != 0 and settings.SIGNATURE_VARIATION_CRITICAL > 0:
+    if petition.get_day_signature_number() > settings.SIGNATURE_VARIATION_CRITICAL*number_to_compare and number_to_compare != 0 and settings.SIGNATURE_VARIATION_CRITICAL > 0:
         if petition.moderated:
             pass
         else:
@@ -115,7 +113,7 @@ def check_signature_variation(petition, interval):
         return True
 
     # check if the variation requires strong monitoring
-    elif day_signature_number > settings.SIGNATURE_VARIATION_STRONG*number_to_compare and number_to_compare != 0 and settings.SIGNATURE_VARIATION_STRONG > 0:
+    elif petition.get_day_signature_number() > settings.SIGNATURE_VARIATION_STRONG*number_to_compare and number_to_compare != 0 and settings.SIGNATURE_VARIATION_STRONG > 0:
         if petition.moderated or (petition.monitored and petition.monitoring.last().priority == "strong"):
             pass
         else:
@@ -134,7 +132,7 @@ def check_signature_variation(petition, interval):
         return False
 
     # check if the variation requires average monitoring
-    elif day_signature_number > settings.SIGNATURE_VARIATION_AVERAGE*number_to_compare and number_to_compare != 0 and settings.SIGNATURE_VARIATION_AVERAGE > 0:
+    elif petition.get_day_signature_number() > settings.SIGNATURE_VARIATION_AVERAGE*number_to_compare and number_to_compare != 0 and settings.SIGNATURE_VARIATION_AVERAGE > 0:
         if (petition.monitored and (petition.monitoring.last().priority == "strong" or petition.monitoring.last().priority == "average")) or petition.moderated:
                 return False
         else:
@@ -143,7 +141,7 @@ def check_signature_variation(petition, interval):
             return False
     
     # check if the variation requires low monitoring
-    elif day_signature_number > settings.SIGNATURE_VARIATION_LOW*number_to_compare and number_to_compare != 0 and settings.SIGNATURE_VARIATION_LOW > 0:
+    elif petition.get_day_signature_number() > settings.SIGNATURE_VARIATION_LOW*number_to_compare and number_to_compare != 0 and settings.SIGNATURE_VARIATION_LOW > 0:
         if petition.monitored or petition.moderated:
                 return False
         else:
@@ -229,10 +227,9 @@ def check_unconfirmed_signatures(petition):
 def check_creation_signatures(petition):
     moderation_reason, created = ModerationReason.objects.get_or_create(msg="signature_creation")
     monitoring_reason, created = MonitoringReason.objects.get_or_create(msg="signature_creation")
-    creation_signature_number = petition.get_creation_signature_number()  # counted once
 
     # check if the number of signatures 24h after creation requires critical monitoring (=automatic moderation)
-    if creation_signature_number > settings.CREATION_NUMBER_CRITICAL and settings.CREATION_NUMBER_CRITICAL > 0:
+    if petition.get_creation_signature_number() > settings.CREATION_NUMBER_CRITICAL and settings.CREATION_NUMBER_CRITICAL > 0:
         if petition.moderated:
             pass
         else:
@@ -252,7 +249,7 @@ def check_creation_signatures(petition):
         return True
 
     # check if the number of signatures 24h after creation requires strong monitoring
-    elif creation_signature_number > settings.CREATION_NUMBER_STRONG and settings.CREATION_NUMBER_STRONG > 0:
+    elif petition.get_creation_signature_number() > settings.CREATION_NUMBER_STRONG and settings.CREATION_NUMBER_STRONG > 0:
         if petition.moderated or (petition.monitored and petition.monitoring.last().priority == "strong"):
             pass
         else:
@@ -271,7 +268,7 @@ def check_creation_signatures(petition):
         return False
 
     # check if the number of signatures 24h after creation requires average monitoring
-    elif creation_signature_number > settings.CREATION_NUMBER_AVERAGE and settings.CREATION_NUMBER_AVERAGE > 0:
+    elif petition.get_creation_signature_number() > settings.CREATION_NUMBER_AVERAGE and settings.CREATION_NUMBER_AVERAGE > 0:
         # average monitoring doesn't replace strong monitoring
         if (petition.monitored and (petition.monitoring.last().priority == "strong" or petition.monitoring.last().priority == "average")) or petition.moderated:
                 return False
@@ -281,7 +278,7 @@ def check_creation_signatures(petition):
             return False
 
     # check if the number of signatures 24h after creation requires low monitoring
-    elif creation_signature_number > settings.CREATION_NUMBER_LOW and settings.CREATION_NUMBER_LOW > 0:
+    elif petition.get_creation_signature_number() > settings.CREATION_NUMBER_LOW and settings.CREATION_NUMBER_LOW > 0:
         # low monitoring doesn't replace strong or average monitoring
         if petition.monitored or petition.moderated:
                 return False

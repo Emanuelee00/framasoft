@@ -1,8 +1,5 @@
 {% extends 'petition/user_base.html' %}
-{% load i18n %}
-
-{% block title %}{% trans "Bin" %}{% endblock title %}
 
 {% block content %}
-  {% include "petition/bin_list.html" with petitions_bin=petitions_bin.all %}
+  {% include "petition/bin_list.html" with petitions=petitions.all petitions_bin=petitions_bin.all title=_("Your deleted petitions") search=False %}
 {% endblock %}
