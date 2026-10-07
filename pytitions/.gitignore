@@ -106,3 +106,8 @@ my-venv/
 # mypy
 .mypy_cache/
 
+
+# Local development settings (contains a secret key)
+pytition/pytition/settings/local.py
+
+.make-install-stamp

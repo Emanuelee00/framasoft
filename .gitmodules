@@ -1,0 +1,4 @@
+[submodule "gatling-tests"]
+	path = gatling-tests
+	url = https://github.com/Emanuelee00/Gatling-Performance-Test-starter.git
+	branch = emanuele

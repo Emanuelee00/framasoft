@@ -37,9 +37,49 @@
 
 See [dev/CONTRIBUTE.md](dev/CONTRIBUTE.md)
 
+### Running it locally with `make`
+
+Dependencies are managed with [uv](https://docs.astral.sh/uv/) (`pyproject.toml` + `uv.lock`).
+There are two ways to run the project:
+
+* **Without upgrading** (default): the first `make run` installs the **exact versions of `pdm.lock`** (Django 4.2.13 and so on).
+* **Upgraded**: `make upgrade` moves everything to the latest compatible versions (Django 5.2.x).
+
+Run these from the `pytitions/` folder:
+
+| Command | What it does |
+|---|---|
+| `make run` | Starts the PostgreSQL container and the Django dev server on http://127.0.0.1:8000. The first time it also does the initial setup, with the exact `pdm.lock` versions. |
+| `make migrate` | Applies new database migrations. **Run it after every `git pull` or upgrade** that adds a migration: `make run` does not do it by itself. |
+| `make upgrade` | Upgrades all dependencies to the latest compatible versions (Django 5.2.x). Asks for confirmation first, removes the exact `pdm.lock` pins from `pyproject.toml` and appends only the changed packages to [`upgraded.md`](upgraded.md). |
+
+Notes:
+
+* The first-time setup runs only once: the file `.make-install-stamp` marks it as done
+  (it is not committed to git, so every new clone does it again). `make migrate` does
+  not create or change that file.
+* Before `make upgrade`, commit `uv.lock` and `pyproject.toml`: that is what lets you go back. The command
+  prints the exact rollback line, and the same line is saved in `upgraded.md`:
+  `git checkout <commit> -- uv.lock pyproject.toml && uv sync --all-groups --no-install-package uwsgi`.
+* After an upgrade, run the tests: `cd pytition && python manage.py test`.
+* `fixed.md` lists the fixes made for the Django 5.2 upgrade, with before/after code.
+
+## Load testing (`gatling-tests/`)
+
+
+`gatling-tests/` is a git **submodule**, not a regular folder — cloning this
+repo normally leaves it empty. To get its contents:
+
+```bash
+git clone --recurse-submodules <this-repo-url>
+# or, if you already cloned without that flag:
+git submodule update --init
+```
+
 ## Documentation (Installing in production, configuration, update etc)
 
 See https://pytition.readthedocs.io
+
 
 ## Included dependencies
 
@@ -54,8 +94,8 @@ Those are external projects that are needed and used by Pytition, but included i
 
 ## Dependencies
 
-* Python 3.8 up to 3.11
-* Django 4.2.x
+* Python 3.10 or newer (tested on 3.11 and 3.13)
+* Django 4.2.x (default, pinned by `pdm.lock`) or 5.2.x (after `make upgrade`)
 * django-tinymce 3.5.0
 * django-colorfield 0.8.0
 * requests 2.20.x

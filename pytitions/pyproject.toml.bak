@@ -6,27 +6,27 @@ authors = [
     {name = "Yann Sionneau", email = "yann@sionneau.net"},
 ]
 dependencies = [
-    "Django>=4.2,<5.3",
-    "django-colorfield",
-    "django-tinymce",
-    "django-mailer",
+    "Django~=4.2.0",
+    "django-colorfield==0.10.1",
+    "django-tinymce==3.6.1",
+    "django-mailer==2.3",
     "django-maintenance-mode",
-    "django-phonenumber-field[phonenumbers]",
-    "requests",
-    "django-widget-tweaks",
-    "beautifulsoup4",
-    "django-formtools",
+    "django-phonenumber-field[phonenumbers]==6.3.0",
+    "requests~=2.0",
+    "django-widget-tweaks==1.4.3",
+    "beautifulsoup4~=4.6.3",
+    "django-formtools==2.2",
     "bcrypt",
     "lxml[html_clean]",
     "uwsgi",
-    "jinja2",
-    "psycopg[binary]>=3.1.19",
+    "jinja2<3.1",
+    "psycopg[binary]==3.1.19",
     "matplotlib>=3.7.5",
     "python-akismet>=0.4.3",
     "alt-profanity-check>=1.3.2",
-    "setuptools>=75.3.2,<81",
+    "setuptools>=75.3.2",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.8"
 readme = "README.md"
 license = {text = "BSD 3-Clause"}
 
@@ -40,6 +40,3 @@ test = [
     "sphinx",
     "sphinx-rtd-theme"
 ]
-
-[dependency-groups]
-test = ["coverage==4.5.2", "sphinx", "sphinx-rtd-theme"]
