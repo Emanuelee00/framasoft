@@ -69,8 +69,7 @@ with `manage.py runserver` as `make run` does, against a fresh database. It has 
    `1024 worker_connections are not enough, reusing connections`, and `nginx-uwsgi/nginx.conf`
    sets `worker_processes 1` and `worker_connections 1024`. Each proxied request uses two
    connections (client and uWSGI), so about 500 simultaneous requests fill nginx.
-   Raising those two values and repeating the test has **not been done yet**, so this is the most
-   likely cause but is not proven.
+   Raising those two values changes the picture, see the second series below.
 4. **32 workers with backlog 100 is an outlier**: more OK responses (5851) but very slow
    (p50 16 s, p95 55 s, 4.6% timeouts). Not a configuration to use.
 5. **Burst of 1000 users in 1 s**: the new stack answers 506 requests in at most 4.8 s and closes the
@@ -78,9 +77,40 @@ with `manage.py runserver` as `make run` does, against a fresh database. It has 
    and 63 connections time out after 10 s. At 30000 users in 30 s the development server serves 345
    requests (1.1%; 29350 connection timeouts), the new stack 1463 to 5851 (4.9% to 19.5%).
 
+## Second series: nginx limits raised
+
+The first series suggested that nginx (`worker_processes 1`, `worker_connections 1024`) was the
+limit. The same test was repeated (backlog 1024, `UWSGI_CHEAPER=0`, 30000 users in 30 s) with
+`worker_processes auto` (4 on this machine) and `worker_connections 8192` in `nginx-uwsgi/nginx.conf`.
+"Before" is the backlog 1024 row of the first series.
+
+| Workers | OK before | OK after | OK % after | p50 before / after (s) | p95 before / after (s) | HTTP 502 after | closed before response after |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 1946 | 3144 | 10.5% | 9.5 / 31.4 | 11.8 / 48.3 | 89.5% | 0.0% |
+| 2 | 2724 | 3917 | 13.1% | 6.0 / 23.0 | 7.7 / 46.4 | 86.0% | 0.9% |
+| 4 | 3365 | 3157 | 10.5% | 4.4 / 18.1 | 8.0 / 20.3 | 76.6% | 12.9% |
+| 8 | 3136 | 3858 | 12.9% | 4.5 / 16.5 | 7.6 / 32.0 | 64.2% | 23.0% |
+| 16 | 3640 | 4217 | 14.1% | 4.5 / 14.2 | 5.2 / 24.3 | 66.4% | 19.5% |
+| 32 | 3284 | 5348 | 17.8% | 4.7 / 21.4 | 6.3 / 36.2 | 63.8% | 18.4% |
+
+What changed:
+
+- More requests succeed in 5 of 6 cases (for example 32 workers: 3284 to 5348; 1 worker: 1946 to 3144);
+  with 4 workers it is the same within noise (3365 to 3157). The success rate stays between 10% and 18%.
+- The failures changed kind: connections closed by nginx are replaced by **HTTP 502** answers
+  (64% to 90% of the requests). nginx now accepts every connection, and the 502 are most likely
+  uWSGI's queue (backlog 1024) being full; this was not checked in the nginx log.
+- The latency of the successful requests is much higher (p50 14 s to 31 s, before 4 s to 10 s),
+  because accepted requests wait a long time for a free worker.
+
+So raising the nginx limits moves the bottleneck to uWSGI (workers and queue) but, on this machine, does
+not make the stack serve many more requests. It was **not** committed to the branch: the limits
+are the original ones. To repeat the series, set the two values above and rebuild
+(`make run-prod` does it with `--build`).
+
 ## Limits of this benchmark
 
-- One run per configuration: no repetitions, no measure of variance. Differences of a few
+- One run per configuration (30 runs in total, no repetitions): no repetitions, no measure of variance. Differences of a few
   hundred requests between neighbouring rows may be noise.
 - Gatling and the server share 4 cores and the network stack of one machine. Port 8000 is
   published through rootless podman's port forwarding, which can also be a limit (not measured).
