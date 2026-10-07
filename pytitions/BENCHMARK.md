@@ -189,6 +189,52 @@ branches, so the images and the uWSGI settings are the same. The application cod
   These tests cannot show its effect, neither for better nor for worse.
 - The `runserver` run with 30000 users (345 vs 142 successful requests) has a large relative
   difference, but on very small numbers from a server that is saturated; it is not a reliable result.
-- To measure the changes of the other branch a Gatling simulation that signs petitions is needed
-  (a POST to `/petition/<id>/sign` with a valid form and, if enabled, the anti-spam checks).
-  There is none in `Gatling-Performance-Test-starter` and it was **not** done.
+- The signature code is measured in the next section.
+
+## Signing petitions (POST): comparison of the two branches
+
+The home-page tests above cannot show the effect of the changes in `modernized_plus_minimalist`,
+because they are in the code that creates a signature. This series tests that code.
+
+**Test.** New Gatling simulation `example.Sign` (file `src/test/scala/example/Sign.scala` of
+`Gatling-Performance-Test-starter`). Each virtual user loads a petition page (to get the CSRF
+token) and then POSTs the signature form to `/petition/<id>/sign`; success is the 302 answer.
+Users arrive at a constant rate for 30 s, on 3 sample petitions (`gen_pet`).
+
+- Stack: nginx + uWSGI with 8 workers, `UWSGI_CHEAPER=0`, backlog 1024, nginx limits unchanged;
+  fresh database and sample data for every run.
+- Every user sends its own `X-Forwarded-For`, so the per-IP signature limit (5 in this branch,
+  disabled in the other) does not influence the result.
+- E-mails are dropped (`dummy` backend, settings file outside the repositories): in the stack
+  the SMTP backend points to `localhost:25`, which does not exist in the container, and the
+  signature request would end with HTTP 500 after saving the signature.
+- "Signatures saved" is the number of rows in the database after the run.
+
+| Offered load | Signatures saved: emanuele | colleague | Sign p50 (s): emanuele / colleague | Sign p95 (s): emanuele / colleague | users that failed before signing: emanuele / colleague |
+|---|---:|---:|---:|---:|---:|
+| 10/s (300 users) | 300 | 300 | 1.1 / 0.04 | 2.4 / 0.35 | 0 / 0 |
+| 25/s (750 users) | 749 | 750 | 16.8 / 0.03 | 23.5 / 0.39 | 1 / 0 |
+| 50/s (1500 users) | 754 | 1500 | 20.4 / 0.74 | 24.0 / 3.9 | 732 / 0 |
+| 100/s (3000 users) | 740 | 1563 | 17.6 / 4.9 | 32.0 / 6.5 | 2158 / 1264 |
+| 200/s (6000 users) | 719 | 1263 | 20.1 / 5.3 | 23.5 / 8.2 | 5020 / 4146 |
+
+What the numbers show:
+
+- **At low load the signature request is about 29 times faster** in the other branch:
+  p50 of 1.10 s against 0.04 s at 10 signatures/s, where nothing is queued. The signature stored by
+  this branch carries a `bcrypt_sha256` hash of the IP (`make_password`, checked by hand), which is slow by
+  design; the other branch uses HMAC-SHA256. The size of the difference matches this explanation,
+  but the time spent in the hash was not measured separately.
+- **Capacity is about twice as high.** This branch saves about 720 to 750 signatures per run
+  from 25/s up, however high the load; the other one saves 1500 at 50/s and 1563 at 100/s.
+  Above those loads both queue up and the latency of the signature goes to several seconds,
+  and users start to fail already when loading the petition page.
+- At 200/s both are overloaded (719 and 1263 signatures saved out of 6000 users).
+- The change of `petition.save()` into a conditional `UPDATE` was not measured separately from the
+  hash, so this test cannot tell how much each change contributes.
+
+Limits: one run per point; Gatling runs on the same 4-core machine; only 8 workers were tried;
+e-mail sending is not included, so a real instance is slower than these numbers.
+
+To repeat it, create the sample data (`gen_orga`, `gen_user`, `join_org`, `gen_pet -n 3`) and run
+`mvn gatling:test -Dgatling.simulationClass=example.Sign -Drate=50 -Dseconds=30`.
