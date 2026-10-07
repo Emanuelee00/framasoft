@@ -296,7 +296,7 @@ def create_signature(request, petition_id):
             petition=petition,
             ipaddress=ipaddr,
             date__gt=since)
-
+            
         # If there are too many signatures from the same IP address, an error message and an email to moderation are sent
         if signatures.count() > settings.SIGNATURE_THROTTLE:
             signature = form.save()
