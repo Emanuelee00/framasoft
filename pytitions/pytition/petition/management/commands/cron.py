@@ -7,20 +7,9 @@ class Command(BaseCommand):
     help = "launch cron script for bot signatures tests"
 
     def handle(self, *args, **options):
-        petitions_cron = Petition.objects.filter(cron_to_schedule = True)
-
-        if petitions_cron:
-            for petition in petitions_cron:
-              
-                check_signature_number(petition)
-                    
-                check_signature_variation(petition, "yesterday")
-                 
-                check_signature_variation(petition, "last week")
-
-                check_unconfirmed_signatures(petition)
-                    
-                check_creation_signatures(petition)
-
-        else:
-            pass
+        for petition in Petition.objects.filter(cron_to_schedule=True):
+            check_signature_number(petition)
+            check_signature_variation(petition, "yesterday")
+            check_signature_variation(petition, "last week")
+            check_unconfirmed_signatures(petition)
+            check_creation_signatures(petition)
