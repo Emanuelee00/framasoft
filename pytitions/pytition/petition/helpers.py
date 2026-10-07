@@ -75,9 +75,6 @@ def check_user_in_orga(user, orga):
     return None
 
 
-
-
-
 # Return a 404 if a petition does not exist
 def petition_from_id(id):
     from .models import Petition

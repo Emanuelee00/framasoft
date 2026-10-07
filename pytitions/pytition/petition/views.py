@@ -59,8 +59,6 @@ from .spam_management.anti_bot_tests.check_signature_number import check_signatu
 from .spam_management.anti_bot_tests.check_petition_number import check_petition_number_day, check_mon_petition_number, check_user_signature_number
 from .spam_management.detector import is_spam
 
-
-
 #------------------------------------ Views -----------------------------------
 
 # Path : /
