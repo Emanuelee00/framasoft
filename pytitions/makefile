@@ -47,4 +47,19 @@ run-prod: stop-db
 upgrade:
 	bash upgrade.sh
 
-.PHONY: run install db migrate stop-db run-prod upgrade
+# Creates sample data in the running `run-prod` stack: the organization RAP, the user
+# julia (password julia123) and 10 petitions. If the database already has petitions it
+# does nothing, because gen_pet always names them "Petition 0", "Petition 1"... and a
+# second run would fail on the duplicated slug. To start from scratch delete the data with:
+#   podman-compose -f docker-compose.yml -f nginx-uwsgi/docker-compose.yml down -v
+# Use `docker` instead of `podman` if you use Docker.
+MANAGE = podman exec pytitions_web_1 python3 pytition/manage.py
+populate:
+	@n=$$($(MANAGE) shell -c "from petition.models import Petition; print(Petition.objects.count())" | tail -1); \
+	if [ "$$n" != "0" ]; then echo "The database already has $$n petitions: nothing to do."; exit 0; fi; \
+	$(MANAGE) gen_orga RAP; \
+	$(MANAGE) gen_user julia julia123 -fn Julia -ln Test; \
+	$(MANAGE) join_org julia RAP; \
+	$(MANAGE) gen_pet --user julia -n 10 && echo "Done: user julia / julia123, 10 petitions."
+
+.PHONY: run install db migrate stop-db run-prod upgrade populate
