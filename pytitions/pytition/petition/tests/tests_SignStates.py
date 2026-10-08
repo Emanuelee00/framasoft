@@ -54,6 +54,12 @@ class SignStatesTest(TestCase):
         self.assertEqual(response.context['sign_state'], 'confirmed')
         self.assertContains(response, 'Thank you for confirming your signature to this petition!')
         self.assertNotContains(response, 'id="show_confirm_success"')
+        self.assertNotIn('sessionid', self.client.cookies)  # confirming creates no session
+
+    def test_cached_sign_fields_never_hold_typed_data(self):
+        response = self.sign(first_name='Mallory', consent='')
+        self.assertContains(response, 'value="Mallory"')
+        self.assertNotContains(self.client.get(self.petition.url), 'Mallory')
 
     @override_settings(SIGNATURE_THROTTLE=0)
     def test_throttled_signature_shows_alert_and_keeps_form(self):

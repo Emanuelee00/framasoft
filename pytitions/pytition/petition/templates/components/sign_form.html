@@ -1,5 +1,5 @@
 {% load i18n %}
-{% load widget_tweaks %}
+{% load cache %}
 <form method="post" action="{% url 'create_signature' petition.id %}" class="fp-sign-form" novalidate>
   {% csrf_token %}
   {% for hidden_field in form.hidden_fields %}{{ hidden_field }}{% endfor %}
@@ -16,32 +16,7 @@
   </div>
   {% endif %}
 
-  {% for field in form.visible_fields %}
-  {% if field.widget_type != "checkbox" %}
-  <div class="fp-field{% if field.errors %} fp-field-invalid{% endif %}">
-    <label class="fp-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
-    {% if field.errors %}
-      {% with error_id=field.auto_id|add:"-error" %}
-      <p id="{{ error_id }}" class="fp-field-error">{% include "components/icon.html" with name="warning" %}<span>{{ field.errors|join:" " }}</span></p>
-      {% render_field field class="fp-input" aria-invalid="true" aria-describedby=error_id %}
-      {% endwith %}
-    {% else %}
-      {% render_field field class="fp-input" %}
-    {% endif %}
-  </div>
-  {% endif %}
-  {% endfor %}
-
-  {% for field in form.visible_fields %}
-  {% if field.widget_type == "checkbox" and field.name != "consent" %}
-  {% include "components/sign_checkbox.html" with described_by="" %}
-  {% endif %}
-  {% endfor %}
-
-  {% if form.consent %}
-  {% include "components/sign_checkbox.html" with field=form.consent described_by="fp-gdpr-notice" %}
-  {% endif %}
-
+{% if form.is_bound %}{% include "components/sign_fields.html" %}{% else %}{% cache 300 fp_sign_fields petition.id petition.last_modification_date petition.owner_name LANGUAGE_CODE form.fields|join:"," %}{% include "components/sign_fields.html" %}{% endcache %}{% endif %}
   {% include "components/gdpr_notice.html" %}
 
   <button type="submit" class="fp-btn fp-btn-primary fp-btn-lg fp-btn-block fp-sign-btn fp-anim-tilt">{% include "components/icon.html" with name="signature" %}{% trans "Sign the petition" %}</button>

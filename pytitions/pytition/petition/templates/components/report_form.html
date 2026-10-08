@@ -1,10 +1,10 @@
-{% load i18n %}
+{% load i18n cache %}
 <form method="post" action="{% url 'report_petition' petition.id %}" class="fp-report-form">
   {% csrf_token %}
-  {% if report_form.reason.field.queryset.exists %}
+  {% cache 300 fp_report_reasons LANGUAGE_CODE report_form|yesno %}{% with radios=report_form.reason.subwidgets %}{% if radios %}
   <fieldset class="fp-fieldset">
     <legend class="fp-legend">{{ report_form.reason.label }}</legend>
-    {% for radio in report_form.reason %}
+    {% for radio in radios %}
     <div class="fp-check">
       {{ radio.tag }}
       <label for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
@@ -13,7 +13,7 @@
   </fieldset>
   {% else %}
   <p>{% trans "You are about to report this petition to moderation." %}</p>
-  {% endif %}
+  {% endif %}{% endwith %}{% endcache %}
   <p class="fp-help">{% trans "The moderation team checks each report against the moderation charter." %}</p>
   <div class="fp-dialog-actions fp-report-actions">
     {% if in_dialog %}

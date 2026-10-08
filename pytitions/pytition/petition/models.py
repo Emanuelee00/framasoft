@@ -418,7 +418,7 @@ class Petition(models.Model):
     @classmethod
     def by_id(cls, id):
         try:
-            return Petition.objects.get(pk=id)
+            return Petition.objects.select_related('org', 'user__user').get(pk=id)
         except Petition.DoesNotExist:
             return None
 

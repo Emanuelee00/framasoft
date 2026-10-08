@@ -1,4 +1,4 @@
-{% load i18n %}{% load static %}{% load petition_extras %}
+{% load i18n cache %}{% load static %}{% load petition_extras %}
 {% comment %}
   Petition card (DS-04). Put it in a list: <ul class="fp-card-grid"><li>{% include ... %}</li></ul>
   {% include "components/petition_card.html" with petition=petition %}
@@ -10,7 +10,7 @@
   {% if petition.twitter_image %}
   <img class="fp-petition-card-img" alt="" width="640" height="360" loading="lazy" decoding="async" src="{{ petition.twitter_image }}">
   {% elif settings.DEFAULT_INDEX_THUMBNAIL == "img/brand/petition-banner-1200.jpg" %}
-  {% include "components/picture.html" with name="petition-banner" widths="800 1600" fallback="1200" width="1200" height="375" sizes="(min-width: 768px) 38rem, 180vw" class="fp-petition-card-art" %}
+  {% cache 3600 fp_card_art %}{% include "components/picture.html" with name="petition-banner" widths="800 1600" fallback="1200" width="1200" height="375" sizes="(min-width: 768px) 38rem, 180vw" class="fp-petition-card-art" %}{% endcache %}
   {% else %}
   <img class="fp-petition-card-img" alt="" width="640" height="360" loading="lazy" decoding="async" src="{% static settings.DEFAULT_INDEX_THUMBNAIL %}">
   {% endif %}

@@ -189,11 +189,7 @@ def hide_sign_form_if_user_just_signed(request, ctx):
         state = next((tag for tag in SIGN_STATES if tag in tags), None)
         if state is None and message.level == messages.SUCCESS:
             state = "pending_email"
-        if state == "pending_email" and request.session.get('just_confirmed', False):
-            state = "confirmed"
         if state:
-            if state == "confirmed":
-                request.session['just_confirmed'] = False
             ctx.update({'sign_state': state})
 
 
@@ -203,7 +199,7 @@ def detail(request, petition_id):
     petition = petition_from_id(petition_id)
     check_petition_is_accessible(request, petition)
     try:
-        pytitionuser = get_session_user(request)
+        pytitionuser = get_session_user(request) if request.user.is_authenticated else None
     except:
         pytitionuser = None
 
@@ -256,14 +252,14 @@ def confirm(request, petition_id, confirmation_hash):
         if Signature.objects.filter(pk=signature.pk, confirmed=False).update(confirmed=True,
                                                                              confirmed_at=timezone.now()):
             # Like Signature.save() on a confirmed signature: other signatures of the same address go away
-            petition.signature_set.filter(email=signature.email).exclude(pk=signature.pk).delete()
+            # confirmed__in lets sig_pet_conf_email_idx serve the lookup
+            petition.signature_set.filter(confirmed__in=(True, False), email=signature.email).exclude(pk=signature.pk).delete()
             # Newsletter subscription only once the signature is confirmed (GD-06)
             if petition.has_newsletter and signature.subscribed_to_mailinglist:
                 subscribe_to_newsletter(petition, signature.email)
                 Signature.objects.filter(pk=signature.pk).update(newsletter_consent_at=timezone.now())
             # Back to the petition, which shows the confirmed state and the share buttons
-            messages.success(request, _("Thank you for confirming your signature!"))
-            request.session['just_confirmed'] = True
+            messages.success(request, _("Thank you for confirming your signature!"), extra_tags="confirmed")
             return redirect(petition.url)
         state = "already_confirmed"
     if state == "already_confirmed":
@@ -285,11 +281,10 @@ class _Echo:
 
 
 def _csv_cell(column, value):
-    text = "" if value is None else str(value)
     # neutralize spreadsheet formulas (phone numbers in E.164 always start with "+")
-    if column != "phone" and text[:1] in ("=", "+", "-", "@", "\t", "\r"):
-        return "'" + text
-    return text
+    if column != "phone" and isinstance(value, str) and value[:1] in ("=", "+", "-", "@", "\t", "\r"):
+        return "'" + value
+    return value  # csv.writer writes None as "" and booleans as True/False
 
 
 # <int:petition_id>/get_csv_signature
@@ -317,9 +312,9 @@ def get_csv_signature(request, petition_id, only_confirmed):
     audit_logger.info("csv_export petition=%s user=%s count=%d", petition.pk, user.pk, signatures.count())
     rows = signatures.order_by('pk').values_list(*attrs).iterator(chunk_size=2000)
     writer = csv.writer(_Echo())
-    response = StreamingHttpResponse(
-        (writer.writerow([_csv_cell(c, v) for c, v in zip(attrs, row)]) for row in itertools.chain([attrs], rows)),
-        content_type='text/csv')
+    lines = (writer.writerow([_csv_cell(c, v) for c, v in zip(attrs, row)]) for row in itertools.chain([attrs], rows))
+    # one chunk per 2000 lines instead of one per line
+    response = StreamingHttpResponse(iter(lambda: "".join(itertools.islice(lines, 2000)), ""), content_type='text/csv')
     response['Content-Disposition'] = 'attachment;filename={}'.format(filename).replace('\r\n', '').replace(' ', '%20')
     return response
 

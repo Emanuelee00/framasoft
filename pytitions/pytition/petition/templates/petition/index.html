@@ -1,6 +1,6 @@
 {% extends 'layouts/layout.html' %}
 {% load static %}
-{% load i18n %}
+{% load i18n cache %}
 
 {% block title %}{% trans "Petitions that respect you" %}{% endblock title %}
 
@@ -19,7 +19,7 @@
 {% endblock extracss %}
 
 {% block main_content %}
-{% if not petitions.has_previous %}
+{% if not petitions.has_previous %}{% cache 3600 fp_home_hero LANGUAGE_CODE user.is_authenticated %}
 <section class="fp-slant fp-hero" aria-labelledby="hero-title">
   {% include "components/picture.html" with name="hero" widths="640 960 1440 1920" fallback="1440" width="1440" height="810" sizes="100vw" class="fp-slant-media" eager=True %}
   <div class="fp-container fp-hero-content">
@@ -105,7 +105,7 @@
     </ol>
   </div>
 </section>
-{% endif %}
+{% endcache %}{% endif %}
 
 <section class="fp-section fp-list-section" id="petitions" aria-labelledby="petitions-title">
   <div class="fp-container">
