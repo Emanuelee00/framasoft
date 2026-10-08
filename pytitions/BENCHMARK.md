@@ -262,7 +262,7 @@ always ran Django 4.2 (it installs `requirements.txt`), so the upgrade had never
 - Load: the `example.Sign` simulation, 10, 50 and 100 signatures/s for 30 s. Every user has its own `X-Forwarded-For`.
 - **3 repetitions** per point, the four setups interleaved inside each block and the order rotated, to keep slow changes of the machine
   from favouring one of them. Tables show mean (minimum-maximum).
-- **36 runs were planned, 35 were done**: the third repetition of "colleague code, Django 5.2" at 100/s was not run (that row has 2 runs).
+- 36 runs (4 setups x 3 loads x 3 repetitions), all done.
 
 ### Functional checks (same on the four setups)
 
@@ -322,7 +322,7 @@ What this shows:
 | emanuele code, Django 4.2 | 3 | 766 (757-773) | 18.93 (17.79-19.92) | 29.93 (28.25-32.99) | 2146 (2127-2170) | 88 (63-116) |
 | colleague code, Django 4.2 | 3 | 1651 (1590-1710) | 5.14 (4.95-5.30) | 5.87 (5.53-6.34) | 1169 (1133-1231) | 180 (157-204) |
 | emanuele code, Django 5.2 | 3 | 778 (772-783) | 18.38 (18.02-18.66) | 27.53 (26.65-28.29) | 2133 (2099-2150) | 90 (67-123) |
-| colleague code, Django 5.2 | 2 | 1616 (1604-1627) | 4.80 (4.79-4.80) | 6.57 (6.34-6.79) | 1184 (1180-1187) | 201 (193-209) |
+| colleague code, Django 5.2 | 3 | 1658 (1604-1742) | 4.77 (4.70-4.80) | 6.23 (5.54-6.79) | 1142 (1058-1187) | 201 (193-209) |
 
 #### Effects (ratio of the means of the repetitions)
 
@@ -338,16 +338,16 @@ What this shows:
 1. **The colleague code is clearly faster, on both Django versions.** At 10 signatures/s the median time of the signature
    goes from 0.34 s to 0.04 s (about 8 times faster; 87% less) and the 95th percentile from about 0.8 s to about 0.17 s. At 50/s ours saves
    about 790 of 1500 signatures and loses about 680 users before they sign, while the colleague code saves all 1500. At 100/s it
-   saves about 1600-1650 signatures against about 770 (a bit more than twice as many). The numbers of the repetitions do not overlap.
+   saves about 1650 signatures against about 770 (a bit more than twice as many). The numbers of the repetitions do not overlap.
 2. **Django 5.2 with the new libraries makes no measurable difference.** The median time of the signature changes by -1% to -14% against Django 4.2,
    but the variation between repetitions is as large (for example the colleague code at 50/s: median from 0.26 s to 2.45 s on 5.2, from 0.48 s to 2.73 s
-   on 4.2), and the number of saved signatures is the same on both (791 and 791; 766 and 778; 1651 and 1616). There is no speed gain
+   on 4.2), and the number of saved signatures is the same on both (791 and 791; 766 and 778; 1651 and 1658). There is no speed gain
    from the upgrade, and no loss.
 3. **The two changes together work and add up as expected**: "colleague code, Django 5.2" has the same behaviour as the other three (functional checks) and
    the speed of "colleague code, Django 4.2" (within noise). The gain comes from the signature code, not from the Django version.
 4. **The colleague code reaches its limit between 50 and 100 signatures/s.** At 50/s it handles everything, but the median
-   already varies a lot between repetitions (0.26 s to 2.7 s); at 100/s it saves about 1600 out of 3000, loses about 1170 users before signing
-   and answers 5 s at the median.
+   already varies a lot between repetitions (0.26 s to 2.7 s); at 100/s it saves about 1600 out of 3000, loses about 1150-1170 users before signing
+   and answers in about 5 s at the median.
 5. **The difference at low load is smaller than in the previous series** (8 times against 29 times at 10/s): the colleague code gives the
    same 0.04 s, but the median of our code is now 0.34 s and it was 1.1 s. Same machine, other day, different images: the cause was not investigated.
    Where the time of the signature goes was not measured separately, so the explanation of the previous section (the slow `bcrypt_sha256` hash
@@ -364,4 +364,4 @@ What this shows:
   triggers in either code, so it does not change the result, but this value must not go to production.
 - Same limits as before: Gatling on the same 4-core machine, 8 workers only, e-mail sending not included (dummy backend), only the signature page.
   The creation of a petition and the use with real e-mail were not measured.
-- One run is missing (see above). The scripts used (stack, load, collection and aggregation) are not in the repository.
+- The scripts used (stack, load, collection and aggregation) are not in the repository.
