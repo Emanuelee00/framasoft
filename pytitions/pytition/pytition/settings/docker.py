@@ -1,3 +1,5 @@
+import os
+
 from .base import *
 
 # Local-only key for the docker-compose/nginx-uwsgi stack. Not for production.
@@ -10,3 +12,9 @@ SECRET_KEY = 'docker-compose-local-only-not-for-production'
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp'
 EMAIL_PORT = 2525
+
+# Load tests send every request from one machine, so the per-IP limit (5 signatures per petition
+# and per day) stops them. Raise it only for benchmarks, e.g. SIGNATURE_THROTTLE=1000000.
+# Do not set PYTITION_TRUSTED_PROXY_COUNT for this: nginx is the first proxy and already passes the
+# client address as REMOTE_ADDR, so trusting X-Forwarded-For would let clients choose their IP.
+SIGNATURE_THROTTLE = int(os.getenv("SIGNATURE_THROTTLE", SIGNATURE_THROTTLE))

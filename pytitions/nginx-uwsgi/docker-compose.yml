@@ -26,3 +26,5 @@ services:
       # size of the uWSGI socket backlog (base image default: 100). Capped by
       # the kernel's net.core.somaxconn
       UWSGI_LISTEN: ${UWSGI_LISTEN:-1024}
+      # per-IP signature limit, raise it only for load tests (see nginx-uwsgi/README.md)
+      SIGNATURE_THROTTLE: ${SIGNATURE_THROTTLE:-5}
