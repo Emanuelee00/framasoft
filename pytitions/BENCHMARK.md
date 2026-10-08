@@ -365,3 +365,146 @@ What this shows:
 - Same limits as before: Gatling on the same 4-core machine, 8 workers only, e-mail sending not included (dummy backend), only the signature page.
   The creation of a petition and the use with real e-mail were not measured.
 - The scripts used (stack, load, collection and aggregation) are not in the repository.
+
+
+## All the branches together: emanuele, colleague and `final` (6 setups)
+
+The branches were merged into `origin/final` (commit `52c10c7`: `modernized_plus_minimalist`, which already contains our uv / Django 5.2
+work, plus the work of Gabriele). The same checks and the same load test were repeated on it, together with the four setups of the
+previous section, so that the six setups are compared in one single series.
+
+### What was compared
+
+| | Django 4.2 | Django 5.2 |
+|---|---|---|
+| emanuele code | 4.2.30, libraries of `requirements.txt` | 5.2.18, libraries of `uv.lock` |
+| colleague code | 4.2.30, libraries of `requirements.txt` | 5.2.18, libraries of `uv.lock` |
+| **`final` branch** | 4.2.30, libraries of `requirements.txt` | 5.2.18, libraries of `uv.lock` |
+
+- `final` is used as it is on GitHub (`origin/final`, 52c10c7). Its signature code is its own: HMAC-SHA256 hash of the IP specific to each petition
+  (`signature_ip_hash`), a conditional `UPDATE` of `cron_to_schedule`, a mandatory consent checkbox, a refusal with HTTP 429 (the signature is not
+  saved) when the per-IP limit is exceeded, and a confirmation in two steps (the link shows a page, a POST confirms).
+- The images of `final` are built from its own tree, because its `nginx-uwsgi/nginx.conf` is different (client IP anonymised in the access log).
+  The libraries of the 5.2 image are the same as before (its `uv.lock` exports to the same list as the one of the previous series).
+- Same method as the previous series: nginx + uWSGI with 8 workers, `UWSGI_CHEAPER=0`, backlog 1024, nginx limits unchanged, fresh containers and
+  database for every run, e-mails dropped, `example.Sign` at 10, 50 and 100 signatures/s for 30 s, **3 repetitions** per point, the six setups
+  interleaved with the order rotated at every block. **54 runs, all done.**
+- Changes needed so that the test is valid on `final` (they are sent to / set for all six setups; the other branches ignore them):
+  - the simulation sends the field `consent=on` (without it the signature form of `final` is invalid and every signature is refused);
+  - `PYTITION_HTTPS=0` in the stack (`final` sets the session and CSRF cookies as `Secure` by default; the stack is plain http on port 8000);
+  - `PYTITION_TRUSTED_PROXY_COUNT = 1` for `final` (see the first finding below): this way the IP used for the limit is the `X-Forwarded-For`
+    that Gatling sends, one different address for every virtual user, as in all the other setups.
+- The series stopped by itself once, at the first run of the last block (the cause was not investigated), and that block, the third repetition at 100/s
+  (6 runs), was run afterwards with the same procedure.
+
+### Functional checks on `final`
+
+| Check | `final`, Django 4.2 | `final`, Django 5.2 |
+|---|---|---|
+| Django version | 4.2.30 | 5.2.18 |
+| Full test suite inside the container | 439 tests, 436 OK, **3 fail** | 439 tests, 436 OK, **3 fail** |
+| `/`, `/petition/`, petition page, `/admin/login/` | 200 | 200 |
+| Sign (POST) | 302 | 302 |
+| Confirmation e-mail received (maildev) | yes | yes |
+| Confirmation link | GET 200 (page), POST 302, signature confirmed | GET 200 (page), POST 302, signature confirmed |
+| Signing again with a confirmed e-mail | 302, same answer as a new signature (on purpose) | 302, same answer as a new signature (on purpose) |
+| IP stored in the signature | 64 hex characters (HMAC-SHA256) | 64 hex characters (HMAC-SHA256) |
+| 8 signatures from the same IP | first 5 accepted (302), then 429, the refused ones are not saved | first 5 accepted (302), then 429, the refused ones are not saved |
+| `manage.py cron` | exit 0 | exit 0 |
+| `/static/admin/css/base.css` | **403** | **403** |
+
+- The 3 failing tests are the French ones (`ConfirmationEmailTest.test_text_version_in_french`, `ExpiryReminderTest.test_french`,
+  `PrivacyNoticeExpiryTest.test_french`), the same on both Django versions. The cause is that the translations are not compiled in the container:
+  the `.mo` files are in `.gitignore` and the image has no `compilemessages` step (and no `gettext`). After installing `gettext` and running
+  `compilemessages` in the container, the 47 tests of the two classes that contain them (`tests_PetitionExpiry`, `tests_ConfirmationEmail`) pass. The rest of the suite was not run again after that.
+  The consequence is that, in this stack, the French texts are most likely shown in English (the page was not checked).
+- The files served by nginx still answer 403 (as in the previous section, on the six setups).
+
+### Findings about `final` and its stack
+
+1. **Behind the nginx of the stack, every visitor has the same IP.** `get_client_ip` of `final` only reads `X-Forwarded-For` when
+   `PYTITION_TRUSTED_PROXY_COUNT` is greater than 0, and the default is 0 (it is not set in `settings/docker.py`). So the IP used by the limit is the
+   address of nginx for everybody. With the default configuration, the first test at 10 signatures/s on `final` (Django 4.2, one run, then stopped)
+   saved **18 signatures out of 300** and refused 282 with 429: after 5 signatures per petition (and per day) nobody can sign any more. The
+   limit works as designed, it is the stack that is not configured. To correct it, `PYTITION_TRUSTED_PROXY_COUNT = 1` must be set for the stack **and**
+   nginx must set the header itself: the `nginx.conf` of the stack contains no line that does it, so the header that arrives is the one sent by the client
+   (it can be forged). The measurements below use the value 1 and the header of Gatling.
+2. **The stack installs Django 4.2 even if the project says 5.2.** `make run-prod` builds from `requirements.txt` (`Django~=4.2.0`). The `pyproject.toml` of `final`
+   has `Django>=4.2,<5.3` but also the 69 exact versions of pdm (`constraint-dependencies`, with `django==4.2.13`), while its `uv.lock` is Django 5.2.18:
+   `uv lock --check` fails and a normal `uv sync` would go back to 4.2.13. The 5.2 setup of this section uses the versions of `uv.lock` as they are
+   (`uv sync --frozen` or `uv export --frozen`).
+3. The translations are not compiled in the image and the static files give 403 (see above).
+
+### Performance: signing (POST), 3 repetitions, six setups
+
+#### 10 signatures/s (300 users)
+
+| Setup | Runs | Signatures saved | Sign p50 (s) | Sign p95 (s) | Users failed before signing | Sign errors |
+|---|---:|---:|---:|---:|---:|---:|
+| emanuele code, Django 4.2 | 3 | 300 (300-300) | 0.35 (0.34-0.36) | 0.79 (0.75-0.84) | 0 (0-0) | 0 (0-0) |
+| colleague code, Django 4.2 | 3 | 300 (300-300) | 0.04 (0.04-0.05) | 0.18 (0.10-0.28) | 0 (0-0) | 0 (0-0) |
+| emanuele code, Django 5.2 | 3 | 300 (300-300) | 0.41 (0.35-0.48) | 1.32 (1.07-1.52) | 0 (0-0) | 0 (0-0) |
+| colleague code, Django 5.2 | 3 | 300 (300-300) | 0.04 (0.04-0.04) | 0.10 (0.08-0.12) | 0 (0-0) | 0 (0-0) |
+| FINAL branch, Django 4.2 | 3 | 300 (300-300) | 0.04 (0.04-0.04) | 0.10 (0.07-0.14) | 0 (0-0) | 0 (0-0) |
+| FINAL branch, Django 5.2 | 3 | 300 (300-300) | 0.04 (0.04-0.04) | 0.10 (0.09-0.12) | 0 (0-0) | 0 (0-0) |
+
+#### 50 signatures/s (1500 users)
+
+| Setup | Runs | Signatures saved | Sign p50 (s) | Sign p95 (s) | Users failed before signing | Sign errors |
+|---|---:|---:|---:|---:|---:|---:|
+| emanuele code, Django 4.2 | 3 | 777 (770-782) | 18.20 (15.80-20.80) | 29.09 (28.36-29.62) | 695 (690-698) | 28 (23-32) |
+| colleague code, Django 4.2 | 3 | 1500 (1500-1500) | 0.84 (0.68-1.14) | 1.47 (1.45-1.48) | 0 (0-0) | 0 (0-0) |
+| emanuele code, Django 5.2 | 3 | 788 (787-791) | 16.54 (16.32-16.81) | 30.19 (29.39-30.72) | 688 (686-690) | 24 (23-26) |
+| colleague code, Django 5.2 | 3 | 1500 (1500-1500) | 0.38 (0.20-0.61) | 0.68 (0.49-0.95) | 0 (0-0) | 0 (0-0) |
+| FINAL branch, Django 4.2 | 3 | 1500 (1500-1500) | 0.88 (0.51-1.60) | 1.50 (0.85-2.00) | 0 (0-0) | 0 (0-0) |
+| FINAL branch, Django 5.2 | 3 | 1500 (1500-1500) | 0.95 (0.15-2.09) | 1.83 (0.62-2.98) | 0 (0-0) | 0 (0-0) |
+
+#### 100 signatures/s (3000 users)
+
+| Setup | Runs | Signatures saved | Sign p50 (s) | Sign p95 (s) | Users failed before signing | Sign errors |
+|---|---:|---:|---:|---:|---:|---:|
+| emanuele code, Django 4.2 | 3 | 738 (687-765) | 20.22 (18.87-22.45) | 28.41 (26.23-29.58) | 2086 (1989-2137) | 176 (102-324) |
+| colleague code, Django 4.2 | 3 | 1447 (1174-1623) | 6.35 (5.62-7.78) | 8.13 (6.36-9.81) | 1312 (1197-1525) | 241 (180-301) |
+| emanuele code, Django 5.2 | 3 | 740 (683-773) | 20.93 (18.08-24.51) | 28.77 (27.76-29.38) | 2085 (2011-2134) | 174 (93-306) |
+| colleague code, Django 5.2 | 3 | 1532 (1241-1725) | 5.31 (4.99-5.55) | 6.43 (5.57-7.50) | 1192 (1100-1309) | 277 (175-450) |
+| FINAL branch, Django 4.2 | 3 | 1568 (1491-1607) | 5.18 (4.96-5.34) | 6.63 (6.05-6.94) | 1204 (1199-1212) | 228 (181-309) |
+| FINAL branch, Django 5.2 | 3 | 1523 (1181-1704) | 5.07 (4.86-5.45) | 7.15 (5.47-10.46) | 1214 (1100-1435) | 264 (196-384) |
+
+#### Effects on the median time of the signature (ratio of the means of the repetitions)
+
+| Load | Django 5.2 vs 4.2, emanuele code | Django 5.2 vs 4.2, colleague code | Django 5.2 vs 4.2, final branch | colleague vs emanuele code (Django 5.2) | final vs emanuele code (Django 5.2) | final vs colleague code (Django 5.2) |
+|---|---:|---:|---:|---:|---:|---:|
+| 10/s | +17% | -7% | -1% | -90% | -90% | -2% |
+| 50/s | -9% | -54% | +7% | -98% | -94% | +147% |
+| 100/s | +4% | -16% | -2% | -75% | -76% | -5% |
+
+
+### What the numbers show
+
+1. **`final` is as fast as the colleague code, and about 10 times faster than ours at low load.** At 10 signatures/s the median time of the signature is 0.04 s
+   for `final` and for the colleague code, against 0.35-0.41 s for ours (90% less). At 50/s `final` and the colleague code save all 1500
+   signatures, ours about 780 and loses about 690 users before they sign. At 100/s `final` saves about 1520-1570 signatures, the colleague code 1450-1530,
+   ours about 740 (twice as many), with a median of about 5 s for the two fast ones against 20 s.
+2. **The difference between `final` and the colleague code is not measurable.** At 50/s the medians of the repetitions overlap (`final` on 5.2: 0.15 s to 2.09 s;
+   colleague on 5.2: 0.20 s to 0.61 s) and at 100/s they are 5.07-5.18 s against 5.31-6.35 s; the "+147%" of the table at 50/s comes from medians of a few
+   tenths of a second that vary a lot from one run to the next. The features that `final` adds (consent, 429, two-step confirmation, per-petition hash) do not
+   make the signature measurably slower in this test. The test does not exercise most of them, only the petition page and the signature.
+3. **Django 5.2 against 4.2: no reliable effect, on any of the three codes.** The sign of the difference changes from one code and one load to the other
+   (for example -54% for the colleague code at 50/s, +7% for `final`, +17% for ours at 10/s), the repetitions overlap, and the number of signatures saved is
+   the same on both. The 95th percentile of ours at 10/s is higher on 5.2 (1.07-1.52 s against 0.75-0.84 s) but it was not in the previous series (0.74-0.84 s on 5.2),
+   so it is not read as an effect of Django.
+4. **The limit of the three fast codes is between 50 and 100 signatures/s on this machine.** At 100/s about 1200 users out of 3000 fail before signing and the number of
+   signatures saved varies a lot between repetitions (for example `final` on 5.2: 1181 to 1704).
+5. The results are consistent with the previous section (same figures for ours and for the colleague code, measured about 4 hours earlier).
+
+### Limits of this series
+
+- 3 repetitions: enough to see a difference of 2 times or more (ours against the other two), not to separate `final` from the colleague code or one Django
+  version from the other.
+- `PYTITION_TRUSTED_PROXY_COUNT = 1` and `PYTITION_HTTPS=0` were set for the measures (see above); with the stack as it is, `final` refuses signatures after the fifth
+  of each petition. The per-IP limit is active on `final` (5) and does not trigger because every virtual user has its own address; on the colleague code it is
+  practically off (5000000000), on ours it is 5.
+- Same limits as before: Gatling on the same machine (4 cores), 8 workers, e-mail sending not included, only the petition page and the signature. The creation of a
+  petition, the confirmation page, the pages that `final` adds and the use with real e-mail were not measured.
+- The Django 4.2 images take the libraries of `requirements.txt` as they were on the day of the build; the 5.2 images the exact versions of `uv.lock`: it is not Django alone.
+- The scripts used (stack, load, collection and aggregation) are not in the repository.
