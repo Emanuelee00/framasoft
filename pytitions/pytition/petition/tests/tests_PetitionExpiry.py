@@ -32,8 +32,8 @@ class ExpiryDataMigrationTest(TransactionTestCase):
     # flush with TRUNCATE ... CASCADE (an unmanaged model keeps a foreign key in the schema)
     available_apps = ['petition', 'django.contrib.admin', 'django.contrib.auth', 'django.contrib.contenttypes',
                       'django.contrib.sessions']
-    before = [('petition', '0050_signature_indexes_gdpr')]
-    after = [('petition', '0051_petition_expiry')]
+    before = [('petition', '0051_signature_indexes_gdpr')]
+    after = [('petition', '0052_petition_expiry')]
 
     def tearDown(self):
         # leave the schema as the other tests expect it

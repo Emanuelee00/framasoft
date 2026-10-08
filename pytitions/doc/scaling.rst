@@ -153,15 +153,15 @@ at each request.
 Upgrading an existing instance
 ==============================
 
-* **Indexes.** The migration ``0050_signature_indexes_gdpr`` changes the ``ipaddress``
+* **Indexes.** The migration ``0051_signature_indexes_gdpr`` changes the ``ipaddress``
   column to ``varchar(128)``, adds three nullable columns (quick) and creates 5 indexes on
   ``petition_signature``. On PostgreSQL, ``CREATE INDEX`` blocks the writes on the table while
   it runs. On a big table, either apply the migration during a maintenance window, or:
 
-  1. print its SQL with ``python3 pytition/manage.py sqlmigrate petition 0050``;
+  1. print its SQL with ``python3 pytition/manage.py sqlmigrate petition 0051``;
   2. run the ``ALTER TABLE`` statements as they are, and the ``CREATE INDEX`` statements as
      ``CREATE INDEX CONCURRENTLY`` (outside of a transaction);
-  3. mark the migration as applied with ``python3 pytition/manage.py migrate petition 0050 --fake``.
+  3. mark the migration as applied with ``python3 pytition/manage.py migrate petition 0051 --fake``.
 
 * **Throttle.** The IP addresses stored before the upgrade (bcrypt hashes) do not match the
   new HMAC values: during ``SIGNATURE_THROTTLE_TIMING`` seconds after the upgrade, an address

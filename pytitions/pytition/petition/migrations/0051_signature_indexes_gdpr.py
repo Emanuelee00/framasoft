@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('petition', '0049_alter_petition_user_agent'),
+        ('petition', '0050_petitiontemplate_paper_signatures'),
     ]
 
     operations = [

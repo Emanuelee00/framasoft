@@ -18,7 +18,7 @@ def set_existing_expiry(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('petition', '0050_signature_indexes_gdpr'),
+        ('petition', '0051_signature_indexes_gdpr'),
     ]
 
     operations = [
