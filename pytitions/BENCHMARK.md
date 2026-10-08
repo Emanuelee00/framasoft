@@ -238,3 +238,130 @@ e-mail sending is not included, so a real instance is slower than these numbers.
 
 To repeat it, create the sample data (`gen_orga`, `gen_user`, `join_org`, `gen_pet -n 3`) and run
 `mvn gatling:test -Dgatling.simulationClass=example.Sign -Drate=50 -Dseconds=30`.
+
+
+## Django 5.2 and the colleague's code together (2 x 2)
+
+Two questions: is the colleague's signature code (branch `modernized_plus_minimalist`) faster than ours,
+and does Django 5.2 with the new dependencies (the `uv.lock` of this branch) change anything? Until now the stack
+always ran Django 4.2 (it installs `requirements.txt`), so the upgrade had never been measured.
+
+### What was compared
+
+| | Django 4.2 | Django 5.2 |
+|---|---|---|
+| **emanuele code** (`make_password` for the IP, `petition.save()`) | 4.2.30, libraries of `requirements.txt` | 5.2.18, libraries of `uv.lock` |
+| **colleague code** (`hash_ip` HMAC-SHA256, one `UPDATE`, `SIGNATURE_THROTTLE = 5000000000`) | 4.2.30, libraries of `requirements.txt` | 5.2.18, libraries of `uv.lock` |
+
+- Same tree for all four: the working tree of this branch. The colleague code is the diff `d7c15fb..origin/modernized_plus_minimalist`
+  of 4 files (`helpers.py`, `views.py`, `cron.py`, `settings/base.py`) applied on top of it.
+- Two images, same base (`tiangolo/uwsgi-nginx:python3.11`): one built as `Dockerfile_uwsgi` (`requirements.txt`), one with the versions
+  exported from `uv.lock` (`uv export --frozen`). The code is mounted from the host, so only the libraries differ between the images.
+- Stack: nginx + uWSGI with 8 workers, `UWSGI_CHEAPER=0`, backlog 1024, nginx limits unchanged, PostgreSQL, fresh containers and database for
+  every run, 3 sample petitions. E-mails are dropped (`dummy` backend), as in the previous series.
+- Load: the `example.Sign` simulation, 10, 50 and 100 signatures/s for 30 s. Every user has its own `X-Forwarded-For`.
+- **3 repetitions** per point, the four setups interleaved inside each block and the order rotated, to keep slow changes of the machine
+  from favouring one of them. Tables show mean (minimum-maximum).
+- **36 runs were planned, 35 were done**: the third repetition of "colleague code, Django 5.2" at 100/s was not run (that row has 2 runs).
+
+### Functional checks (same on the four setups)
+
+Each setup was started from scratch with the settings of the stack (`settings.docker`, e-mails to maildev) and checked end to end.
+
+| Check | emanuele, 4.2 | colleague, 4.2 | emanuele, 5.2 | colleague, 5.2 |
+|---|---|---|---|---|
+| Django version | 4.2.30 | 4.2.30 | 5.2.18 | 5.2.18 |
+| Full test suite inside the container | 191/191 OK | 191/191 OK | 191/191 OK | 191/191 OK |
+| `/`, `/petition/`, petition page, `/admin/login/` | 200 | 200 | 200 | 200 |
+| Sign (POST) | 302 | 302 | 302 | 302 |
+| Confirmation e-mail received (maildev) | yes | yes | yes | yes |
+| Confirmation link confirms the signature | yes | yes | yes | yes |
+| Signing again with a confirmed e-mail | refused (200) | refused (200) | refused (200) | refused (200) |
+| IP stored in the signature | `bcrypt_sha256` | 64 hex characters (HMAC-SHA256) | `bcrypt_sha256` | 64 hex characters (HMAC-SHA256) |
+| 8 signatures from the same IP | first 6 accepted, 7th and 8th blocked | all 8 accepted | first 6 accepted, 7th and 8th blocked | all 8 accepted |
+| `manage.py cron` | exit 0 | exit 0 | exit 0 | exit 0 |
+| `/static/admin/css/base.css` | **403** | **403** | **403** | **403** |
+
+What this shows:
+
+- The behaviour is the same on Django 4.2 and 5.2 for each code. The only differences between the two codes are the intended ones:
+  the format of the stored IP and the signature limit per IP (5 in ours, practically none in the colleague branch).
+  The change of `cron.py` is only a rewriting of the loop, with the same behaviour.
+- The signatures blocked by the limit are saved anyway in both (8 rows for 8 requests): this is how `create_signature` already worked
+  (`form.save()` before the error message), not something new.
+- **The static files are not served by the nginx + uWSGI stack, with any of the four setups**: `collectstatic` creates
+  `/var/pytition/static` as `drwxr-x--- root root`, and nginx (which runs as user `nginx`) answers 403, most likely because it cannot read
+  that directory (the cause was seen in the permissions, a fix was not tried). The pages work but without CSS
+  and JavaScript. It is older than these changes (the same on Django 4.2), it is not fixed in the repository, and the load tests do not
+  see it because they only request HTML pages.
+
+### Performance: signing (POST), 3 repetitions
+
+#### 10 signatures/s (300 users)
+
+| Setup | Runs | Signatures saved | Sign p50 (s) | Sign p95 (s) | Users failed before signing | Sign errors |
+|---|---:|---:|---:|---:|---:|---:|
+| emanuele code, Django 4.2 | 3 | 300 (300-300) | 0.34 (0.34-0.34) | 0.82 (0.71-1.01) | 0 (0-0) | 0 (0-0) |
+| colleague code, Django 4.2 | 3 | 300 (300-300) | 0.04 (0.04-0.04) | 0.18 (0.13-0.22) | 0 (0-0) | 0 (0-0) |
+| emanuele code, Django 5.2 | 3 | 300 (300-300) | 0.34 (0.33-0.34) | 0.77 (0.74-0.84) | 0 (0-0) | 0 (0-0) |
+| colleague code, Django 5.2 | 3 | 300 (300-300) | 0.04 (0.04-0.04) | 0.16 (0.15-0.19) | 0 (0-0) | 0 (0-0) |
+
+#### 50 signatures/s (1500 users)
+
+| Setup | Runs | Signatures saved | Sign p50 (s) | Sign p95 (s) | Users failed before signing | Sign errors |
+|---|---:|---:|---:|---:|---:|---:|
+| emanuele code, Django 4.2 | 3 | 791 (781-799) | 18.02 (17.54-18.38) | 28.59 (28.05-29.41) | 680 (674-686) | 29 (21-33) |
+| colleague code, Django 4.2 | 3 | 1500 (1500-1500) | 1.77 (0.48-2.73) | 2.75 (0.79-3.83) | 0 (0-0) | 0 (0-0) |
+| emanuele code, Django 5.2 | 3 | 791 (777-798) | 17.26 (15.91-19.64) | 29.79 (26.13-33.08) | 686 (680-694) | 24 (20-29) |
+| colleague code, Django 5.2 | 3 | 1500 (1500-1500) | 1.51 (0.26-2.45) | 2.07 (0.67-3.15) | 0 (0-0) | 0 (0-0) |
+
+#### 100 signatures/s (3000 users)
+
+| Setup | Runs | Signatures saved | Sign p50 (s) | Sign p95 (s) | Users failed before signing | Sign errors |
+|---|---:|---:|---:|---:|---:|---:|
+| emanuele code, Django 4.2 | 3 | 766 (757-773) | 18.93 (17.79-19.92) | 29.93 (28.25-32.99) | 2146 (2127-2170) | 88 (63-116) |
+| colleague code, Django 4.2 | 3 | 1651 (1590-1710) | 5.14 (4.95-5.30) | 5.87 (5.53-6.34) | 1169 (1133-1231) | 180 (157-204) |
+| emanuele code, Django 5.2 | 3 | 778 (772-783) | 18.38 (18.02-18.66) | 27.53 (26.65-28.29) | 2133 (2099-2150) | 90 (67-123) |
+| colleague code, Django 5.2 | 2 | 1616 (1604-1627) | 4.80 (4.79-4.80) | 6.57 (6.34-6.79) | 1184 (1180-1187) | 201 (193-209) |
+
+#### Effects (ratio of the means of the repetitions)
+
+| Load | Django 5.2 vs 4.2, emanuele code (sign p50) | Django 5.2 vs 4.2, colleague code (sign p50) | colleague vs emanuele code, Django 4.2 (sign p50) | colleague vs emanuele code, Django 5.2 (sign p50) |
+|---|---:|---:|---:|---:|
+| 10/s | -1% | -3% | -87% | -88% |
+| 50/s | -4% | -14% | -90% | -91% |
+| 100/s | -3% | -7% | -73% | -74% |
+
+
+### What the numbers show
+
+1. **The colleague code is clearly faster, on both Django versions.** At 10 signatures/s the median time of the signature
+   goes from 0.34 s to 0.04 s (about 8 times faster; 87% less) and the 95th percentile from about 0.8 s to about 0.17 s. At 50/s ours saves
+   about 790 of 1500 signatures and loses about 680 users before they sign, while the colleague code saves all 1500. At 100/s it
+   saves about 1600-1650 signatures against about 770 (a bit more than twice as many). The numbers of the repetitions do not overlap.
+2. **Django 5.2 with the new libraries makes no measurable difference.** The median time of the signature changes by -1% to -14% against Django 4.2,
+   but the variation between repetitions is as large (for example the colleague code at 50/s: median from 0.26 s to 2.45 s on 5.2, from 0.48 s to 2.73 s
+   on 4.2), and the number of saved signatures is the same on both (791 and 791; 766 and 778; 1651 and 1616). There is no speed gain
+   from the upgrade, and no loss.
+3. **The two changes together work and add up as expected**: "colleague code, Django 5.2" has the same behaviour as the other three (functional checks) and
+   the speed of "colleague code, Django 4.2" (within noise). The gain comes from the signature code, not from the Django version.
+4. **The colleague code reaches its limit between 50 and 100 signatures/s.** At 50/s it handles everything, but the median
+   already varies a lot between repetitions (0.26 s to 2.7 s); at 100/s it saves about 1600 out of 3000, loses about 1170 users before signing
+   and answers 5 s at the median.
+5. **The difference at low load is smaller than in the previous series** (8 times against 29 times at 10/s): the colleague code gives the
+   same 0.04 s, but the median of our code is now 0.34 s and it was 1.1 s. Same machine, other day, different images: the cause was not investigated.
+   Where the time of the signature goes was not measured separately, so the explanation of the previous section (the slow `bcrypt_sha256` hash
+   of the IP) is still only the most likely one.
+
+### Limits of this series
+
+- 3 repetitions per point: enough to see a difference of 2 times, not to measure a difference of a few per cent. The "Django 5.2 against 4.2"
+  differences of -1% to -14% should be read as "no difference".
+- The Django 4.2 image installs the libraries of `requirements.txt` as they were on the day of the build (most are not pinned), the 5.2 image
+  the exact versions of `uv.lock`. The comparison is "Django 4.2 with the libraries of `requirements.txt`" against "Django 5.2 with the libraries of `uv.lock`",
+  not Django alone.
+- The colleague code has `SIGNATURE_THROTTLE = 5000000000` (the limit per IP is practically off). With a different IP per virtual user the limit never
+  triggers in either code, so it does not change the result, but this value must not go to production.
+- Same limits as before: Gatling on the same 4-core machine, 8 workers only, e-mail sending not included (dummy backend), only the signature page.
+  The creation of a petition and the use with real e-mail were not measured.
+- One run is missing (see above). The scripts used (stack, load, collection and aggregation) are not in the repository.
