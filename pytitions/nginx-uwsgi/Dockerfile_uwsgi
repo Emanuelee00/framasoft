@@ -1,7 +1,7 @@
 FROM tiangolo/uwsgi-nginx:python3.11
 
 RUN apt update \
-    && apt install -y netcat-openbsd \
+    && apt install -y netcat-openbsd gettext \
     && rm -rf /var/lib/apt/lists/*
 
 ENV UWSGI_INI /app/uwsgi.ini
