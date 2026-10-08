@@ -15,7 +15,7 @@ not as absolute capacity figures. See [Limits of this benchmark](#limits-of-this
 | Machine | Intel Core i5-6500 (4 cores), 7.6 GiB RAM, Fedora, rootless podman 5.8.7 |
 | Load generator | Gatling `example.Dos` (Gatling-Performance-Test-starter), on the **same machine** |
 | Request | `GET /` only; counted as OK for status 200 or 304 |
-| Server | `make run-prod` stack: nginx + uWSGI (Python 3.11, Django 5.2.18) + PostgreSQL |
+| Server | `make run-prod` stack: nginx + uWSGI (Python 3.11, Django 4.2.30, installed from `requirements.txt` by `Dockerfile_uwsgi`) + PostgreSQL |
 | uWSGI | `UWSGI_PROCESSES` = 1 to 32, `UWSGI_CHEAPER=0` (all workers always running), `UWSGI_LISTEN` = 100 or 1024 |
 | Load | 30000 users ramped over 30 s, i.e. 1000 new requests per second for 30 s |
 | Between runs | whole stack removed and recreated, fresh database |
@@ -50,7 +50,7 @@ with `manage.py runserver` as `make run` does, against a fresh database. It has 
 
 | Setup | Load | OK | OK % | p50 (s) | p95 (s) | max (s) |
 |---|---|---:|---:|---:|---:|---:|
-| nginx + uWSGI, 32 workers, backlog 1024 (Django 5.2) | 1000 users in 1 s | 506 / 1000 | 50.6% | 3.1 | 4.5 | 4.8 |
+| nginx + uWSGI, 32 workers, backlog 1024 (Django 4.2.30) | 1000 users in 1 s | 506 / 1000 | 50.6% | 3.1 | 4.5 | 4.8 |
 | Django 4.2.13 `runserver` (no workers) | 1000 users in 1 s | 937 / 1000 | 93.7% | 6.6 | 54.2 | 56.9 |
 | Django 4.2.13 `runserver` (no workers) | 30000 users in 30 s | 345 / 30000 | 1.1% | 2.8 | 41.5 | 59.5 |
 
@@ -114,8 +114,9 @@ are the original ones. To repeat the series, set the two values above and rebuil
   hundred requests between neighbouring rows may be noise.
 - Gatling and the server share 4 cores and the network stack of one machine. Port 8000 is
   published through rootless podman's port forwarding, which can also be a limit (not measured).
-- The old and new setups differ in Django version (4.2.13 vs 5.2.18) **and** in server
-  (`runserver` vs nginx + uWSGI), so the comparison does not isolate the effect of Django.
+- The old and new setups differ mainly in the server (`runserver` vs nginx + uWSGI). Django is
+  4.2.13 (`pdm.lock`) vs 4.2.30 (`requirements.txt`, same minor series) and the other packages
+  differ too, so the comparison is not a pure server comparison either.
 - `UWSGI_CHEAPER=0` was used so that "N workers" means N running workers. The default of the stack
   is `UWSGI_CHEAPER=4`.
 - Only the home page was requested; pages that write to the database may behave differently.
@@ -133,3 +134,107 @@ python3 analyze_results.py
 
 For the old setup use a virtualenv with the versions of `pdm.lock` (Django 4.2.13), then run
 `manage.py runserver 127.0.0.1:8000` and the same Gatling command.
+
+## Comparison with branch `modernized_plus_minimalist`
+
+The same tests were repeated on the branch `origin/modernized_plus_minimalist` (commit `cfe6805`),
+to see if its changes improve the results of this branch (`emanuele`). Same machine, same
+commands, same load; the 18 tests with nginx + uWSGI and the 2 with `runserver` were all repeated.
+The files of the stack (`nginx-uwsgi/`, `Dockerfile`, `requirements.txt`) are identical in both
+branches, so the images and the uWSGI settings are the same. The application code differs:
+
+- `create_signature`: the IP of the signer is hashed with HMAC-SHA256 (`hash_ip`) instead of
+  `make_password`, and `cron_to_schedule` is changed with one `UPDATE` instead of `petition.save()`;
+- `cron` command and `base.py` (`SIGNATURE_THROTTLE` raised to 5000000000) changed;
+- `docker-compose.yml` and a `Makefile` that runs `docker compose up`.
+
+### Workers and backlog (1000 requests/s for 30 s)
+
+| Workers | Backlog | OK emanuele | OK colleague | diff | p50 (s) emanuele / colleague | p95 (s) emanuele / colleague |
+|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 100 | 1463 | 1294 | -12% | 4.3 / 2.8 | 36.9 / 34.5 |
+| 1 | 1024 | 1946 | 1915 | -2% | 9.5 / 9.9 | 11.8 / 11.8 |
+| 2 | 100 | 1729 | 1954 | +13% | 3.1 / 3.0 | 10.9 / 11.0 |
+| 2 | 1024 | 2724 | 2893 | +6% | 6.0 / 6.0 | 7.7 / 6.9 |
+| 4 | 100 | 2147 | 2407 | +12% | 3.4 / 2.7 | 8.0 / 8.6 |
+| 4 | 1024 | 3365 | 3458 | +3% | 4.4 / 4.5 | 8.0 / 6.0 |
+| 8 | 100 | 2598 | 2898 | +12% | 3.8 / 3.2 | 13.9 / 9.7 |
+| 8 | 1024 | 3136 | 3532 | +13% | 4.5 / 4.8 | 7.6 / 5.6 |
+| 16 | 100 | 2978 | 3304 | +11% | 6.4 / 3.0 | 14.4 / 10.2 |
+| 16 | 1024 | 3640 | 3054 | -16% | 4.5 / 5.3 | 5.2 / 6.2 |
+| 32 | 100 | 5851 | 4858 | -17% | 16.1 / 17.2 | 55.2 / 57.1 |
+| 32 | 1024 | 3284 | 2656 | -19% | 4.7 / 4.6 | 6.3 / 14.5 |
+
+### Other series
+
+| Series | Workers | OK emanuele | OK colleague | diff | p50 (s) e / c | p95 (s) e / c |
+|---|---:|---:|---:|---:|---:|---:|
+| burst 1000 users in 1 s, backlog 1024 | 32 | 506 / 1000 | 486 / 1000 | -4% | 3.1 / 3.5 | 4.5 / 4.7 |
+| nginx raised, backlog 1024 | 1 | 3144 | 3263 | +4% | 31.4 / 35.2 | 48.3 / 53.3 |
+| nginx raised, backlog 1024 | 2 | 3917 | 3999 | +2% | 23.0 / 21.1 | 46.4 / 43.0 |
+| nginx raised, backlog 1024 | 4 | 3157 | 3492 | +11% | 18.1 / 17.3 | 20.3 / 21.8 |
+| nginx raised, backlog 1024 | 8 | 3858 | 3834 | -1% | 16.5 / 13.9 | 32.0 / 20.0 |
+| nginx raised, backlog 1024 | 16 | 4217 | 4220 | +0% | 14.2 / 13.4 | 24.3 / 20.9 |
+| nginx raised, backlog 1024 | 32 | 5348 | 4414 | -17% | 21.4 / 14.0 | 36.2 / 22.9 |
+| `runserver` Django 4.2.13, 1000 users in 1 s | - | 937 | 863 | -8% | 6.6 / 5.8 | 54.2 / 29.5 |
+| `runserver` Django 4.2.13, 30000 users in 30 s | - | 345 | 142 | -59% | 2.8 / 2.3 | 41.5 / 58.5 |
+
+### Result
+
+- **No measurable difference.** The change in successful requests over the 18 runs with nginx + uWSGI
+  has mean +0.1% and median +2.4%, from -19% to +13%, better in 11 runs and worse in 7. This is
+  the same size as the variation between neighbouring rows of a single series, so it is noise.
+- **This is expected.** The load only requests the home page (`GET /`), and none of the code
+  changed in the other branch is run by that request: it is on the path that creates a signature.
+  These tests cannot show its effect, neither for better nor for worse.
+- The `runserver` run with 30000 users (345 vs 142 successful requests) has a large relative
+  difference, but on very small numbers from a server that is saturated; it is not a reliable result.
+- The signature code is measured in the next section.
+
+## Signing petitions (POST): comparison of the two branches
+
+The home-page tests above cannot show the effect of the changes in `modernized_plus_minimalist`,
+because they are in the code that creates a signature. This series tests that code.
+
+**Test.** New Gatling simulation `example.Sign` (file `src/test/scala/example/Sign.scala` of
+`Gatling-Performance-Test-starter`). Each virtual user loads a petition page (to get the CSRF
+token) and then POSTs the signature form to `/petition/<id>/sign`; success is the 302 answer.
+Users arrive at a constant rate for 30 s, on 3 sample petitions (`gen_pet`).
+
+- Stack: nginx + uWSGI with 8 workers, `UWSGI_CHEAPER=0`, backlog 1024, nginx limits unchanged;
+  fresh database and sample data for every run.
+- Every user sends its own `X-Forwarded-For`, so the per-IP signature limit (5 in this branch,
+  disabled in the other) does not influence the result.
+- E-mails are dropped (`dummy` backend, settings file outside the repositories): in the stack
+  the SMTP backend points to `localhost:25`, which does not exist in the container, and the
+  signature request would end with HTTP 500 after saving the signature.
+- "Signatures saved" is the number of rows in the database after the run.
+
+| Offered load | Signatures saved: emanuele | colleague | Sign p50 (s): emanuele / colleague | Sign p95 (s): emanuele / colleague | users that failed before signing: emanuele / colleague |
+|---|---:|---:|---:|---:|---:|
+| 10/s (300 users) | 300 | 300 | 1.1 / 0.04 | 2.4 / 0.35 | 0 / 0 |
+| 25/s (750 users) | 749 | 750 | 16.8 / 0.03 | 23.5 / 0.39 | 1 / 0 |
+| 50/s (1500 users) | 754 | 1500 | 20.4 / 0.74 | 24.0 / 3.9 | 732 / 0 |
+| 100/s (3000 users) | 740 | 1563 | 17.6 / 4.9 | 32.0 / 6.5 | 2158 / 1264 |
+| 200/s (6000 users) | 719 | 1263 | 20.1 / 5.3 | 23.5 / 8.2 | 5020 / 4146 |
+
+What the numbers show:
+
+- **At low load the signature request is about 29 times faster** in the other branch:
+  p50 of 1.10 s against 0.04 s at 10 signatures/s, where nothing is queued. The signature stored by
+  this branch carries a `bcrypt_sha256` hash of the IP (`make_password`, checked by hand), which is slow by
+  design; the other branch uses HMAC-SHA256. The size of the difference matches this explanation,
+  but the time spent in the hash was not measured separately.
+- **Capacity is about twice as high.** This branch saves about 720 to 750 signatures per run
+  from 25/s up, however high the load; the other one saves 1500 at 50/s and 1563 at 100/s.
+  Above those loads both queue up and the latency of the signature goes to several seconds,
+  and users start to fail already when loading the petition page.
+- At 200/s both are overloaded (719 and 1263 signatures saved out of 6000 users).
+- The change of `petition.save()` into a conditional `UPDATE` was not measured separately from the
+  hash, so this test cannot tell how much each change contributes.
+
+Limits: one run per point; Gatling runs on the same 4-core machine; only 8 workers were tried;
+e-mail sending is not included, so a real instance is slower than these numbers.
+
+To repeat it, create the sample data (`gen_orga`, `gen_user`, `join_org`, `gen_pet -n 3`) and run
+`mvn gatling:test -Dgatling.simulationClass=example.Sign -Drate=50 -Dseconds=30`.

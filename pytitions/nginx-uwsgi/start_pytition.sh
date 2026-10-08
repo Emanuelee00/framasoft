@@ -2,7 +2,7 @@
 set -e
 
 # we collect the static
-python3 pytition/manage.py collectstatic
+python3 pytition/manage.py collectstatic --noinput
 
 # wait for postgres to start
 while ! nc -z db 5432; do echo "waiting for postgres to start..." && sleep 1; done;
