@@ -1,0 +1,38 @@
+# Image for Render: same nginx + uWSGI stack as Dockerfile_uwsgi, but with the code copied inside
+# (Render has no volume to mount it) and static files and translations built at image build time.
+# Build from the pytitions/ directory: podman build -f nginx-uwsgi/Dockerfile_render .
+FROM docker.io/tiangolo/uwsgi-nginx:python3.11
+
+RUN apt update \
+    && apt install -y gettext \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV UWSGI_INI /app/uwsgi.ini
+ENV PYTHONUNBUFFERED 1
+ENV DJANGO_SETTINGS_MODULE pytition.settings.render
+ENV STATIC_ROOT /var/pytition/static
+
+RUN mkdir /code
+WORKDIR /code
+COPY requirements.txt /code/
+RUN pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir psycopg2-binary==2.9.9
+
+COPY . /code/
+COPY ./nginx-uwsgi/nginx.conf /app/nginx.conf
+COPY ./nginx-uwsgi/uwsgi.ini /app/uwsgi.ini
+COPY ./nginx-uwsgi/start_render.sh /start_pytition.sh
+
+# Render sends the traffic to port 10000 (the default of its PORT variable)
+RUN sed -i 's/listen 80;/listen 10000;/' /app/nginx.conf
+
+# SECRET_KEY is only needed to load the settings, the real one is set by Render at run time.
+# nginx runs as the nginx user: the collected files must be readable by everyone.
+RUN SECRET_KEY=build-only python3 pytition/manage.py collectstatic --noinput \
+    && (cd pytition && SECRET_KEY=build-only python3 manage.py compilemessages -v 0) \
+    && chmod a+rx /var/pytition \
+    && chmod -R a+rX /var/pytition/static
+
+EXPOSE 10000
+ENTRYPOINT ["sh", "/start_pytition.sh"]
+CMD ["/usr/bin/supervisord"]
