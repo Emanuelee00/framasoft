@@ -1,5 +1,12 @@
+# $HOME is small and fills up: keep uv's Python interpreters inside the project (on /goinfre).
+# uv's cache already lives on /goinfre (XDG_CACHE_HOME) and podman's graphroot too.
+export UV_PYTHON_INSTALL_DIR ?= $(CURDIR)/.uv-python
+
+# Port of the dev server, e.g.: make run PORT=8001
+PORT ?= 8000
+
 run: install db
-	cd pytition && DJANGO_SETTINGS_MODULE=pytition.settings.local uv run --no-sync python manage.py runserver 127.0.0.1:8000
+	cd pytition && DJANGO_SETTINGS_MODULE=pytition.settings.local uv run --no-sync python manage.py runserver 127.0.0.1:$(PORT)
 
 # Runs only the first time (the stamp file marks it as done)
 install: .make-install-stamp

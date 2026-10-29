@@ -4,6 +4,9 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# $HOME is small and fills up: keep uv's Python interpreters inside the project (on /goinfre)
+export UV_PYTHON_INSTALL_DIR="${UV_PYTHON_INSTALL_DIR:-$PWD/.uv-python}"
+
 # numpy 1.24.4 (from pdm.lock) has no prebuilt package for Python 3.12+, so 3.11 is the default.
 # Override it when running the script, e.g.: PYTHON_VERSION=3.8 bash migrate.sh
 PYTHON_VERSION="${PYTHON_VERSION:-3.11}"
